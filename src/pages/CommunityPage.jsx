@@ -20,6 +20,18 @@ const attributeFields = {
   music: ["Instrument / role", "Genre", "Experience level"],
   outdoors: ["Difficulty", "Preferred distance", "Availability"],
 };
+const attributeLabels = {
+  skilllevel: "Skill Level",
+  skillLevel: "Skill Level",
+  frequency: "Frequency",
+  availability: "Availability",
+};
+const labelForAttribute = (key) =>
+  attributeLabels[key] ??
+  key
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/[_-]/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
 const emptyForm = {
   postTypeId: "",
   categoryId: "",
@@ -157,14 +169,14 @@ function CommunityDetail({ post, token, user, onReload }) {
   const [message, setMessage] = useState("");
   const isOwner = user && String(user.id) === String(post.authorUserId);
   const isActive = post.status === "active";
-  const attributes = parseAttributes(post.attributes);
+  const attributes = Object.fromEntries(Object.entries(parseAttributes(post.attributes)).map(([key, value]) => [labelForAttribute(key), value]));
   const detailUrl = `${window.location.origin}${communityPostUrl(post)}`;
 
   useEffect(() => {
     if (token && new URLSearchParams(location.search).get("interest") === "1" && isActive && !isOwner) setInterestOpen(true);
   }, [token, location.search, isActive, isOwner]);
   const showError = (error) => setMessage(error.message);
-  const submitInterest = async () => { setBusy(true); setMessage(""); try { await communityRequest(`/api/community/posts/${post.id}/responses`, { method: "POST", headers: communityHeaders(token, true), body: JSON.stringify({ message: interestMessage }) }); setInterestOpen(false); setInterestMessage(""); setMessage("Your interest has been sent."); onReload(); } catch (error) { showError(error); } finally { setBusy(false); } };
+  const submitInterest = async () => { const messageText = document.getElementById("confirmation-message")?.value ?? interestMessage; setBusy(true); setMessage(""); try { await communityRequest(`/api/community/posts/${post.id}/responses`, { method: "POST", headers: communityHeaders(token, true), body: JSON.stringify({ message: messageText }) }); setInterestOpen(false); setInterestMessage(""); setMessage("Your interest has been sent."); onReload(); } catch (error) { showError(error); } finally { setBusy(false); } };
   const submitReport = async () => { setBusy(true); setMessage(""); try { await communityRequest(`/api/community/posts/${post.id}/report`, { method: "POST", headers: communityHeaders(token, true), body: JSON.stringify(report) }); setReportOpen(false); setMessage("Report submitted. Thank you for helping keep YKCircle safe."); } catch (error) { showError(error); } finally { setBusy(false); } };
   const loadResponses = async () => { setBusy(true); setMessage(""); try { setResponses(asList(await communityRequest(`/api/community/posts/${post.id}/responses`, { headers: communityHeaders(token) }))); setResponsesOpen(true); } catch (error) { showError(error); } finally { setBusy(false); } };
   const updateResponse = async (responseId, status) => { try { await communityRequest(`/api/community/posts/${post.id}/responses/${responseId}`, { method: "PATCH", headers: communityHeaders(token, true), body: JSON.stringify({ status }) }); setResponses((current) => current.map((item) => item.id === responseId ? { ...item, status } : item)); } catch (error) { showError(error); } };

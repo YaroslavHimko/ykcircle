@@ -8,10 +8,11 @@ export default function ConfirmationDialog({
   onCancel,
   destructive = false,
   busy = false,
+  children,
 }) {
   return (
     <div
-      className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 px-5"
+      className="fixed inset-0 z-[72] flex items-center justify-center bg-black/50 px-5"
       role="alertdialog"
       aria-modal="true"
       aria-labelledby="confirmation-dialog-title"
@@ -25,6 +26,7 @@ export default function ConfirmationDialog({
         <p id="confirmation-dialog-description" className="mt-4 leading-relaxed text-muted-foreground">
           {description}
         </p>
+        {children && <div className="mt-5">{React.isValidElement(children) && children.type === "textarea" ? React.cloneElement(children, { id: "confirmation-message", rows: 4, placeholder: "Optional message", "aria-label": "Optional message", className: "w-full border border-border bg-background p-3" }) : children}</div>}
         <div className="mt-7 flex justify-end gap-3">
           <button
             type="button"

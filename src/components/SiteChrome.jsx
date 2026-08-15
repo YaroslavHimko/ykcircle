@@ -176,18 +176,16 @@ export function Footer() {
                 <div className="text-sm">
                     <p className="mb-4 text-[0.7rem] uppercase tracking-[0.25em] text-[hsl(40_20%_60%)]">Explore</p>
                     <ul className="space-y-2">
+                        <li><Link className="hover:text-primary" to="/stockholm/community">Communities</Link></li>
                         <li><Link className="hover:text-primary" to="/groups">Groups</Link></li>
                         <li><Link className="hover:text-primary" to="/events">Events</Link></li>
-                        <li><Link className="hover:text-primary" to="/journeys">City guides</Link></li>
                     </ul>
                 </div>
 
                 <div className="text-sm">
-                    <p className="mb-4 text-[0.7rem] uppercase tracking-[0.25em] text-[hsl(40_20%_60%)]">Discover</p>
+                    <p className="mb-4 text-[0.7rem] uppercase tracking-[0.25em] text-[hsl(40_20%_60%)]">More</p>
                     <ul className="space-y-2 text-[hsl(40_20%_78%)]">
-                        <li><Link className="hover:text-primary" to="/groups">Find your circle</Link></li>
-                        <li><Link className="hover:text-primary" to="/events">Find an event</Link></li>
-                        <li><Link className="hover:text-primary" to="/profile/groups">My Circle</Link></li>
+                        <li><Link className="hover:text-primary" to="/articles">Articles</Link></li>
                         <li><Link className="hover:text-primary" to="/contact">Contact</Link></li>
                     </ul>
                 </div>

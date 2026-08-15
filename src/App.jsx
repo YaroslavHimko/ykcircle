@@ -3,7 +3,6 @@ import { Route, Routes, BrowserRouter as Router } from 'react-router-dom';
 import ScrollToTop from './components/ScrollToTop';
 import HomePage from './pages/HomePage';
 import AboutPage from './pages/AboutPage';
-import JourneysPage from './pages/JourneysPage';
 import JoinPage from './pages/JoinPage';
 import ContactPage from './pages/ContactPage';
 import AuthPage from './pages/AuthPage';
@@ -31,7 +30,6 @@ function App() {
             <Routes>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/about" element={<AboutPage />} />
-                <Route path="/journeys" element={<JourneysPage />} />
                 <Route path="/join" element={<JoinPage />} />
                 <Route path="/contact" element={<ContactPage />} />
                 <Route path="/login" element={<AuthPage mode="login" />} />

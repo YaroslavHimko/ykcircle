@@ -10,7 +10,7 @@ const HERO = `/images/hero.png?v=${import.meta.env.VITE_HERO_IMAGE_VERSION}`;
 const AboutPage = () => (
     <SiteChrome>
         <Helmet>
-            <title>About Yaro Himko — Travel Filmmaker, City Guides & Relocation</title>
+            <title>About Yaro Himko — Travel Filmmaker & Relocation</title>
             <meta
                 name="description"
                 content="Who is Yaro Himko? A travel filmmaker documenting European city tours, history and practical travel advice on YouTube, now building relocation consulting, language courses and traveller communities."

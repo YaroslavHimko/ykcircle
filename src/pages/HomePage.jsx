@@ -258,19 +258,19 @@ export default function HomePage() {
       <section className="mx-auto grid max-w-[90rem] gap-10 px-5 py-16 sm:px-8 sm:py-24 md:grid-cols-2 md:items-center">
         <div>
           <p className="text-xs uppercase tracking-[0.25em] text-primary">
-            Guides from the road
+            Articles & local knowledge
           </p>
           <h2 className="mt-3 font-display text-4xl font-semibold">
-            Places have more to say when you arrive curious.
+            Stories, guides, and ideas for your next plan.
           </h2>
           <p className="mt-5 max-w-xl leading-relaxed text-muted-foreground">
-            YKCircle brings people, plans and local places together—so finding your next community starts with what you genuinely want to do.
+            Read local perspective, practical guides, and stories that help you make more of life together.
           </p>
           <Link
-            to="/journeys"
+            to="/articles"
             className="mt-6 inline-flex items-center gap-2 text-sm text-primary"
           >
-            Read journeys <ArrowRight className="h-4 w-4" />
+            Read articles <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
         <div className="grid grid-cols-2 gap-3">
