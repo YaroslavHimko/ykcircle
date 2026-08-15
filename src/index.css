@@ -1,0 +1,88 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,900;1,9..144,600&family=Inter:wght@300;400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 30 22% 96%;
+    --foreground: 25 22% 12%;
+    --card: 32 30% 92%;
+    --card-foreground: 25 22% 12%;
+    --popover: 30 22% 96%;
+    --popover-foreground: 25 22% 12%;
+    --primary: 18 78% 46%;
+    --primary-foreground: 40 40% 98%;
+    --secondary: 30 14% 88%;
+    --secondary-foreground: 25 22% 12%;
+    --muted: 30 12% 87%;
+    --muted-foreground: 25 10% 38%;
+    --accent: 172 40% 32%;
+    --accent-foreground: 40 40% 98%;
+    --destructive: 0 72% 45%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 28 14% 82%;
+    --input: 28 14% 82%;
+    --ring: 18 78% 46%;
+    --radius: 0.25rem;
+    --ink: 25 24% 9%;
+  }
+}
+
+html, body, #root {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+.font-display {
+  font-family: 'Fraunces', Georgia, serif;
+}
+
+.grain::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 60;
+  opacity: 0.045;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.marquee-track {
+  animation: marquee 34s linear infinite;
+}
+
+@keyframes marquee {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
+}
+
+.underline-sketch {
+  position: relative;
+  display: inline-block;
+}
+.underline-sketch::after {
+  content: '';
+  position: absolute;
+  left: -2%;
+  right: -2%;
+  bottom: 0.02em;
+  height: 0.32em;
+  background: hsl(var(--primary) / 0.28);
+  transform: skewX(-12deg) scaleX(1);
+  transform-origin: left;
+  z-index: -1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track { animation: none; }
+  *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+}

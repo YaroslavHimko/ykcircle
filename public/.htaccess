@@ -1,0 +1,6 @@
+RewriteEngine On
+
+# Let Vite/React Router handle frontend routes on direct navigation.
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.html [L]
