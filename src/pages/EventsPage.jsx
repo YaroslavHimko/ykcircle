@@ -156,7 +156,19 @@ export default function EventsPage({
         });
         if (own.ok) {
           const ownData = await own.json();
-          setMine(Array.isArray(ownData) ? ownData : ownData.events || []);
+          const ownEvents = Array.isArray(ownData) ? ownData : ownData.events || [];
+          const hydratedEvents = await Promise.all(ownEvents.map(async (event) => {
+            if (eventCover(event) || !event.id) return event;
+            try {
+              const detail = await apiFetch(`/api/events/${event.id}`, { headers: { Authorization: `Bearer ${token}` } });
+              if (!detail.ok) return event;
+              const detailData = await detail.json();
+              return { ...event, ...(detailData.event || detailData) };
+            } catch {
+              return event;
+            }
+          }));
+          setMine(hydratedEvents);
         }
       }
     } finally {
