@@ -72,14 +72,18 @@ function FieldError({ errors, name }) {
 function LinkedEventSelector({ events, value, onChange, loading }) {
   return (
     <label className="mx-auto mt-5 block max-w-3xl text-sm">
-      Linked event
+      Linked events <span className="text-muted-foreground">(select one or more)</span>
       <select
+        multiple
         value={value}
-        onChange={(event) => onChange(event.target.value)}
+        onChange={(event) =>
+          onChange(
+            [...event.target.selectedOptions].map((option) => option.value),
+          )
+        }
         disabled={loading}
         className="mt-2 min-h-11 w-full border border-border bg-background px-3 disabled:opacity-50"
       >
-        <option value="">No linked event</option>
         {events.map((event) => (
           <option key={event.id} value={event.id}>
             {event.title}
@@ -94,7 +98,12 @@ function LinkedEventSelector({ events, value, onChange, loading }) {
   );
 }
 
-const linkedEventIds = (post) => Array.isArray(post.eventIds) ? post.eventIds : post.eventId != null ? [post.eventId] : [];
+const linkedEventIds = (post) =>
+  Array.isArray(post.eventIds)
+    ? post.eventIds
+    : post.eventId != null
+      ? [post.eventId]
+      : [];
 
 function LinkedEventCta({ post, inActionBar = false }) {
   const eventIds = linkedEventIds(post);
@@ -103,7 +112,8 @@ function LinkedEventCta({ post, inActionBar = false }) {
     let active = true;
     Promise.all(eventIds.map((eventId) => apiFetch(`/api/events/${eventId}`)))
       .then((responses) => {
-        if (active) setHasAvailableEvents(responses.some((response) => response.ok));
+        if (active)
+          setHasAvailableEvents(responses.some((response) => response.ok));
       })
       .catch(() => {
         if (active) setHasAvailableEvents(false);
@@ -126,22 +136,170 @@ function CommunityLinkedEventsPage({ post }) {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const eventIds = linkedEventIds(post);
-  useEffect(() => { let active = true; Promise.all(eventIds.map(async (eventId) => { const response = await apiFetch(`/api/events/${eventId}`); return response.ok ? response.json() : null; })).then((data) => { if (active) setEvents(data.filter(Boolean).map((event) => event.event || event)); }).catch(() => { if (active) setEvents([]); }).finally(() => { if (active) setLoading(false); }); return () => { active = false; }; }, [eventIds.join(",")]);
-  return <SiteChrome><Helmet><title>Linked events | YKCircle</title></Helmet><section className="mx-auto max-w-4xl px-5 pb-24 pt-32 sm:px-8 sm:pt-40"><Link to={communityPostUrl(post)} className="text-sm text-primary">← Back to post</Link><p className="mt-8 text-xs uppercase tracking-[0.25em] text-primary">Community post</p><h1 className="mt-3 font-display text-4xl font-black">Linked events</h1><p className="mt-4 text-muted-foreground">Events connected to “{post.title}”.</p><div className="mt-8 grid gap-5 sm:grid-cols-2">{loading ? <p className="text-muted-foreground">Loading linked events…</p> : events.map((event) => <Link key={event.id} to={`/events/${event.id}`} className="border border-border p-5 hover:border-primary"><p className="text-xs uppercase tracking-[0.2em] text-primary">{event.startsAt ? new Date(event.startsAt).toLocaleString() : "Date to be announced"}</p><h2 className="mt-2 font-display text-2xl">{event.title}</h2><p className="mt-3 text-sm text-muted-foreground">{event.shortDescription || event.description || "View event details."}</p></Link>)}{!loading && events.length === 0 && <p className="text-muted-foreground">No linked events are currently available.</p>}</div></section></SiteChrome>;
+  useEffect(() => {
+    let active = true;
+    Promise.all(
+      eventIds.map(async (eventId) => {
+        const response = await apiFetch(`/api/events/${eventId}`);
+        return response.ok ? response.json() : null;
+      }),
+    )
+      .then((data) => {
+        if (active)
+          setEvents(data.filter(Boolean).map((event) => event.event || event));
+      })
+      .catch(() => {
+        if (active) setEvents([]);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [eventIds.join(",")]);
+  return (
+    <SiteChrome>
+      <Helmet>
+        <title>Linked events | YKCircle</title>
+      </Helmet>
+      <section className="mx-auto max-w-4xl px-5 pb-24 pt-32 sm:px-8 sm:pt-40">
+        <Link to={communityPostUrl(post)} className="text-sm text-primary">
+          ← Back to post
+        </Link>
+        <p className="mt-8 text-xs uppercase tracking-[0.25em] text-primary">
+          Community post
+        </p>
+        <h1 className="mt-3 font-display text-4xl font-black">Linked events</h1>
+        <p className="mt-4 text-muted-foreground">
+          Events connected to “{post.title}”.
+        </p>
+        <div className="mt-8 grid gap-5 sm:grid-cols-2">
+          {loading ? (
+            <p className="text-muted-foreground">Loading linked events…</p>
+          ) : (
+            events.map((event) => (
+              <Link
+                key={event.id}
+                to={`/events/${event.id}`}
+                className="border border-border p-5 hover:border-primary"
+              >
+                <p className="text-xs uppercase tracking-[0.2em] text-primary">
+                  {event.startsAt
+                    ? new Date(event.startsAt).toLocaleString()
+                    : "Date to be announced"}
+                </p>
+                <h2 className="mt-2 font-display text-2xl">{event.title}</h2>
+                <p className="mt-3 text-sm text-muted-foreground">
+                  {event.shortDescription ||
+                    event.description ||
+                    "View event details."}
+                </p>
+              </Link>
+            ))
+          )}
+          {!loading && events.length === 0 && (
+            <p className="text-muted-foreground">
+              No linked events are currently available.
+            </p>
+          )}
+        </div>
+      </section>
+    </SiteChrome>
+  );
 }
 
 function CommunityEventLinkPage({ post, token }) {
   const navigate = useNavigate();
   const [events, setEvents] = useState([]);
-  const [eventId, setEventId] = useState(post.eventId != null ? String(post.eventId) : "");
+  const [eventIds, setEventIds] = useState(() =>
+    linkedEventIds(post).map(String),
+  );
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(() => { let active = true; apiFetch("/api/my/events", { headers: communityHeaders(token) }).then(async (response) => response.ok ? response.json() : []).then((data) => { if (active) setEvents(asList(data, "events")); }).catch(() => { if (active) setError("Unable to load your events."); }).finally(() => { if (active) setLoading(false); }); return () => { active = false; }; }, [token]);
-  const save = async () => { setSaving(true); setError(""); try { await communityRequest(`/api/community/posts/${post.id}/event`, { method: "PUT", headers: communityHeaders(token, true), body: JSON.stringify({ eventId: eventId ? Number(eventId) : null }) }); navigate(communityPostUrl(post)); } catch (requestError) { setError(requestError.message); } finally { setSaving(false); } };
+  useEffect(() => {
+    let active = true;
+    apiFetch("/api/my/events", { headers: communityHeaders(token) })
+      .then(async (response) => (response.ok ? response.json() : []))
+      .then((data) => {
+        if (active) setEvents(asList(data, "events"));
+      })
+      .catch(() => {
+        if (active) setError("Unable to load your events.");
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [token]);
+  const save = async () => {
+    setSaving(true);
+    setError("");
+    try {
+      await communityRequest(`/api/community/posts/${post.id}/event`, {
+        method: "PUT",
+        headers: communityHeaders(token, true),
+        body: JSON.stringify({ eventIds: eventIds.map(Number) }),
+      });
+      navigate(communityPostUrl(post));
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setSaving(false);
+    }
+  };
 
-  return <SiteChrome><Helmet><title>Link event | YKCircle</title><meta name="robots" content="noindex" /></Helmet><section className="mx-auto max-w-3xl px-5 pb-24 pt-32 sm:px-8 sm:pt-40"><Link to={communityPostUrl(post)} className="text-sm text-primary">← Back to post</Link><p className="mt-8 text-xs uppercase tracking-[0.25em] text-primary">Post management</p><h1 className="mt-3 font-display text-4xl font-black">Link an event</h1><p className="mt-4 text-muted-foreground">Choose one of your events to show alongside “{post.title}”.</p><LinkedEventSelector events={events} value={eventId} onChange={setEventId} loading={loading || saving} />{error && <p role="alert" className="mt-5 text-sm text-destructive">{error}</p>}<div className="mt-7 flex flex-wrap gap-3"><Link to={communityPostUrl(post)} className="inline-flex min-h-12 items-center border border-border px-5 text-sm">Cancel</Link><button type="button" onClick={save} disabled={loading || saving} className="min-h-12 bg-primary px-5 text-sm text-primary-foreground disabled:opacity-50">{saving ? "Saving…" : "Save linked event"}</button></div></section></SiteChrome>;
+  return (
+    <SiteChrome>
+      <Helmet>
+        <title>Link events | YKCircle</title>
+        <meta name="robots" content="noindex" />
+      </Helmet>
+      <section className="mx-auto max-w-3xl px-5 pb-24 pt-32 sm:px-8 sm:pt-40">
+        <Link to={communityPostUrl(post)} className="text-sm text-primary">
+          ← Back to post
+        </Link>
+        <p className="mt-8 text-xs uppercase tracking-[0.25em] text-primary">
+          Post management
+        </p>
+        <h1 className="mt-3 font-display text-4xl font-black">Link events</h1>
+        <p className="mt-4 text-muted-foreground">
+          Choose one of your events to show alongside “{post.title}”.
+        </p>
+        <LinkedEventSelector
+          events={events}
+          value={eventIds}
+          onChange={setEventIds}
+          loading={loading || saving}
+        />
+        {error && (
+          <p role="alert" className="mt-5 text-sm text-destructive">
+            {error}
+          </p>
+        )}
+        <div className="mt-7 flex flex-wrap gap-3">
+          <Link
+            to={communityPostUrl(post)}
+            className="inline-flex min-h-12 items-center border border-border px-5 text-sm"
+          >
+            Cancel
+          </Link>
+          <button
+            type="button"
+            onClick={save}
+            disabled={loading || saving}
+            className="min-h-12 bg-primary px-5 text-sm text-primary-foreground disabled:opacity-50"
+          >
+            {saving ? "Saving…" : "Save linked event"}
+          </button>
+        </div>
+      </section>
+    </SiteChrome>
+  );
 }
 
 function PostCard({ post }) {
@@ -811,7 +969,9 @@ function CommunityDetail({ post, token, user, onReload }) {
           </p>
         )}
         <div className="mt-8 flex flex-wrap gap-3">
-          {linkedEventIds(post).length > 0 && <LinkedEventCta post={post} inActionBar />}
+          {linkedEventIds(post).length > 0 && (
+            <LinkedEventCta post={post} inActionBar />
+          )}
           {isActive && !isOwner && (
             <button
               type="button"
@@ -1215,9 +1375,7 @@ export default function CommunityPage({ mode = "discover" }) {
         ...form,
         postTypeId: Number(form.postTypeId),
         categoryId: Number(form.categoryId),
-        subcategoryId: form.subcategoryId
-          ? Number(form.subcategoryId)
-          : null,
+        subcategoryId: form.subcategoryId ? Number(form.subcategoryId) : null,
         locationRadiusKm: form.locationRadiusKm
           ? Number(form.locationRadiusKm)
           : null,
