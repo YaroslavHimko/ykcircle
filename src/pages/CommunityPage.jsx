@@ -94,7 +94,7 @@ function LinkedEventSelector({ events, value, onChange, loading }) {
   );
 }
 
-function LinkedEventCta({ eventId }) {
+function LinkedEventCta({ eventId, inActionBar = false }) {
   const [event, setEvent] = useState(null);
   useEffect(() => {
     let active = true;
@@ -113,11 +113,25 @@ function LinkedEventCta({ eventId }) {
   return event ? (
     <Link
       to={`/events/${event.id || eventId}`}
-      className="mt-5 inline-flex min-h-10 items-center border border-primary px-4 text-sm text-primary"
+      className={`${inActionBar ? "" : "mt-5 "}inline-flex min-h-12 items-center border border-primary px-5 text-sm text-primary`}
     >
-      View linked event
+      View linked events
     </Link>
   ) : null;
+}
+
+function CommunityEventLinkPage({ post, token }) {
+  const navigate = useNavigate();
+  const [events, setEvents] = useState([]);
+  const [eventId, setEventId] = useState(post.eventId != null ? String(post.eventId) : "");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => { let active = true; apiFetch("/api/my/events", { headers: communityHeaders(token) }).then(async (response) => response.ok ? response.json() : []).then((data) => { if (active) setEvents(asList(data, "events")); }).catch(() => { if (active) setError("Unable to load your events."); }).finally(() => { if (active) setLoading(false); }); return () => { active = false; }; }, [token]);
+  const save = async () => { setSaving(true); setError(""); try { await communityRequest(`/api/community/posts/${post.id}/event`, { method: "PUT", headers: communityHeaders(token, true), body: JSON.stringify({ eventId: eventId ? Number(eventId) : null }) }); navigate(communityPostUrl(post)); } catch (requestError) { setError(requestError.message); } finally { setSaving(false); } };
+
+  return <SiteChrome><Helmet><title>Link event | YKCircle</title><meta name="robots" content="noindex" /></Helmet><section className="mx-auto max-w-3xl px-5 pb-24 pt-32 sm:px-8 sm:pt-40"><Link to={communityPostUrl(post)} className="text-sm text-primary">← Back to post</Link><p className="mt-8 text-xs uppercase tracking-[0.25em] text-primary">Post management</p><h1 className="mt-3 font-display text-4xl font-black">Link an event</h1><p className="mt-4 text-muted-foreground">Choose one of your events to show alongside “{post.title}”.</p><LinkedEventSelector events={events} value={eventId} onChange={setEventId} loading={loading || saving} />{error && <p role="alert" className="mt-5 text-sm text-destructive">{error}</p>}<div className="mt-7 flex flex-wrap gap-3"><Link to={communityPostUrl(post)} className="inline-flex min-h-12 items-center border border-border px-5 text-sm">Cancel</Link><button type="button" onClick={save} disabled={loading || saving} className="min-h-12 bg-primary px-5 text-sm text-primary-foreground disabled:opacity-50">{saving ? "Saving…" : "Save linked event"}</button></div></section></SiteChrome>;
 }
 
 function PostCard({ post }) {
@@ -173,10 +187,6 @@ function CommunityForm({
   const [form, setForm] = useState(emptyForm);
   const [step, setStep] = useState(1);
   const [errors, setErrors] = useState({});
-  const [managedEvents, setManagedEvents] = useState([]);
-  const [eventsLoading, setEventsLoading] = useState(false);
-  const [linkedEventId, setLinkedEventId] = useState("");
-  const token = localStorage.getItem("authToken");
   const topCategories = categories.filter((item) => !item.parentId);
   const selectedCategory = categories.find(
     (item) => String(item.id) === String(form.categoryId),
@@ -215,27 +225,7 @@ function CommunityForm({
     );
     setErrors({});
     setStep(1);
-    setLinkedEventId(initial?.eventId != null ? String(initial.eventId) : "");
   }, [initial]);
-  useEffect(() => {
-    if (!token) return undefined;
-    let active = true;
-    setEventsLoading(true);
-    apiFetch("/api/my/events", { headers: communityHeaders(token) })
-      .then(async (response) => (response.ok ? response.json() : []))
-      .then((data) => {
-        if (active) setManagedEvents(asList(data, "events"));
-      })
-      .catch(() => {
-        if (active) setManagedEvents([]);
-      })
-      .finally(() => {
-        if (active) setEventsLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, [token]);
 
   const update = (name, value) => {
     setForm((current) => ({ ...current, [name]: value }));
@@ -274,7 +264,7 @@ function CommunityForm({
       setStep(3);
       return;
     }
-    onSave({ ...form, status, linkedEventId });
+    onSave({ ...form, status });
   };
 
   const type = postTypes.find(
@@ -282,12 +272,6 @@ function CommunityForm({
   );
   return (
     <section className="mx-auto max-w-3xl">
-      <LinkedEventSelector
-        events={managedEvents}
-        value={linkedEventId}
-        onChange={setLinkedEventId}
-        loading={eventsLoading || saving}
-      />
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-xs uppercase tracking-[0.25em] text-primary">
@@ -817,7 +801,7 @@ function CommunityDetail({ post, token, user, onReload }) {
           </p>
         )}
         <div className="mt-8 flex flex-wrap gap-3">
-          {post.eventId && <LinkedEventCta eventId={post.eventId} />}
+          {post.eventId && <LinkedEventCta eventId={post.eventId} inActionBar />}
           {isActive && !isOwner && (
             <button
               type="button"
@@ -842,6 +826,12 @@ function CommunityDetail({ post, token, user, onReload }) {
                 className="inline-flex min-h-12 items-center border border-border px-5 text-sm"
               >
                 Edit post
+              </Link>
+              <Link
+                to={`/profile/community/${post.id}/event`}
+                className="inline-flex min-h-12 items-center border border-border px-5 text-sm"
+              >
+                Link event
               </Link>
               <button
                 type="button"
@@ -1164,7 +1154,7 @@ export default function CommunityPage({ mode = "discover" }) {
             token ? { headers: communityHeaders(token) } : {},
           ),
         );
-      else if (mode === "mine" || mode === "edit") {
+      else if (["mine", "edit", "event-link"].includes(mode)) {
         if (!token)
           return navigate(
             `/login?from=${encodeURIComponent("/profile/community")}`,
@@ -1211,18 +1201,17 @@ export default function CommunityPage({ mode = "discover" }) {
     setError("");
     setFormErrors({});
     try {
-      const { linkedEventId: selectedEventId, ...postForm } = form;
       const payload = {
-        ...postForm,
-        postTypeId: Number(postForm.postTypeId),
-        categoryId: Number(postForm.categoryId),
-        subcategoryId: postForm.subcategoryId
-          ? Number(postForm.subcategoryId)
+        ...form,
+        postTypeId: Number(form.postTypeId),
+        categoryId: Number(form.categoryId),
+        subcategoryId: form.subcategoryId
+          ? Number(form.subcategoryId)
           : null,
-        locationRadiusKm: postForm.locationRadiusKm
-          ? Number(postForm.locationRadiusKm)
+        locationRadiusKm: form.locationRadiusKm
+          ? Number(form.locationRadiusKm)
           : null,
-        expiresAt: postForm.expiresAt ? `${postForm.expiresAt} 23:59:59` : null,
+        expiresAt: form.expiresAt ? `${form.expiresAt} 23:59:59` : null,
       };
       const saved = await communityRequest(
         post ? `/api/community/posts/${post.id}` : "/api/community/posts",
@@ -1232,13 +1221,6 @@ export default function CommunityPage({ mode = "discover" }) {
           body: JSON.stringify(payload),
         },
       );
-      await communityRequest(`/api/community/posts/${saved.id}/event`, {
-        method: "PUT",
-        headers: communityHeaders(token, true),
-        body: JSON.stringify({
-          eventId: selectedEventId ? Number(selectedEventId) : null,
-        }),
-      });
       navigate(communityPostUrl(saved));
     } catch (requestError) {
       setError(requestError.message);
@@ -1265,6 +1247,8 @@ export default function CommunityPage({ mode = "discover" }) {
         />
       </SiteChrome>
     );
+  if (mode === "event-link" && post)
+    return <CommunityEventLinkPage post={post} token={token} />;
   if (mode === "create" || mode === "edit")
     return (
       <SiteChrome>

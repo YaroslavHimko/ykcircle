@@ -37,11 +37,17 @@ const toInputDate = (value) =>
   value ? new Date(value).toISOString().slice(0, 16) : "";
 const eventCover = (event) =>
   event?.thumbnailUrl ||
+  event?.thumbnail_url ||
+  event?.thumbnail ||
   event?.coverImage ||
   event?.coverImageUrl ||
+  event?.cover_image_url ||
   event?.cover_image ||
+  event?.coverUrl ||
   event?.cover_url ||
+  event?.cover ||
   event?.image ||
+  event?.image_url ||
   event?.imageUrl ||
   "";
 const coverImageUrl = (value) => {

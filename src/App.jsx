@@ -52,6 +52,7 @@ function App() {
                 <Route path="/groups/:id" element={<GroupsPage detailPage />} />
                 <Route path="/profile/groups" element={<GroupsPage managementOnly />} />
                 <Route path="/profile/community" element={<CommunityPage mode="mine" />} />
+                <Route path="/profile/community/:id/event" element={<CommunityPage mode="event-link" />} />
                 <Route path="/profile/community/:id/edit" element={<CommunityPage mode="edit" />} />
                 <Route path="/profile/articles" element={<ArticlesPage view="workspace" />} />
                 <Route path="/profile/articles/new" element={<ArticlesPage view="new" />} />

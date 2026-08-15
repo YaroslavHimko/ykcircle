@@ -136,8 +136,9 @@ export default function GroupsPage({ detailPage = false, managementOnly = false 
   useEffect(() => { load(); }, [id, detailPage, token, canManage, canManageOwnGroups]);
   const refreshGroupViews = async () => { if (detailPage) await loadDetail(); else await loadDirectory(); };
   const uploadGroupImage = async (groupId, image) => { if (!image) return; const body = new FormData(); body.append("coverImage", image); await read(await apiFetch(`/api/groups/${groupId}/cover`, { method: "POST", headers, body }), "Unable to upload group picture."); };
-  const toggleMembership = async () => {
+  const toggleMembership = async (confirmedJoin = false) => {
     if (!token) return navigate(`/login?from=${encodeURIComponent(`/groups/${id}`)}`);
+    if (!group.isMember && !confirmedJoin) { setConfirmation({ action: "join-group", target: group }); return; }
     setSaving(true); setError("");
     try { const leaving = group.isMember; await read(await apiFetch(`/api/groups/${id}${leaving ? "/membership" : "/join"}`, { method: leaving ? "DELETE" : "POST", headers }), leaving ? "Unable to leave group." : "Unable to join group."); await loadDetail(); }
     catch (requestError) { setError(requestError.message); } finally { setSaving(false); }
@@ -191,16 +192,17 @@ export default function GroupsPage({ detailPage = false, managementOnly = false 
 
   const notification = error && <p role="alert" className="fixed bottom-6 right-6 z-50 max-w-md border border-destructive/30 bg-background px-4 py-3 text-sm text-destructive shadow-lg">{error}</p>;
   const confirmationDialog = confirmation && <ConfirmationDialog
-    title={confirmation.action === "remove-member" ? `Remove ${confirmation.member.name || confirmation.member.email}?` : `Delete ${confirmation.target.name}?`}
-    description={confirmation.action === "remove-member" ? `This person will be removed from ${selectedGroup?.name || "the group"}.` : "The group will be permanently deleted. Its events will remain available without a group."}
-    confirmLabel={confirmation.action === "remove-member" ? "Remove member" : "Delete group"}
-    destructive
+    title={confirmation.action === "join-group" ? `Join ${confirmation.target.name}?` : confirmation.action === "remove-member" ? `Remove ${confirmation.member.name || confirmation.member.email}?` : `Delete ${confirmation.target.name}?`}
+    description={confirmation.action === "join-group" ? `You will become a member of ${confirmation.target.name}.` : confirmation.action === "remove-member" ? `This person will be removed from ${selectedGroup?.name || "the group"}.` : "The group will be permanently deleted. Its events will remain available without a group."}
+    confirmLabel={confirmation.action === "join-group" ? "Join group" : confirmation.action === "remove-member" ? "Remove member" : "Delete group"}
+    destructive={confirmation.action !== "join-group"}
     busy={confirmation.action === "remove-member" ? memberLoading : saving}
     onCancel={() => setConfirmation(null)}
     onConfirm={() => {
       const current = confirmation;
       setConfirmation(null);
-      if (current.action === "remove-member") executeRemoveMember(current.member);
+      if (current.action === "join-group") toggleMembership(true);
+      else if (current.action === "remove-member") executeRemoveMember(current.member);
       else executeDeleteGroup(current.target);
     }}
   />;
