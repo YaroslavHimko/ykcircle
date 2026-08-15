@@ -483,11 +483,12 @@ export default function EventsPage({
     : organizerView
       ? mine
       : events;
+  const eventStatus = (event) => String(event?.status || "Published").toLowerCase();
   const active = displayed.filter(
-    (event) => !["Archived", "Draft"].includes(event.status),
+    (event) => !["archived", "draft"].includes(eventStatus(event)),
   );
-  const drafts = displayed.filter((event) => event.status === "Draft");
-  const archived = [...archivedEvents, ...displayed.filter((event) => event.status === "Archived")]
+  const drafts = displayed.filter((event) => eventStatus(event) === "draft");
+  const archived = [...archivedEvents, ...displayed.filter((event) => eventStatus(event) === "archived")]
     .filter((event, index, all) => all.findIndex((item) => String(item.id) === String(event.id)) === index);
   useEffect(() => {
     if (!organizerView) return undefined;
@@ -1013,12 +1014,15 @@ export default function EventsPage({
             <p className="mt-2 text-sm text-muted-foreground">Archived events are kept here for your records and are not visible to customers.</p>
             <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {archived.map((event) => (
-                <article key={event.id} className="overflow-hidden border border-border bg-secondary/25 p-4">
+                <article key={event.id} className="relative overflow-hidden border border-border bg-secondary/25 p-4 opacity-75">
+                  <div className="pointer-events-none absolute inset-0 z-10 bg-white/35" aria-hidden="true" />
                   {eventCover(event) && <img src={coverImageUrl(eventCover(event))} alt="" className="mb-4 aspect-[16/10] w-full object-cover" />}
-                  <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Archived</p>
-                  <h3 className="mt-2 font-display text-2xl">{event.title}</h3>
-                  <p className="mt-2 text-sm text-muted-foreground">{event.startsAt ? new Date(event.startsAt).toLocaleString() : "Date to be announced"}</p>
-                  <div className="mt-5 grid grid-cols-2 gap-2">
+                  <div className="relative z-20">
+                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Archived</p>
+                    <h3 className="mt-2 font-display text-2xl text-muted-foreground">{event.title}</h3>
+                    <p className="mt-2 text-sm text-muted-foreground">{event.startsAt ? new Date(event.startsAt).toLocaleString() : "Date to be announced"}</p>
+                  </div>
+                  <div className="relative z-20 mt-5 grid grid-cols-2 gap-2">
                     <button
                       type="button"
                       onClick={() => restoreEvent(event.id)}
