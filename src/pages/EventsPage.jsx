@@ -4,7 +4,6 @@ import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import SiteChrome from "@/components/SiteChrome";
 import { apiAssetUrl, apiFetch } from "@/lib/api";
 
-const roles = ["organizer", "manager", "admin"];
 const initialForm = {
   title: "",
   shortDescription: "",
@@ -89,8 +88,9 @@ export default function EventsPage({
   const draftMessageRef = useRef(null);
   const user = JSON.parse(localStorage.getItem("authUser") || "null");
   const token = localStorage.getItem("authToken");
-  const canManage = Boolean(
-    managementOnly && user && roles.includes(user.role),
+  const canManage = Boolean(managementOnly && token);
+  const canManageAllEvents = Boolean(
+    user && ["manager", "admin"].includes(user.role),
   );
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -457,12 +457,14 @@ export default function EventsPage({
     </label>
   );
   const organizerView = managementOnly && canManage;
-  const displayed = organizerView
+  const displayed = organizerView && canManageAllEvents
     ? [
         ...mine,
         ...events.filter((event) => !mine.some((item) => item.id === event.id)),
       ]
-    : events;
+    : organizerView
+      ? mine
+      : events;
   const active = displayed.filter(
     (event) => !["Archived", "Draft"].includes(event.status),
   );
@@ -617,7 +619,7 @@ export default function EventsPage({
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
                 <p className="text-xs uppercase tracking-[0.25em] text-primary">
-                  Organizer workspace
+                  Event workspace
                 </p>
                 <h2 className="mt-2 font-display text-3xl font-semibold">
                   {editPage ? "Edit an event" : "Create an experience"}

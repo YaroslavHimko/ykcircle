@@ -18,7 +18,9 @@ export function Header() {
     const overlay = pathname === '/';
     const canManage = Boolean(user && ['admin', 'manager'].includes(user.role));
     const isAdmin = user?.role === 'admin';
-    const canManageEvents = Boolean(user && ['organizer', 'manager', 'admin'].includes(user.role));
+    // The API verifies the email address and enforces event ownership. Any
+    // signed-in member can therefore access their own event workspace.
+    const canManageEvents = Boolean(user);
     const nav = [...baseNav, ...(user ? [] : [{ to: '/login', label: 'Log in' }])];
 
     React.useEffect(() => {

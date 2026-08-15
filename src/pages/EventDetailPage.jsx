@@ -106,7 +106,9 @@ export default function EventDetailPage() {
     manageView &&
       token &&
       (["manager", "admin"].includes(user?.role) ||
-        (user?.role === "organizer" && event?.managerId === user.id)),
+        (user?.id != null &&
+          event?.managerId != null &&
+          String(event.managerId) === String(user.id))),
   );
   const sanitizeParticipants = (value) => {
     if (canManageEvents || !value?.participants) return value;
@@ -172,9 +174,7 @@ export default function EventDetailPage() {
     const eventData = await eventResponse.json();
     if (!eventResponse.ok)
       throw new Error(eventData.error || "Unable to load event.");
-    const canRequestManagedParticipants = Boolean(
-      token && ["organizer", "manager", "admin"].includes(user?.role),
-    );
+    const canRequestManagedParticipants = canManageEvents;
     const managedParticipantsResponse = canRequestManagedParticipants
       ? await apiFetch(`/api/events/${id}/participants`, { headers })
       : null;
