@@ -71,7 +71,7 @@ function FieldError({ errors, name }) {
 
 function LinkedEventSelector({ events, value, onChange, loading }) {
   return (
-    <label className="mx-auto mt-5 block max-w-3xl text-sm">
+    <div className="mx-auto mt-5 block max-w-3xl text-sm">
       Linked events <span className="text-muted-foreground">(select one or more)</span>
       <select
         multiple
@@ -82,7 +82,7 @@ function LinkedEventSelector({ events, value, onChange, loading }) {
           )
         }
         disabled={loading}
-        className="mt-2 min-h-11 w-full border border-border bg-background px-3 disabled:opacity-50"
+        className="sr-only"
       >
         {events.map((event) => (
           <option key={event.id} value={event.id}>
@@ -94,7 +94,18 @@ function LinkedEventSelector({ events, value, onChange, loading }) {
           </option>
         ))}
       </select>
-    </label>
+      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+        {events.map((event) => {
+          const id = String(event.id);
+          const selected = value.includes(id);
+          return <label key={event.id} className={`flex cursor-pointer items-start gap-3 border p-4 text-sm transition-colors ${selected ? "border-primary bg-primary/5" : "border-border"}`}>
+            <input type="checkbox" checked={selected} disabled={loading} onChange={() => onChange(selected ? value.filter((item) => item !== id) : [...value, id])} className="mt-1 h-4 w-4 shrink-0" />
+            <span><span className="block font-medium">{event.title}</span><span className="text-muted-foreground">{event.startsAt ? new Date(event.startsAt).toLocaleDateString() : "Date to be announced"}{event.status ? ` · ${event.status}` : ""}</span></span>
+          </label>;
+        })}
+        {!loading && events.length === 0 && <p className="text-sm text-muted-foreground">You do not have any events available to link.</p>}
+      </div>
+    </div>
   );
 }
 
