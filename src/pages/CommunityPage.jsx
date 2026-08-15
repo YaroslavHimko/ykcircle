@@ -94,30 +94,40 @@ function LinkedEventSelector({ events, value, onChange, loading }) {
   );
 }
 
-function LinkedEventCta({ eventId, inActionBar = false }) {
-  const [event, setEvent] = useState(null);
+const linkedEventIds = (post) => Array.isArray(post.eventIds) ? post.eventIds : post.eventId != null ? [post.eventId] : [];
+
+function LinkedEventCta({ post, inActionBar = false }) {
+  const eventIds = linkedEventIds(post);
+  const [hasAvailableEvents, setHasAvailableEvents] = useState(false);
   useEffect(() => {
     let active = true;
-    apiFetch(`/api/events/${eventId}`)
-      .then(async (response) => (response.ok ? response.json() : null))
-      .then((data) => {
-        if (active) setEvent(data?.event || data);
+    Promise.all(eventIds.map((eventId) => apiFetch(`/api/events/${eventId}`)))
+      .then((responses) => {
+        if (active) setHasAvailableEvents(responses.some((response) => response.ok));
       })
       .catch(() => {
-        if (active) setEvent(null);
+        if (active) setHasAvailableEvents(false);
       });
     return () => {
       active = false;
     };
-  }, [eventId]);
-  return event ? (
+  }, [eventIds.join(",")]);
+  return eventIds.length > 0 && hasAvailableEvents ? (
     <Link
-      to={`/events/${event.id || eventId}`}
+      to={`${communityPostUrl(post)}/events`}
       className={`${inActionBar ? "" : "mt-5 "}inline-flex min-h-12 items-center border border-primary px-5 text-sm text-primary`}
     >
       View linked events
     </Link>
   ) : null;
+}
+
+function CommunityLinkedEventsPage({ post }) {
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const eventIds = linkedEventIds(post);
+  useEffect(() => { let active = true; Promise.all(eventIds.map(async (eventId) => { const response = await apiFetch(`/api/events/${eventId}`); return response.ok ? response.json() : null; })).then((data) => { if (active) setEvents(data.filter(Boolean).map((event) => event.event || event)); }).catch(() => { if (active) setEvents([]); }).finally(() => { if (active) setLoading(false); }); return () => { active = false; }; }, [eventIds.join(",")]);
+  return <SiteChrome><Helmet><title>Linked events | YKCircle</title></Helmet><section className="mx-auto max-w-4xl px-5 pb-24 pt-32 sm:px-8 sm:pt-40"><Link to={communityPostUrl(post)} className="text-sm text-primary">← Back to post</Link><p className="mt-8 text-xs uppercase tracking-[0.25em] text-primary">Community post</p><h1 className="mt-3 font-display text-4xl font-black">Linked events</h1><p className="mt-4 text-muted-foreground">Events connected to “{post.title}”.</p><div className="mt-8 grid gap-5 sm:grid-cols-2">{loading ? <p className="text-muted-foreground">Loading linked events…</p> : events.map((event) => <Link key={event.id} to={`/events/${event.id}`} className="border border-border p-5 hover:border-primary"><p className="text-xs uppercase tracking-[0.2em] text-primary">{event.startsAt ? new Date(event.startsAt).toLocaleString() : "Date to be announced"}</p><h2 className="mt-2 font-display text-2xl">{event.title}</h2><p className="mt-3 text-sm text-muted-foreground">{event.shortDescription || event.description || "View event details."}</p></Link>)}{!loading && events.length === 0 && <p className="text-muted-foreground">No linked events are currently available.</p>}</div></section></SiteChrome>;
 }
 
 function CommunityEventLinkPage({ post, token }) {
@@ -171,7 +181,7 @@ function PostCard({ post }) {
           {post.responseCount || 0} interested
         </span>
       </div>
-      {post.eventId && <LinkedEventCta eventId={post.eventId} />}
+      {linkedEventIds(post).length > 0 && <LinkedEventCta post={post} />}
     </article>
   );
 }
@@ -801,7 +811,7 @@ function CommunityDetail({ post, token, user, onReload }) {
           </p>
         )}
         <div className="mt-8 flex flex-wrap gap-3">
-          {post.eventId && <LinkedEventCta eventId={post.eventId} inActionBar />}
+          {linkedEventIds(post).length > 0 && <LinkedEventCta post={post} inActionBar />}
           {isActive && !isOwner && (
             <button
               type="button"
@@ -1147,7 +1157,7 @@ export default function CommunityPage({ mode = "discover" }) {
     setError("");
     try {
       await taxonomy();
-      if (mode === "detail")
+      if (mode === "detail" || mode === "linked-events")
         setPost(
           await communityRequest(
             `/api/community/posts/${slug}`,
@@ -1247,6 +1257,8 @@ export default function CommunityPage({ mode = "discover" }) {
         />
       </SiteChrome>
     );
+  if (mode === "linked-events" && post)
+    return <CommunityLinkedEventsPage post={post} />;
   if (mode === "event-link" && post)
     return <CommunityEventLinkPage post={post} token={token} />;
   if (mode === "create" || mode === "edit")

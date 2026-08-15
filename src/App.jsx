@@ -61,6 +61,7 @@ function App() {
                 <Route path="/articles/:slug" element={<ArticlesPage view="detail" />} />
                 <Route path="/articles" element={<ArticlesPage />} />
                 <Route path="/:city/community/new" element={<CommunityPage mode="create" />} />
+                <Route path="/:city/community/post/:slug/events" element={<CommunityPage mode="linked-events" />} />
                 <Route path="/:city/community/post/:slug" element={<CommunityPage mode="detail" />} />
                 <Route path="/:city/community/:category/:subcategory" element={<CommunityPage />} />
                 <Route path="/:city/community/:category" element={<CommunityPage />} />
