@@ -51,6 +51,7 @@ function App() {
                 <Route path="/events/:id" element={<EventDetailPage />} />
                 <Route path="/groups" element={<GroupsPage />} />
                 <Route path="/groups/:id" element={<GroupsPage detailPage />} />
+                <Route path="/profile/groups/:id" element={<GroupsPage managementOnly focusedManagement />} />
                 <Route path="/profile/groups" element={<GroupsPage managementOnly />} />
                 <Route path="/profile/community" element={<CommunityPage mode="mine" />} />
                 <Route path="/profile/community/:id/event" element={<CommunityPage mode="event-link" />} />

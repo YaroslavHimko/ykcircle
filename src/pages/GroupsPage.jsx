@@ -305,6 +305,7 @@ function MemberManagement({
 export default function GroupsPage({
   detailPage = false,
   managementOnly = false,
+  focusedManagement = false,
 }) {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -456,10 +457,10 @@ export default function GroupsPage({
       setSaving(false);
     }
   };
-  const saveGroup = async (form, image) => {
+  const saveGroup = async (form, image, target = editing) => {
     setSaving(true);
     setError("");
-    const edited = editing;
+    const edited = target;
     try {
       const data = await read(
         await apiFetch(edited ? `/api/groups/${edited.id}` : "/api/groups", {
@@ -494,7 +495,7 @@ export default function GroupsPage({
         }),
         "Unable to delete group.",
       );
-      if (detailPage) navigate("/profile/groups");
+      if (detailPage || focusedManagement) navigate("/profile/groups");
       else await loadDirectory();
     } catch (requestError) {
       setError(requestError.message);
@@ -767,7 +768,7 @@ export default function GroupsPage({
                       {canManageGroup ? (
                         <>
                           <Link
-                            to="/profile/groups"
+                            to={`/profile/groups/${group.id}`}
                             className="inline-flex min-h-11 items-center border border-border px-5 text-sm"
                           >
                             Manage group
@@ -912,6 +913,33 @@ export default function GroupsPage({
             Log in
           </Link>
         </section>
+      </SiteChrome>
+    );
+  const focusedGroup = focusedManagement
+    ? managedGroups.find((item) => String(item.id) === String(id))
+    : null;
+  if (managementOnly && focusedManagement)
+    return (
+      <SiteChrome>
+        <Helmet>
+          <title>{focusedGroup ? `Manage ${focusedGroup.name} | YKCircle` : "Manage group | YKCircle"}</title>
+        </Helmet>
+        <section className="mx-auto max-w-[72rem] px-5 pb-24 pt-32 sm:px-8 sm:pt-40">
+          {loading ? <p className="text-muted-foreground">Loading group…</p> : !focusedGroup ? <><h1 className="font-display text-4xl font-semibold">Group unavailable</h1><p className="mt-4 text-muted-foreground">You do not have permission to manage this group.</p><Link to="/profile/groups" className="mt-6 inline-flex text-primary">Back to your groups</Link></> : <>
+            <Link to={`/groups/${focusedGroup.id}`} className="text-sm text-primary">← Back to group</Link>
+            <p className="mt-8 text-xs uppercase tracking-[0.25em] text-primary">Group management</p>
+            <h1 className="mt-3 font-display text-5xl font-black">Manage {focusedGroup.name}</h1>
+            <GroupForm initial={focusedGroup} onSave={(form, image) => saveGroup(form, image, focusedGroup)} onCancel={() => navigate(`/groups/${focusedGroup.id}`)} saving={saving} />
+            <div className="mt-8 flex flex-wrap gap-3">
+              <button type="button" onClick={() => openMembers(focusedGroup)} className="min-h-11 border border-border px-5 text-sm">Manage members</button>
+              <Link to={`/profile/events/new?groupId=${focusedGroup.id}`} className="inline-flex min-h-11 items-center bg-primary px-5 text-sm text-primary-foreground">Create event</Link>
+              <button type="button" onClick={() => deleteGroup(focusedGroup)} className="min-h-11 border border-destructive px-5 text-sm text-destructive">Delete group</button>
+            </div>
+            {selectedGroup?.id === focusedGroup.id && <div className="mt-8">{memberPanel}</div>}
+          </>}
+        </section>
+        {notification}
+        {confirmationDialog}
       </SiteChrome>
     );
   const displayGroups = managementOnly ? managedGroups : groups;
