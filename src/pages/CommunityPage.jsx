@@ -325,33 +325,24 @@ function CommunityEventLinkPage({ post, token }) {
   );
 }
 
-function PostStatus({ status }) {
-  const completed = status === "fulfilled" || status === "completed";
-  return (
-    <span
-      className={`inline-flex shrink-0 items-center border px-3 py-2 text-sm ${completed ? "border-primary text-primary" : "border-border text-muted-foreground"}`}
-    >
-      {completed ? "Completed" : "Active"}
-    </span>
-  );
-}
-
 function PostCard({ post }) {
   return (
-    <article className="border border-border bg-background p-5 shadow-sm">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-primary">
-            {post.postTypeName || post.postTypeKey?.replaceAll("_", " ")}
-          </p>
-          <h2 className="mt-2 font-display text-2xl font-semibold">
-            <Link to={communityPostUrl(post)} className="hover:text-primary">
-              {post.title}
-            </Link>
-          </h2>
-        </div>
-        <PostStatus status={post.status} />
+    <article className="relative border border-border bg-background p-5 shadow-sm">
+      <div className="pr-20">
+        <p className="text-xs uppercase tracking-[0.2em] text-primary">
+          {post.postTypeName || post.postTypeKey?.replaceAll("_", " ")}
+        </p>
+        <h2 className="mt-2 font-display text-2xl font-semibold">
+          <Link to={communityPostUrl(post)} className="hover:text-primary">
+            {post.title}
+          </Link>
+        </h2>
       </div>
+      <span
+        className={`absolute right-5 top-5 text-xs font-medium ${post.status === "fulfilled" ? "text-primary" : "text-muted-foreground"}`}
+      >
+        {post.status === "fulfilled" ? "Completed" : "Active"}
+      </span>
       <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-muted-foreground">
         {post.shortDescription}
       </p>
@@ -1018,7 +1009,11 @@ function CommunityDetail({ post, token, user, onReload }) {
                 {post.shortDescription}
               </p>
             </div>
-            <PostStatus status={post.status} />
+            <span
+              className={`border px-3 py-2 text-sm ${post.status === "fulfilled" ? "border-primary text-primary" : "border-border text-muted-foreground"}`}
+            >
+              {post.status === "fulfilled" ? "Completed" : post.status}
+            </span>
           </div>
           <div className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">
             <span>
