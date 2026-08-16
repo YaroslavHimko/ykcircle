@@ -40,10 +40,46 @@ const imageUrl = (value, folder) => {
   );
 };
 
-function GroupImage({ group, className = "" }) {
+function GroupImage({ group, token, className = "" }) {
   const image = imageUrl(groupImageValue(group), "group-covers");
-  return image ? (
-    <img src={image} alt="" className={`object-cover ${className}`} />
+  const [imageSource, setImageSource] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    let objectUrl = "";
+
+    setImageSource("");
+    if (!image) return () => {};
+
+    const loadImage = async () => {
+      try {
+        const response = await fetch(image, {
+          headers: token
+            ? { Authorization: `Bearer ${token}` }
+            : {},
+        });
+        if (!response.ok) throw new Error("Unable to load group picture.");
+
+        objectUrl = URL.createObjectURL(await response.blob());
+        if (active) {
+          setImageSource(objectUrl);
+        } else {
+          URL.revokeObjectURL(objectUrl);
+        }
+      } catch {
+        if (active) setImageSource("");
+      }
+    };
+
+    loadImage();
+    return () => {
+      active = false;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [image, token]);
+
+  return imageSource ? (
+    <img src={imageSource} alt="" className={`object-cover ${className}`} />
   ) : (
     <div
       className={`bg-gradient-to-br from-primary/90 via-primary/65 to-slate-900 ${className}`}
@@ -51,10 +87,10 @@ function GroupImage({ group, className = "" }) {
   );
 }
 
-function GroupCard({ group, action }) {
+function GroupCard({ group, token, action }) {
   return (
     <article className="overflow-hidden border border-border bg-background shadow-sm">
-      <GroupImage group={group} className="aspect-[16/7] w-full" />
+      <GroupImage group={group} token={token} className="aspect-[16/7] w-full" />
       <div className="p-5">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -808,7 +844,7 @@ export default function GroupsPage({
                   ← All groups
                 </Link>
                 <div className="mt-6 overflow-hidden border-y border-border">
-                  <GroupImage group={group} className="aspect-[16/6] w-full" />
+                  <GroupImage group={group} token={token} className="aspect-[16/6] w-full" />
                   <div className="flex flex-wrap items-start justify-between gap-6 py-8">
                     <div>
                       <p className="text-xs uppercase tracking-[0.25em] text-primary">
@@ -1079,7 +1115,7 @@ export default function GroupsPage({
                     !managedGroups.some((managed) => managed.id === item.id),
                 )
                 .map((item) => (
-                  <GroupCard key={item.id} group={item} />
+                  <GroupCard key={item.id} group={item} token={token} />
                 ))}
             </div>
           </section>
@@ -1096,6 +1132,7 @@ export default function GroupsPage({
                 <GroupCard
                   key={item.id}
                   group={item}
+                  token={token}
                   action={
                     managementOnly ? (
                       <div className="flex flex-wrap gap-3">
