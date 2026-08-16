@@ -621,11 +621,11 @@ export default function EventsPage({
   return (
     <SiteChrome>
       <Helmet>
-        <title>Events | YARO</title>
+        <title>Events | YKCircle</title>
       </Helmet>
       <section className="mx-auto max-w-[72rem] px-5 pb-24 pt-32 sm:px-8 sm:pt-40">
         <p className="text-xs uppercase tracking-[0.3em] text-primary">
-          YARO experiences
+          YKCircle experiences
         </p>
         <h1 className="mt-3 font-display text-5xl font-black">
           Find something worth joining.

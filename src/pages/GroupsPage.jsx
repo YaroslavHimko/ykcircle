@@ -72,7 +72,7 @@ function GroupCard({ group, action }) {
           </p>
         )}
         <p className="mt-4 text-sm text-muted-foreground">
-          Organized by {group.organizerName || "YARO"}
+          Organized by {group.organizerName || "YKCircle"}
         </p>
         {action && <div className="mt-5">{action}</div>}
       </div>
@@ -692,7 +692,7 @@ export default function GroupsPage({
     return (
       <SiteChrome>
         <Helmet>
-          <title>{group ? `${group.name} | YARO` : "Group | YARO"}</title>
+          <title>{group ? `${group.name} | YKCircle` : "Group | YKCircle"}</title>
         </Helmet>
         <section className="mx-auto max-w-[72rem] px-5 pb-24 pt-32 sm:px-8 sm:pt-40">
           {loading ? (
@@ -717,7 +717,7 @@ export default function GroupsPage({
                         {group.description || "No description yet."}
                       </p>
                       <p className="mt-5 text-sm text-muted-foreground">
-                        Organized by {group.organizerName || "YARO"} ·{" "}
+                        Organized by {group.organizerName || "YKCircle"} ·{" "}
                         {group.memberCount || 0} members
                       </p>
                     </div>
