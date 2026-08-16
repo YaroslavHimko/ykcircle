@@ -6,6 +6,7 @@ import SiteChrome from "@/components/SiteChrome";
 import ConfirmationDialog from "@/components/ConfirmationDialog";
 import ForumDiscussion from "@/components/ForumDiscussion";
 import { apiAssetUrl, apiFetch } from "@/lib/api";
+import { asList as communityList, communityPostUrl } from "@/lib/community";
 
 const managementRoles = ["organizer", "manager", "admin"];
 const asList = (data, key = "groups") =>
@@ -74,6 +75,11 @@ function GroupCard({ group, action }) {
         <p className="mt-4 text-sm text-muted-foreground">
           Organized by {group.organizerName || "YKCircle"}
         </p>
+        {Number(group.ratedEventCount) > 0 && (
+          <p className="mt-2 text-sm text-muted-foreground">
+            {Number(group.ratingAverage).toFixed(1)} / 5 from {group.ratedEventCount} rated {Number(group.ratedEventCount) === 1 ? "event" : "events"}
+          </p>
+        )}
         {action && <div className="mt-5">{action}</div>}
       </div>
     </article>
@@ -307,6 +313,7 @@ export default function GroupsPage({
   const [myGroups, setMyGroups] = useState([]);
   const [managedGroups, setManagedGroups] = useState([]);
   const [group, setGroup] = useState(null);
+  const [sourceCommunityPost, setSourceCommunityPost] = useState(null);
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [members, setMembers] = useState([]);
   const [memberEmail, setMemberEmail] = useState("");
@@ -368,6 +375,24 @@ export default function GroupsPage({
     );
     setGroup(data.group || data);
   };
+  useEffect(() => {
+    setSourceCommunityPost(null);
+    if (!detailPage || !group?.sourcePostId) return undefined;
+    let active = true;
+    apiFetch("/api/community/posts?limit=50")
+      .then(async (response) => {
+        if (!response.ok) return;
+        const data = await response.json();
+        const post = communityList(data, "posts").find(
+          (item) => String(item.id) === String(group.sourcePostId),
+        );
+        if (active) setSourceCommunityPost(post || null);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [detailPage, group?.sourcePostId]);
   const load = async () => {
     setLoading(true);
     setError("");
@@ -720,8 +745,21 @@ export default function GroupsPage({
                         Organized by {group.organizerName || "YKCircle"} ·{" "}
                         {group.memberCount || 0} members
                       </p>
+                      {Number(group.ratedEventCount) > 0 && (
+                        <p className="mt-2 text-sm text-muted-foreground">
+                          Group rating: {Number(group.ratingAverage).toFixed(1)} / 5 from {group.ratedEventCount} rated {Number(group.ratedEventCount) === 1 ? "event" : "events"}
+                        </p>
+                      )}
                     </div>
                     <div className="flex flex-wrap gap-3">
+                      {sourceCommunityPost && (
+                        <Link
+                          to={communityPostUrl(sourceCommunityPost)}
+                          className="inline-flex min-h-11 items-center border border-border px-5 text-sm"
+                        >
+                          View community post
+                        </Link>
+                      )}
                       {canManageGroup ? (
                         <>
                           <Link
@@ -785,6 +823,11 @@ export default function GroupsPage({
                             <p className="mt-2 text-sm text-muted-foreground">
                               {event.shortDescription || event.description}
                             </p>
+                            {Number(event.ratingCount) > 0 && (
+                              <p className="mt-3 text-sm text-muted-foreground">
+                                {Number(event.ratingAverage).toFixed(1)} / 5 ({event.ratingCount} {Number(event.ratingCount) === 1 ? "rating" : "ratings"})
+                              </p>
+                            )}
                           </div>
                         </Link>
                       ))

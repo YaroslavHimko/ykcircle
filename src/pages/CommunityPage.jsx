@@ -706,24 +706,14 @@ function CommunityForm({
             Continue <ArrowRight className="ml-2 inline h-4 w-4" />
           </button>
         ) : (
-          <div className="flex flex-wrap gap-3">
-            <button
-              type="button"
-              disabled={saving}
-              onClick={() => save("draft")}
-              className="min-h-11 border border-border px-5 text-sm disabled:opacity-50"
-            >
-              Save draft
-            </button>
-            <button
-              type="button"
-              disabled={saving}
-              onClick={() => save("active")}
-              className="min-h-11 bg-primary px-5 text-sm text-primary-foreground disabled:opacity-50"
-            >
-              {saving ? "Saving…" : "Publish post"}
-            </button>
-          </div>
+          <button
+            type="button"
+            disabled={saving}
+            onClick={() => save(initial?.status || "active")}
+            className="min-h-11 bg-primary px-5 text-sm text-primary-foreground disabled:opacity-50"
+          >
+            {saving ? "Saving…" : initial ? "Save changes" : "Create post"}
+          </button>
         )}
       </div>
     </section>
@@ -1136,11 +1126,11 @@ function CommunityDetail({ post, token, user, onReload }) {
               {isActive && (
                 <button
                   type="button"
-                  onClick={() => updateStatus("fulfilled")}
+                  onClick={() => updateStatus("completed")}
                   disabled={busy}
                   className="min-h-12 border border-border px-5 text-sm"
                 >
-                  Mark fulfilled
+                  Mark completed
                 </button>
               )}
               {["active", "fulfilled", "draft"].includes(post.status) && (

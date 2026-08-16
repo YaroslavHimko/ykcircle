@@ -19,6 +19,9 @@ const initialForm = {
   address: "",
   startsAt: "",
   endsAt: "",
+  recurrenceFrequency: "none",
+  recurrenceInterval: "1",
+  recurrenceCount: "2",
   timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
   capacity: "",
   minimumAttendees: "",
@@ -229,6 +232,9 @@ export default function EventsPage({
       coverImage: eventCover(event),
       startsAt: toInputDate(eventValue(event, "startsAt", "startsAtUtc", "starts_at", "starts_at_utc")),
       endsAt: toInputDate(eventValue(event, "endsAt", "endsAtUtc", "ends_at", "ends_at_utc")),
+      recurrenceFrequency: eventValue(event, "recurrenceFrequency") || "none",
+      recurrenceInterval: String(eventValue(event, "recurrenceInterval") || 1),
+      recurrenceCount: String(eventValue(event, "recurrenceCount") || 2),
       registrationDeadline: toInputDate(eventValue(event, "registrationDeadline", "registration_deadline")),
       categoryId: eventValue(event, "categoryId", "category_id") || event.category?.id || "",
       typeId: eventValue(event, "typeId", "type_id") || event.type?.id || "",
@@ -250,10 +256,24 @@ export default function EventsPage({
       fee: eventValue(event, "fee") || 0,
     }));
   };
-  const payload = () =>
-    Object.fromEntries(
+  const payload = () => {
+    const {
+      recurrenceFrequency,
+      recurrenceInterval,
+      recurrenceCount,
+      ...eventForm
+    } = form;
+    const recurrence = !draftId && recurrenceFrequency !== "none"
+      ? {
+          frequency: recurrenceFrequency,
+          interval: Number(recurrenceInterval),
+          count: Number(recurrenceCount),
+        }
+      : undefined;
+    return Object.fromEntries(
       Object.entries({
-        ...form,
+        ...eventForm,
+        recurrence,
         categoryId: form.categoryId ? Number(form.categoryId) : undefined,
         typeId: form.typeId ? Number(form.typeId) : undefined,
         startsAtUtc: form.startsAt
@@ -277,6 +297,7 @@ export default function EventsPage({
         ([, value]) => value !== "" && value !== null && value !== undefined,
       ),
     );
+  };
   const uploadFile = async (file, eventId = draftId) => {
     if (!file || !eventId) return;
     setUploading(true);
@@ -772,6 +793,37 @@ export default function EventsPage({
               {input("address", "Address")}
               {input("startsAt", "Starts", "datetime-local", true)}
               {input("endsAt", "Ends", "datetime-local")}
+              {creationPage && !draftId && (
+                <div className="grid gap-4 border border-border p-4 sm:col-span-2 sm:grid-cols-3">
+                  <label className="block text-sm">
+                    Repeat
+                    <select
+                      name="recurrenceFrequency"
+                      value={form.recurrenceFrequency}
+                      onChange={update}
+                      className="mt-2 min-h-11 w-full border border-border bg-background px-3"
+                    >
+                      <option value="none">Does not repeat</option>
+                      <option value="daily">Daily</option>
+                      <option value="weekly">Weekly</option>
+                      <option value="monthly">Monthly</option>
+                    </select>
+                  </label>
+                  {form.recurrenceFrequency !== "none" && <>
+                    <label className="block text-sm">
+                      Every
+                      <input required min="1" max="52" name="recurrenceInterval" type="number" value={form.recurrenceInterval} onChange={update} className="mt-2 min-h-11 w-full border border-border bg-background px-3" />
+                      <span className="mt-1 block text-xs text-muted-foreground">{form.recurrenceFrequency === "daily" ? "day(s)" : form.recurrenceFrequency === "weekly" ? "week(s)" : "month(s)"}</span>
+                    </label>
+                    <label className="block text-sm">
+                      Occurrences
+                      <input required min="2" max="100" name="recurrenceCount" type="number" value={form.recurrenceCount} onChange={update} className="mt-2 min-h-11 w-full border border-border bg-background px-3" />
+                      <span className="mt-1 block text-xs text-muted-foreground">Includes the first event.</span>
+                    </label>
+                  </>}
+                  {errors.recurrence && <p className="text-sm text-destructive sm:col-span-3">{errors.recurrence}</p>}
+                </div>
+              )}
               {
                 <label className="block text-sm">
                   Timezone
@@ -969,6 +1021,11 @@ export default function EventsPage({
                     <p className="text-xs uppercase tracking-[0.2em] text-primary">
                       {event.status}
                     </p>
+                    {event.seriesId && (
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Recurring series · occurrence {event.occurrenceNumber || 1} of {event.recurrenceCount || "?"}
+                      </p>
+                    )}
                     {event.groupName && (
                       <Link to={`/groups/${event.groupId}`} className="mt-2 inline-block text-xs font-medium text-primary hover:underline">
                         From {event.groupName}

@@ -103,6 +103,7 @@ export default function EventDetailPage() {
   const [event, setEvent] = useState(null);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [ratingSaving, setRatingSaving] = useState(false);
   const canManageEvents = Boolean(
     manageView &&
       token &&
@@ -171,7 +172,10 @@ export default function EventDetailPage() {
     ) === Number(id);
   const load = async () => {
     const headers = { Authorization: `Bearer ${token}` };
-    const eventResponse = await apiFetch(`/api/events/${id}`);
+    const eventResponse = await apiFetch(
+      `/api/events/${id}`,
+      token ? { headers } : {},
+    );
     const eventData = await eventResponse.json();
     if (!eventResponse.ok)
       throw new Error(eventData.error || "Unable to load event.");
@@ -857,6 +861,29 @@ export default function EventDetailPage() {
   const canWithdraw =
     currentUserParticipates &&
     !["attended", "noshow"].includes(currentParticipantAttendance);
+  const canRate = Boolean(token && currentParticipantAttendance === "attended");
+  const saveRating = async (rating) => {
+    if (!canRate || ratingSaving) return;
+    setRatingSaving(true);
+    setError("");
+    try {
+      const response = await apiFetch(`/api/events/${id}/rating`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ rating }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Unable to save your rating.");
+      setEvent((current) => current ? { ...current, ...data } : current);
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setRatingSaving(false);
+    }
+  };
   return (
     <SiteChrome>
       <Helmet>
@@ -932,6 +959,13 @@ export default function EventDetailPage() {
                 <br />
                 {event.typeName || event.type || "Event"}
               </p>
+              {Number(event.ratingCount) > 0 && (
+                <p>
+                  <span className="text-muted-foreground">Rating</span>
+                  <br />
+                  {Number(event.ratingAverage).toFixed(1)} / 5 ({event.ratingCount} {Number(event.ratingCount) === 1 ? "rating" : "ratings"})
+                </p>
+              )}
               <p>
                 <span className="text-muted-foreground">Date and time</span>
                 <br />
@@ -996,6 +1030,19 @@ export default function EventDetailPage() {
                 <p className="mt-4 leading-relaxed">
                   {event.meetingInstructions}
                 </p>
+              </section>
+            )}
+            {canRate && (
+              <section className="mt-8 border border-border p-5">
+                <h2 className="font-display text-2xl font-semibold">Rate this event</h2>
+                <p className="mt-2 text-sm text-muted-foreground">Your rating is visible in the event and group averages. You can change it later.</p>
+                <div className="mt-4 flex flex-wrap gap-2" role="group" aria-label="Choose a rating from one to five">
+                  {[1, 2, 3, 4, 5].map((rating) => (
+                    <button key={rating} type="button" disabled={ratingSaving} onClick={() => saveRating(rating)} aria-pressed={Number(event.myRating) === rating} className={`min-h-11 min-w-11 border px-3 text-sm disabled:opacity-50 ${Number(event.myRating) === rating ? "border-primary bg-primary text-primary-foreground" : "border-border"}`}>
+                      {rating} ★
+                    </button>
+                  ))}
+                </div>
               </section>
             )}
             {
