@@ -435,7 +435,7 @@ function CommunityForm({
     if (step === 2) return Boolean(form.categoryId);
     if (step === 3)
       return (
-        form.title.trim().length >= 5 &&
+        form.title.trim().length >= 8 &&
         form.shortDescription.trim().length >= 20
       );
     return true;
@@ -445,8 +445,8 @@ function CommunityForm({
     if (!form.postTypeId)
       nextErrors.postTypeId = "Choose what you are looking for.";
     if (!form.categoryId) nextErrors.categoryId = "Choose a category.";
-    if (form.title.trim().length < 5)
-      nextErrors.title = "Use at least 5 characters.";
+    if (form.title.trim().length < 8)
+      nextErrors.title = "Title must be between 8 and 180 characters.";
     if (form.shortDescription.trim().length < 20)
       nextErrors.shortDescription = "Use at least 20 characters.";
     if (!form.city.trim()) nextErrors.city = "Choose a city.";
@@ -551,11 +551,15 @@ function CommunityForm({
               <input
                 value={form.title}
                 onChange={(event) => update("title", event.target.value)}
+                minLength="8"
                 maxLength="180"
                 className="mt-2 min-h-11 w-full border border-border bg-background px-3"
                 placeholder="Looking for a tennis partner in Stockholm"
               />
             </label>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Use 8–180 characters.
+            </p>
             <FieldError errors={displayedErrors} name="title" />
             <label className="mt-5 block text-sm">
               Short description
