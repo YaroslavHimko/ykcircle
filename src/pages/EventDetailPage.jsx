@@ -854,7 +854,7 @@ export default function EventDetailPage() {
       Boolean(event?.participants?.some(isCurrentParticipant)));
   const currentParticipant = event?.participants?.find(isCurrentParticipant);
   const currentParticipantAttendance = String(
-    attendance[currentParticipant?.id] ?? currentParticipant?.status ?? "",
+    event?.myParticipantStatus ?? attendance[currentParticipant?.id] ?? currentParticipant?.status ?? "",
   )
     .replace(/\s/g, "")
     .toLowerCase();
@@ -1030,6 +1030,12 @@ export default function EventDetailPage() {
                 <p className="mt-4 leading-relaxed">
                   {event.meetingInstructions}
                 </p>
+              </section>
+            )}
+            {token && Number(event.myRating) > 0 && !canRate && (
+              <section className="mt-8 border border-border p-5">
+                <h2 className="font-display text-2xl font-semibold">Your rating</h2>
+                <p className="mt-2 text-sm text-muted-foreground">You rated this event {event.myRating} / 5.</p>
               </section>
             )}
             {canRate && (
