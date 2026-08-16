@@ -744,6 +744,7 @@ function CommunityDetail({ post, token, user, onReload }) {
   const [conversationMessages, setConversationMessages] = useState([]);
   const [conversationBody, setConversationBody] = useState("");
   const [groupOpen, setGroupOpen] = useState(false);
+  const [pendingAcceptanceId, setPendingAcceptanceId] = useState(null);
   const [group, setGroup] = useState({
     name: "",
     slug: "",
@@ -860,6 +861,7 @@ function CommunityDetail({ post, token, user, onReload }) {
         setMessage("Interest accepted — the person has joined the linked group.");
     } catch (error) {
       if (status === "accepted" && error.code === "GROUP_REQUIRED") {
+        setPendingAcceptanceId(responseId);
         setGroup({
           name: post.title,
           slug: slugify(post.title),
@@ -939,6 +941,13 @@ function CommunityDetail({ post, token, user, onReload }) {
           }),
         },
       );
+      setGroupOpen(false);
+      if (pendingAcceptanceId) {
+        const responseId = pendingAcceptanceId;
+        setPendingAcceptanceId(null);
+        await updateResponse(responseId, "accepted");
+        return;
+      }
       navigate(`/stockholm/groups/${created.slug || created.id}`);
     } catch (error) {
       showError(error);
@@ -1374,7 +1383,10 @@ function CommunityDetail({ post, token, user, onReload }) {
             <div className="mt-6 flex justify-end gap-3">
               <button
                 type="button"
-                onClick={() => setGroupOpen(false)}
+                onClick={() => {
+                  setGroupOpen(false);
+                  setPendingAcceptanceId(null);
+                }}
                 className="min-h-11 border border-border px-4 text-sm"
               >
                 Cancel
