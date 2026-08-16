@@ -21,12 +21,48 @@ function MarkdownImage({ line }) {
   return <figure className="my-8"><img src={articleImageUrl(match[2])} alt={match[1]} className="max-h-[34rem] w-full object-cover" />{match[3] && <figcaption className="mt-2 text-sm text-muted-foreground">{match[3]}</figcaption>}</figure>;
 }
 
+function youtubeVideoId(value) {
+  try {
+    const url = new URL(value);
+    const hostname = url.hostname.replace(/^www\./, '').toLowerCase();
+    const id = hostname === 'youtu.be'
+      ? url.pathname.slice(1).split('/')[0]
+      : hostname.endsWith('youtube.com')
+        ? url.searchParams.get('v') || url.pathname.match(/^\/(?:embed|shorts|live)\/([^/?]+)/)?.[1]
+        : null;
+    return id && /^[A-Za-z0-9_-]{11}$/.test(id) ? id : null;
+  } catch {
+    return null;
+  }
+}
+
+function YouTubeEmbed({ line }) {
+  const markdownLink = line.match(/^\[[^\]]*\]\((https?:\/\/[^\s)]+)\)$/);
+  const videoId = youtubeVideoId(markdownLink?.[1] || line);
+  if (!videoId) return null;
+
+  return <figure className="my-8 w-full max-w-xl overflow-hidden border border-border bg-black shadow-sm">
+    <div className="aspect-video">
+      <iframe
+        className="h-full w-full"
+        src={`https://www.youtube-nocookie.com/embed/${videoId}`}
+        title="YouTube video"
+        loading="lazy"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        allowFullScreen
+      />
+    </div>
+  </figure>;
+}
+
 export default function ArticleContent({ body, className = '' }) {
   const blocks = String(body || '').trim().split(/\n\s*\n/).filter(Boolean);
   return <div className={`space-y-5 leading-relaxed ${className}`}>
     {blocks.map((block, index) => {
       const image = MarkdownImage({ line: block.trim() });
       if (image) return <React.Fragment key={index}>{image}</React.Fragment>;
+      const video = YouTubeEmbed({ line: block.trim() });
+      if (video) return <React.Fragment key={index}>{video}</React.Fragment>;
       const heading = block.match(/^(#{1,3})\s+(.+)$/);
       if (heading) {
         const Heading = `h${heading[1].length}`;

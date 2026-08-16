@@ -10,9 +10,17 @@ export const articleSlug = (value = '') => String(value)
   .slice(0, 180);
 
 export const articleImageUrl = (value) => {
-  if (!value) return '';
-  if (/^https?:\/\//i.test(value)) return value;
-  return apiAssetUrl(value.startsWith('/') ? value : `/uploads/article-images/${value}`);
+  const path = String(value || '').trim();
+  if (!path) return '';
+
+  // The API may return either a filename or its upload path. Keep a supplied
+  // path intact rather than treating it as a filename a second time.
+  if (/^(https?:)?\/\//i.test(path) || /^data:image\//i.test(path)) return path;
+  if (/^\/?(?:api\/)?uploads\//i.test(path)) return apiAssetUrl(`/${path.replace(/^\/?api\//i, '')}`);
+  if (/^\/?article-images\//i.test(path)) return apiAssetUrl(`/uploads/${path.replace(/^\//, '')}`);
+  if (/^\/images\//i.test(path)) return path;
+
+  return apiAssetUrl(`/uploads/article-images/${path.replace(/^\//, '')}`);
 };
 
 export const articleDate = (value) => {

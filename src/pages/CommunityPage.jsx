@@ -174,7 +174,7 @@ function CommunityLinkedEventsPage({ post }) {
       <Helmet>
         <title>Linked events | YKCircle</title>
       </Helmet>
-      <section className="mx-auto max-w-4xl px-5 pb-24 pt-32 sm:px-8 sm:pt-40">
+      <section className="mx-auto max-w-[72rem] px-5 pb-24 pt-32 sm:px-8 sm:pt-40">
         <Link to={communityPostUrl(post)} className="text-sm text-primary">
           ← Back to post
         </Link>
@@ -909,7 +909,7 @@ function CommunityDetail({ post, token, user, onReload }) {
           })}
         </script>
       </Helmet>
-      <section className="mx-auto max-w-4xl px-5 pb-24 pt-32 sm:px-8 sm:pt-40">
+      <section className="mx-auto max-w-[72rem] px-5 pb-24 pt-32 sm:px-8 sm:pt-40">
         <Link
           to={`/${post.citySlug}/community/${post.categorySlug}`}
           className="inline-flex items-center gap-2 text-sm text-primary"
