@@ -172,13 +172,33 @@ function ArticleEditor({
   useEffect(() => {
     const editor = document.querySelector('textarea[rows="18"]');
     if (!editor) return undefined;
-    const markdownReference = 'Markdown quick reference:\n# Heading\n**bold**\n[link text](https://example.com)\n![image alt](image-url "caption")\n- Bullet item\n> Quote\n\nPut a YouTube URL on its own line to embed it.';
-    const label = editor.closest('label');
-    editor.title = markdownReference;
-    if (label) label.title = markdownReference;
+    const markdownReference = 'Markdown quick reference:\n# Heading (H1)\n## Subheading (H2)\n**bold** and *italic*\n[link text](https://example.com)\n![image alt](image-url "caption")\n- Bullet item\n> Quote\n\nSeparate paragraphs with a blank line. Put a YouTube URL on its own line to embed it.';
+    const addHint = (control, reference, labelText) => {
+      if (!control) return () => {};
+      const label = control.closest('label');
+      if (!label) return () => {};
+      const hint = document.createElement('span');
+      hint.textContent = '?';
+      hint.title = reference;
+      hint.setAttribute('aria-label', labelText);
+      hint.tabIndex = 0;
+      hint.className = 'ml-1.5 inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full border border-primary bg-transparent text-[10px] font-bold leading-none text-primary align-middle';
+      label.insertBefore(hint, control);
+      control.title = reference;
+      return () => {
+        control.removeAttribute('title');
+        hint.remove();
+      };
+    };
+    const slug = [...document.querySelectorAll('label')].find(label => label.textContent.trim().startsWith('Slug'))?.querySelector('input');
+    const excerpt = [...document.querySelectorAll('label')].find(label => label.textContent.trim().startsWith('Excerpt'))?.querySelector('textarea');
+    const cleanups = [
+      addHint(editor, markdownReference, 'Show Markdown formatting reference'),
+      addHint(slug, 'A short, web-friendly identifier used in the article URL. Example: stockholm-weekend-guide.', 'Explain article slug'),
+      addHint(excerpt, 'A brief summary shown in article cards and search previews. Example: A practical two-day guide to exploring Stockholm.', 'Explain article excerpt')
+    ];
     return () => {
-      editor.removeAttribute('title');
-      label?.removeAttribute('title');
+      cleanups.forEach(cleanup => cleanup());
     };
   }, []);
   const update = (name, value) => setForm(current => ({
