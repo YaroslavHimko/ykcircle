@@ -190,6 +190,9 @@ function GroupForm({ initial, onCancel, onSave, saving }) {
 function MemberManagement({
   group,
   members,
+  invitations,
+  invitationsLoading,
+  invitationsError,
   lookup,
   setLookup,
   email,
@@ -298,6 +301,40 @@ function MemberManagement({
           })
         )}
       </div>
+      {group.visibility === "Private" && canInvite && (
+        <div className="mt-10">
+          <h3 className="font-display text-2xl font-semibold">Invitations</h3>
+          <div className="mt-4 divide-y divide-border border-y border-border">
+            {invitationsLoading ? (
+              <p className="py-5 text-muted-foreground">Loading invitations...</p>
+            ) : invitationsError ? (
+              <p role="alert" className="py-5 text-sm text-destructive">{invitationsError}</p>
+            ) : invitations.length === 0 ? (
+              <p className="py-5 text-muted-foreground">No invitations yet.</p>
+            ) : (
+              invitations.map((invitation) => {
+                const recipient = invitation.recipientName || invitation.recipientEmail || `User #${invitation.invitedUserId}`;
+                const status = invitation.isExpired && String(invitation.status).toLowerCase() === "pending"
+                  ? "Expired"
+                  : invitation.status;
+                return (
+                  <div key={invitation.id} className="flex flex-wrap items-center justify-between gap-4 py-4">
+                    <div>
+                      <p className="font-medium">{recipient}</p>
+                      {invitation.recipientEmail && <p className="mt-1 text-sm text-muted-foreground">{invitation.recipientEmail}</p>}
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Sent {invitation.createdAt ? new Date(invitation.createdAt).toLocaleDateString() : "recently"}
+                        {invitation.expiresAt && ` · Expires ${new Date(invitation.expiresAt).toLocaleDateString()}`}
+                      </p>
+                    </div>
+                    <span className="text-sm font-medium text-primary">{status || "Pending"}</span>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
     </section>
   );
 }
@@ -321,6 +358,9 @@ export default function GroupsPage({
   const [sourceCommunityPost, setSourceCommunityPost] = useState(null);
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [members, setMembers] = useState([]);
+  const [invitations, setInvitations] = useState([]);
+  const [invitationsLoading, setInvitationsLoading] = useState(false);
+  const [invitationsError, setInvitationsError] = useState("");
   const [memberEmail, setMemberEmail] = useState("");
   const [memberLookup, setMemberLookup] = useState("email");
   const [memberLoading, setMemberLoading] = useState(false);
@@ -353,6 +393,13 @@ export default function GroupsPage({
     if (!response.ok) throw new Error(data.error || fallback);
     return data;
   };
+  const isGroupOrganizer = (target) =>
+    Boolean(
+      target?.isOrganizer ||
+        (user?.id &&
+          [target?.organizerId, target?.organizer_id, target?.ownerId, target?.owner_id]
+            .some((ownerId) => String(ownerId) === String(user.id))),
+    );
   const loadDirectory = async () => {
     const [publicData, joinedData, managedData] = await Promise.all([
       apiFetch("/api/groups", { headers }).then((response) =>
@@ -536,12 +583,35 @@ export default function GroupsPage({
       setSaving(false);
     }
   };
+  const loadInvitations = async (target) => {
+    setInvitationsLoading(true);
+    setInvitationsError("");
+    try {
+      const data = await read(
+        await apiFetch(`/api/groups/${target.id}/invitations`, { headers }),
+        "Unable to load invitations.",
+      );
+      setInvitations(asList(data, "invitations"));
+    } catch (requestError) {
+      setInvitations([]);
+      setInvitationsError(requestError.message);
+    } finally {
+      setInvitationsLoading(false);
+    }
+  };
   const openMembers = async (target) => {
     setSelectedGroup(target);
     setMemberError("");
     setMemberNotice("");
     setMemberEmail("");
     setMemberLookup("email");
+    setInvitations([]);
+    setInvitationsError("");
+    if (target.visibility === "Private" && isGroupOrganizer(target)) {
+      void loadInvitations(target);
+    } else {
+      setInvitationsLoading(false);
+    }
     setMemberLoading(true);
     try {
       const data = await read(
@@ -590,6 +660,7 @@ export default function GroupsPage({
       setMemberEmail("");
       if (privateGroup) {
         setMemberNotice("Invitation sent. The recipient can accept or decline it from their email.");
+        await loadInvitations(selectedGroup);
       } else {
         await openMembers(selectedGroup);
         await refreshGroupViews();
@@ -695,6 +766,9 @@ export default function GroupsPage({
     <MemberManagement
       group={selectedGroup}
       members={members}
+      invitations={invitations}
+      invitationsLoading={invitationsLoading}
+      invitationsError={invitationsError}
       lookup={memberLookup}
       setLookup={setMemberLookup}
       email={memberEmail}
@@ -702,7 +776,7 @@ export default function GroupsPage({
       loading={memberLoading}
       error={memberError}
       notice={memberNotice}
-      canInvite={Boolean(selectedGroup?.isOrganizer || (user?.id && [selectedGroup?.organizerId, selectedGroup?.organizer_id, selectedGroup?.ownerId, selectedGroup?.owner_id].some((ownerId) => String(ownerId) === String(user.id))))}
+      canInvite={isGroupOrganizer(selectedGroup)}
       onAdd={addMember}
       onRemove={removeMember}
     />
