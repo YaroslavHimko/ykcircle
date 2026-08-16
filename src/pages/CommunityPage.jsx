@@ -325,6 +325,17 @@ function CommunityEventLinkPage({ post, token }) {
   );
 }
 
+function PostStatus({ status }) {
+  const completed = status === "fulfilled" || status === "completed";
+  return (
+    <span
+      className={`inline-flex shrink-0 items-center border px-3 py-2 text-sm ${completed ? "border-primary text-primary" : "border-border text-muted-foreground"}`}
+    >
+      {completed ? "Completed" : "Active"}
+    </span>
+  );
+}
+
 function PostCard({ post }) {
   return (
     <article className="border border-border bg-background p-5 shadow-sm">
@@ -339,11 +350,7 @@ function PostCard({ post }) {
             </Link>
           </h2>
         </div>
-        <span
-          className={`text-xs font-medium ${post.status === "fulfilled" ? "text-primary" : "text-muted-foreground"}`}
-        >
-          {post.status === "fulfilled" ? "Completed" : "Active"}
-        </span>
+        <PostStatus status={post.status} />
       </div>
       <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-muted-foreground">
         {post.shortDescription}
@@ -1011,11 +1018,7 @@ function CommunityDetail({ post, token, user, onReload }) {
                 {post.shortDescription}
               </p>
             </div>
-            <span
-              className={`border px-3 py-2 text-sm ${post.status === "fulfilled" ? "border-primary text-primary" : "border-border text-muted-foreground"}`}
-            >
-              {post.status === "fulfilled" ? "Completed" : post.status}
-            </span>
+            <PostStatus status={post.status} />
           </div>
           <div className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">
             <span>
