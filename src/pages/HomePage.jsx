@@ -144,7 +144,7 @@ export default function HomePage() {
               Join YKCircle <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
-              to="/events"
+              to="/events?category=music"
               className="inline-flex min-h-12 items-center justify-center border border-white/70 px-5 text-sm text-white"
             >
               Explore events
@@ -198,7 +198,7 @@ export default function HomePage() {
           </div>
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <Link
-              to="/events"
+              to="/events?category=music"
               className="group relative aspect-[4/3] overflow-hidden"
             >
               <img
@@ -212,7 +212,7 @@ export default function HomePage() {
               </span>
             </Link>
             <Link
-              to="/events"
+              to="/events?category=sports"
               className="group relative aspect-[4/3] overflow-hidden"
             >
               <img
@@ -226,7 +226,7 @@ export default function HomePage() {
               </span>
             </Link>
             <Link
-              to="/events"
+              to="/events?category=culture"
               className="group relative aspect-[4/3] overflow-hidden"
             >
               <img
@@ -240,7 +240,7 @@ export default function HomePage() {
               </span>
             </Link>
             <Link
-              to="/events"
+              to="/events?category=culture"
               className="group relative aspect-[4/3] overflow-hidden"
             >
               <img
