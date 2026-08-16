@@ -16,6 +16,7 @@ import ApplicationSentPage from './pages/ApplicationSentPage';
 import EventsPage from './pages/EventsPage';
 import EventDetailPage from './pages/EventDetailPage';
 import InvitationResponsePage from './pages/InvitationResponsePage';
+import GroupInvitationPage from './pages/GroupInvitationPage';
 import UserRolesPage from './pages/UserRolesPage';
 import GroupsPage from './pages/GroupsPage';
 import CommunityPage from './pages/CommunityPage';
@@ -68,6 +69,7 @@ function App() {
                 <Route path="/:city/community" element={<CommunityPage />} />
                 <Route path="/:city/groups/:id" element={<GroupSlugRedirect />} />
                 <Route path="/invitation-response" element={<InvitationResponsePage />} />
+                <Route path="/group-invitation" element={<GroupInvitationPage />} />
             </Routes>
         </Router>
     );

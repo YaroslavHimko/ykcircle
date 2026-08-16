@@ -3,6 +3,7 @@ import { Helmet } from "react-helmet";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { Check, X } from "lucide-react";
 import SiteChrome from "@/components/SiteChrome";
+import ForumDiscussion from "@/components/ForumDiscussion";
 import { apiAssetUrl, apiFetch } from "@/lib/api";
 
 const eventCover = (event) =>
@@ -1133,6 +1134,7 @@ export default function EventDetailPage() {
                 </button>}
               </div>
             )}
+            {(canManageEvents || currentUserParticipates) && <ForumDiscussion title="Event discussion" basePath={`/api/events/${event.id}/threads`} token={token} canPost={Boolean(token)} canModerate={canManageEvents} emptyText="No event discussions yet." />}
             {canManageEvents && (
               <>
                 <h2 className="mt-14 font-display text-3xl font-semibold">

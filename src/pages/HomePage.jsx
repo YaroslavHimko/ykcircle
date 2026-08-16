@@ -11,6 +11,8 @@ const images = {
   taipei: "/images/taipei.png",
   minsk: "/images/minsk.png",
   tennis: "/images/tennis-game.png",
+  band: "/images/band.png",
+  art: "/images/art.png",
 };
 const formatDate = (value) =>
   value
@@ -200,13 +202,13 @@ export default function HomePage() {
               className="group relative aspect-[4/3] overflow-hidden"
             >
               <img
-                src={images.stockholm}
-                alt="Outdoors in Stockholm"
+                src={images.band}
+                alt="Friends playing music together"
                 className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
               />
               <div className="absolute inset-0 bg-black/35" />
               <span className="absolute bottom-4 left-4 text-xl font-medium text-white">
-                Outdoors
+                Music
               </span>
             </Link>
             <Link
@@ -228,13 +230,13 @@ export default function HomePage() {
               className="group relative aspect-[4/3] overflow-hidden"
             >
               <img
-                src={images.taipei}
-                alt="Exploring a city"
+                src={images.art}
+                alt="Friends painting together at an art workshop"
                 className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
               />
               <div className="absolute inset-0 bg-black/35" />
               <span className="absolute bottom-4 left-4 text-xl font-medium text-white">
-                City discovery
+                Art & creativity
               </span>
             </Link>
             <Link
@@ -258,19 +260,19 @@ export default function HomePage() {
       <section className="mx-auto grid max-w-[90rem] gap-10 px-5 py-16 sm:px-8 sm:py-24 md:grid-cols-2 md:items-center">
         <div>
           <p className="text-xs uppercase tracking-[0.25em] text-primary">
-            Articles & local knowledge
+            Promote your idea
           </p>
           <h2 className="mt-3 font-display text-4xl font-semibold">
-            Stories, guides, and ideas for your next plan.
+            Give your event or business a place in the conversation.
           </h2>
           <p className="mt-5 max-w-xl leading-relaxed text-muted-foreground">
-            Read local perspective, practical guides, and stories that help you make more of life together.
+            Planning something worth sharing? Request an article space to introduce your event, venue, service, or business to the YKCircle community.
           </p>
           <Link
-            to="/articles"
+            to="/contact"
             className="mt-6 inline-flex items-center gap-2 text-sm text-primary"
           >
-            Read articles <ArrowRight className="h-4 w-4" />
+            Request article space <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
         <div className="grid grid-cols-2 gap-3">

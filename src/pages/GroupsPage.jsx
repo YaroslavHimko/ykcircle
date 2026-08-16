@@ -4,6 +4,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { Users } from "lucide-react";
 import SiteChrome from "@/components/SiteChrome";
 import ConfirmationDialog from "@/components/ConfirmationDialog";
+import ForumDiscussion from "@/components/ForumDiscussion";
 import { apiAssetUrl, apiFetch } from "@/lib/api";
 
 const managementRoles = ["organizer", "manager", "admin"];
@@ -185,6 +186,8 @@ function MemberManagement({
   setEmail,
   loading,
   error,
+  notice,
+  canInvite,
   onAdd,
   onRemove,
 }) {
@@ -197,10 +200,11 @@ function MemberManagement({
         {group.name} members
       </h2>
       <p className="mt-3 max-w-2xl text-sm text-muted-foreground">
-        Add a verified registered user by email. This also lets you admit people
-        to a private group.
+        {group.visibility === "Private"
+          ? "Invite a registered user by email or user ID. They will receive an email to accept or decline the invitation."
+          : "Add a verified registered user by email or user ID."}
       </p>
-      <form
+      {(group.visibility !== "Private" || canInvite) ? <form
         onSubmit={onAdd}
         className="mt-5 flex max-w-xl flex-col gap-3 sm:flex-row"
       >
@@ -232,9 +236,10 @@ function MemberManagement({
           disabled={loading}
           className="min-h-11 bg-primary px-5 text-sm text-primary-foreground disabled:opacity-50"
         >
-          Add member
+          {loading ? "Sending…" : group.visibility === "Private" ? "Send invitation" : "Add member"}
         </button>
-      </form>
+      </form> : <p className="mt-5 text-sm text-muted-foreground">Only this group’s organizer can send private invitations.</p>}
+      {notice && <p role="status" className="mt-3 text-sm text-primary">{notice}</p>}
       {error && (
         <p role="alert" className="mt-3 text-sm text-destructive">
           {error}
@@ -308,6 +313,7 @@ export default function GroupsPage({
   const [memberLookup, setMemberLookup] = useState("email");
   const [memberLoading, setMemberLoading] = useState(false);
   const [memberError, setMemberError] = useState("");
+  const [memberNotice, setMemberNotice] = useState("");
   const [editing, setEditing] = useState(null);
   const [creating, setCreating] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -503,6 +509,7 @@ export default function GroupsPage({
   const openMembers = async (target) => {
     setSelectedGroup(target);
     setMemberError("");
+    setMemberNotice("");
     setMemberEmail("");
     setMemberLookup("email");
     setMemberLoading(true);
@@ -524,13 +531,17 @@ export default function GroupsPage({
     if (!selectedGroup) return;
     setMemberLoading(true);
     setMemberError("");
+    setMemberNotice("");
     try {
       const payload =
         memberLookup === "email"
           ? { email: memberEmail.trim() }
           : { userId: Number(memberEmail) };
+      const privateGroup = selectedGroup.visibility === "Private";
       const response = await apiFetch(
-        `/api/groups/${selectedGroup.id}/members`,
+        privateGroup
+          ? `/api/groups/${selectedGroup.id}/invitations`
+          : `/api/groups/${selectedGroup.id}/members`,
         {
           method: "POST",
           headers: { ...headers, "Content-Type": "application/json" },
@@ -544,13 +555,18 @@ export default function GroupsPage({
             ? "No registered account matches that email address or user ID."
             : response.status === 409 && data.code === "EMAIL_NOT_VERIFIED"
               ? "This person must verify their email address before they can be added."
-              : data.error || "Unable to add member.",
+              : data.error || (privateGroup ? "Unable to send invitation." : "Unable to add member."),
         );
       setMemberEmail("");
-      await openMembers(selectedGroup);
-      await refreshGroupViews();
+      if (privateGroup) {
+        setMemberNotice("Invitation sent. The recipient can accept or decline it from their email.");
+      } else {
+        await openMembers(selectedGroup);
+        await refreshGroupViews();
+      }
     } catch (requestError) {
       setMemberError(requestError.message);
+    } finally {
       setMemberLoading(false);
     }
   };
@@ -655,6 +671,8 @@ export default function GroupsPage({
       setEmail={setMemberEmail}
       loading={memberLoading}
       error={memberError}
+      notice={memberNotice}
+      canInvite={Boolean(selectedGroup?.isOrganizer || (user?.id && [selectedGroup?.organizerId, selectedGroup?.organizer_id, selectedGroup?.ownerId, selectedGroup?.owner_id].some((ownerId) => String(ownerId) === String(user.id))))}
       onAdd={addMember}
       onRemove={removeMember}
     />
@@ -801,6 +819,7 @@ export default function GroupsPage({
                     </div>
                   </section>
                 )}
+                {(group.isMember || canManageGroup) && <ForumDiscussion title="Group discussion" basePath={`/api/groups/${group.id}/threads`} token={token} canPost={Boolean(token)} canModerate={canManageGroup} emptyText="No group discussions yet." />}
                 {canManageGroup && (
                   <section className="mt-12 border-t border-border pt-8">
                     <div className="flex flex-wrap gap-3">

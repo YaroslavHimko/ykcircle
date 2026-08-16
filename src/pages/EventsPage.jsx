@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Helmet } from "react-helmet";
-import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import SiteChrome from "@/components/SiteChrome";
 import { apiAssetUrl, apiFetch } from "@/lib/api";
 
@@ -90,7 +90,9 @@ export default function EventsPage({
   const { id: editId } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const requestedGroupId = new URLSearchParams(location.search).get("groupId");
+  const selectedCategory = searchParams.get("category") || "";
   const draftMessageRef = useRef(null);
   const user = JSON.parse(localStorage.getItem("authUser") || "null");
   const token = localStorage.getItem("authToken");
@@ -141,8 +143,11 @@ export default function EventsPage({
   const load = async (showLoading = true) => {
     if (showLoading) setLoading(true);
     try {
+      const eventPath = !managementOnly && selectedCategory
+        ? `/api/events?category=${encodeURIComponent(selectedCategory)}`
+        : "/api/events";
       const response = await apiFetch(
-        "/api/events",
+        eventPath,
         canManage && token
           ? { headers: { Authorization: `Bearer ${token}` } }
           : {},
@@ -179,7 +184,7 @@ export default function EventsPage({
     load()
       .catch((requestError) => setError(requestError.message))
       .finally(() => setLoading(false));
-  }, [canManage, token, location.pathname]);
+  }, [canManage, token, location.pathname, managementOnly, selectedCategory]);
   useEffect(() => {
     Promise.all(
       ["/api/event-categories", "/api/event-types", "/api/timezones"].map(
@@ -628,6 +633,27 @@ export default function EventsPage({
         <p className="mt-5 max-w-2xl text-muted-foreground">
           Explore activities, gatherings and local experiences.
         </p>
+        {!managementOnly && (
+          <nav aria-label="Event categories" className="mt-8 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setSearchParams({})}
+              className={`min-h-10 border px-4 text-sm ${!selectedCategory ? "border-primary text-primary" : "border-border"}`}
+            >
+              All categories
+            </button>
+            {categories.map((category) => (
+              <button
+                key={category.id}
+                type="button"
+                onClick={() => setSearchParams({ category: category.slug })}
+                className={`min-h-10 border px-4 text-sm ${selectedCategory === category.slug ? "border-primary text-primary" : "border-border"}`}
+              >
+                {category.name}
+              </button>
+            ))}
+          </nav>
+        )}
         {error && (
           <p className="fixed bottom-6 left-5 z-50 max-w-md border border-destructive/30 bg-background px-4 py-3 text-sm text-destructive shadow-lg sm:left-auto sm:right-6">
             {error}

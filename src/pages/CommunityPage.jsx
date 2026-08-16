@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import SiteChrome from "@/components/SiteChrome";
 import ConfirmationDialog from "@/components/ConfirmationDialog";
+import ForumDiscussion from "@/components/ForumDiscussion";
 import { apiAssetUrl, apiFetch } from "@/lib/api";
 import {
   asList,
@@ -66,6 +67,17 @@ const postImage = (value) => {
 function FieldError({ errors, name }) {
   return errors[name] ? (
     <span className="mt-1 block text-xs text-destructive">{errors[name]}</span>
+  ) : null;
+}
+
+function UnreadBadge({ count }) {
+  return Number(count) > 0 ? (
+    <span
+      aria-label={`${count} unread messages`}
+      className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[0.65rem] font-bold text-primary-foreground"
+    >
+      {count}
+    </span>
   ) : null;
 }
 
@@ -723,12 +735,16 @@ function CommunityDetail({ post, token, user, onReload }) {
   const [report, setReport] = useState({ reason: "", details: "" });
   const [responses, setResponses] = useState([]);
   const [responsesOpen, setResponsesOpen] = useState(false);
+  const [conversationSummaries, setConversationSummaries] = useState([]);
+  const [conversationMember, setConversationMember] = useState(null);
+  const [conversationMessages, setConversationMessages] = useState([]);
+  const [conversationBody, setConversationBody] = useState("");
   const [groupOpen, setGroupOpen] = useState(false);
   const [group, setGroup] = useState({
     name: "",
     slug: "",
     description: "",
-    visibility: "Public",
+    visibility: "Private",
   });
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
@@ -751,6 +767,15 @@ function CommunityDetail({ post, token, user, onReload }) {
     )
       setInterestOpen(true);
   }, [token, location.search, isActive, isOwner]);
+  useEffect(() => {
+    if (!token) return;
+    const path = isOwner
+      ? `/api/community/posts/${post.id}/conversations`
+      : "/api/community/conversations";
+    communityRequest(path, { headers: communityHeaders(token) })
+      .then((data) => setConversationSummaries(asList(data, "conversations")))
+      .catch(() => setConversationSummaries([]));
+  }, [token, isOwner, post.id]);
   const showError = (error) => setMessage(error.message);
   const submitInterest = async () => {
     const messageText =
@@ -794,13 +819,16 @@ function CommunityDetail({ post, token, user, onReload }) {
     setBusy(true);
     setMessage("");
     try {
-      setResponses(
-        asList(
-          await communityRequest(`/api/community/posts/${post.id}/responses`, {
-            headers: communityHeaders(token),
-          }),
-        ),
-      );
+      const [responseData, conversationData] = await Promise.all([
+        communityRequest(`/api/community/posts/${post.id}/responses`, {
+          headers: communityHeaders(token),
+        }),
+        communityRequest(`/api/community/posts/${post.id}/conversations`, {
+          headers: communityHeaders(token),
+        }),
+      ]);
+      setResponses(asList(responseData));
+      setConversationSummaries(asList(conversationData, "conversations"));
       setResponsesOpen(true);
     } catch (error) {
       showError(error);
@@ -809,8 +837,9 @@ function CommunityDetail({ post, token, user, onReload }) {
     }
   };
   const updateResponse = async (responseId, status) => {
+    setBusy(true);
     try {
-      await communityRequest(
+      const result = await communityRequest(
         `/api/community/posts/${post.id}/responses/${responseId}`,
         {
           method: "PATCH",
@@ -823,9 +852,59 @@ function CommunityDetail({ post, token, user, onReload }) {
           item.id === responseId ? { ...item, status } : item,
         ),
       );
+      if (status === "accepted" && result.groupJoined)
+        setMessage("Interest accepted — the person has joined the linked group.");
     } catch (error) {
+      if (status === "accepted" && error.code === "GROUP_REQUIRED") {
+        setGroup({
+          name: post.title,
+          slug: slugify(post.title),
+          description: post.shortDescription,
+          visibility: "Private",
+        });
+        setGroupOpen(true);
+        setMessage("Create a linked group before accepting interest. Approved people will then join it automatically.");
+        return;
+      }
       showError(error);
+    } finally {
+      setBusy(false);
     }
+  };
+  const openConversation = async (memberId, memberName) => {
+    setBusy(true); setMessage("");
+    try {
+      const data = await communityRequest(`/api/community/posts/${post.id}/conversations/${memberId}/messages`, { headers: communityHeaders(token) });
+      setConversationMember({ id: memberId, name: memberName || "Conversation" });
+      setConversationMessages(asList(data.messages, "messages"));
+      setConversationSummaries((current) => current.map((conversation) => {
+        const matches = isOwner
+          ? String(conversation.memberUserId) === String(memberId)
+          : String(conversation.postId) === String(post.id);
+        return matches ? { ...conversation, unreadCount: 0 } : conversation;
+      }));
+    } catch (error) { showError(error); } finally { setBusy(false); }
+  };
+  const unreadForConversation = (memberId) => {
+    const conversation = conversationSummaries.find((item) =>
+      isOwner
+        ? String(item.memberUserId) === String(memberId)
+        : String(item.postId) === String(post.id),
+    );
+    return conversation?.unreadCount || 0;
+  };
+  const unreadConversationCount = conversationSummaries
+    .filter((item) => isOwner || String(item.postId) === String(post.id))
+    .reduce((total, item) => total + Number(item.unreadCount || 0), 0);
+  const sendConversationMessage = async (event) => {
+    event.preventDefault();
+    if (!conversationMember || !conversationBody.trim()) return;
+    setBusy(true);
+    try {
+      await communityRequest(`/api/community/posts/${post.id}/conversations/${conversationMember.id}/messages`, { method: "POST", headers: communityHeaders(token, true), body: JSON.stringify({ body: conversationBody }) });
+      setConversationBody("");
+      await openConversation(conversationMember.id, conversationMember.name);
+    } catch (error) { showError(error); } finally { setBusy(false); }
   };
   const updateStatus = async (status) => {
     setBusy(true);
@@ -992,6 +1071,7 @@ function CommunityDetail({ post, token, user, onReload }) {
               I’m interested
             </button>
           )}
+          {token && !isOwner && <button type="button" onClick={() => openConversation(user.id, post.authorName || "Post owner")} className="inline-flex min-h-12 items-center gap-2 border border-border px-6 text-sm">Message owner <UnreadBadge count={unreadForConversation(user.id)} /></button>}
           {post.groupSlug && (
             <Link
               to={`/stockholm/groups/${post.groupSlug}`}
@@ -1018,9 +1098,10 @@ function CommunityDetail({ post, token, user, onReload }) {
                 type="button"
                 onClick={loadResponses}
                 disabled={busy}
-                className="min-h-12 border border-border px-5 text-sm"
+                className="inline-flex min-h-12 items-center gap-2 border border-border px-5 text-sm"
               >
-                Manage interested people ({post.responseCount || 0})
+                <span>Manage interested people ({post.responseCount || 0})</span>
+                <UnreadBadge count={unreadConversationCount} />
               </button>
               {isActive && !post.groupId && (
                 <button
@@ -1030,7 +1111,7 @@ function CommunityDetail({ post, token, user, onReload }) {
                       name: post.title,
                       slug: slugify(post.title),
                       description: post.shortDescription,
-                      visibility: "Public",
+                      visibility: "Private",
                     });
                     setGroupOpen(true);
                   }}
@@ -1119,18 +1200,21 @@ function CommunityDetail({ post, token, user, onReload }) {
                     <div className="flex gap-2">
                       <button
                         type="button"
+                        disabled={busy}
                         onClick={() => updateResponse(response.id, "accepted")}
-                        className="border border-primary px-3 py-2 text-xs text-primary"
+                        className="border border-primary px-3 py-2 text-xs text-primary disabled:opacity-50"
                       >
                         Accept
                       </button>
                       <button
                         type="button"
+                        disabled={busy}
                         onClick={() => updateResponse(response.id, "declined")}
-                        className="border border-border px-3 py-2 text-xs"
+                        className="border border-border px-3 py-2 text-xs disabled:opacity-50"
                       >
                         Decline
                       </button>
+                      <button type="button" disabled={busy} onClick={() => openConversation(response.userId, response.name)} className="inline-flex items-center gap-2 border border-border px-3 py-2 text-xs disabled:opacity-50">Chat <UnreadBadge count={unreadForConversation(response.userId)} /></button>
                     </div>
                   </div>
                   {response.message && (
@@ -1148,7 +1232,9 @@ function CommunityDetail({ post, token, user, onReload }) {
             </div>
           </section>
         )}
+        <ForumDiscussion title="Post discussion" basePath={`/api/community/posts/${post.id}/threads`} token={token} canPost={Boolean(token)} canModerate={isOwner} emptyText="Be the first to start a discussion about this post." />
       </section>
+      {conversationMember && <div className="fixed inset-0 z-[72] flex items-center justify-center bg-black/50 px-5"><section role="dialog" aria-modal="true" className="max-h-[80vh] w-full max-w-xl overflow-y-auto border border-border bg-background p-6 shadow-2xl"><div className="flex items-center justify-between gap-4"><div><p className="text-xs uppercase tracking-[0.2em] text-primary">Private conversation</p><h2 className="mt-2 font-display text-3xl">{conversationMember.name}</h2></div><button type="button" onClick={() => setConversationMember(null)} className="border border-border px-3 py-2 text-sm">Close</button></div><div className="mt-5 space-y-3">{conversationMessages.length ? conversationMessages.map((item) => <div key={item.id} className="bg-secondary/35 p-3 text-sm"><p className="font-medium">{item.senderName}</p><p className="mt-1 whitespace-pre-wrap">{item.body}</p></div>) : <p className="text-sm text-muted-foreground">No messages yet. Say hello.</p>}</div><form onSubmit={sendConversationMessage} className="mt-5 flex gap-2"><input required maxLength="4000" value={conversationBody} onChange={(event) => setConversationBody(event.target.value)} placeholder="Write a message" className="min-h-11 min-w-0 flex-1 border border-border bg-background px-3" /><button disabled={busy} className="bg-primary px-4 text-sm text-primary-foreground">Send</button></form></section></div>}
       {interestOpen && (
         <ConfirmationDialog
           title="Tell the author you’re interested"
@@ -1278,6 +1364,9 @@ function CommunityDetail({ post, token, user, onReload }) {
                 className="mt-2 w-full border border-border px-3 py-2"
               />
             </label>
+            <p className="mt-4 text-sm text-muted-foreground">
+              This private group is linked to the community post. People whose interest you accept will join it automatically.
+            </p>
             <div className="mt-6 flex justify-end gap-3">
               <button
                 type="button"
