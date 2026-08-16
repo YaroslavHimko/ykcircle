@@ -1447,7 +1447,9 @@ export default function CommunityPage({ mode = "discover" }) {
           if (!found) throw new Error("Community post not found.");
           setPost(found);
         }
-      } else if (mode !== "create") {
+      } else if (mode === "create") {
+        setPost(null);
+      } else {
         const query = new URLSearchParams({ city, page: "1", limit: "20" });
         if (category) query.set("category", category);
         if (subcategory) query.set("subcategory", subcategory);
