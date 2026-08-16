@@ -26,6 +26,10 @@ const eventImageValue = (event) =>
   event?.image ||
   event?.imageUrl ||
   "";
+const ratingStars = (rating) => {
+  const filled = Math.max(0, Math.min(5, Math.round(Number(rating) || 0)));
+  return "★".repeat(filled) + "☆".repeat(5 - filled);
+};
 const imageUrl = (value, folder) => {
   if (!value) return "";
   if (/^https?:\/\//i.test(value) || value.startsWith("/images/")) return value;
@@ -77,7 +81,7 @@ function GroupCard({ group, action }) {
         </p>
         {Number(group.ratedEventCount) > 0 && (
           <p className="mt-2 text-sm text-muted-foreground">
-            {Number(group.ratingAverage).toFixed(1)} / 5 from {group.ratedEventCount} rated {Number(group.ratedEventCount) === 1 ? "event" : "events"}
+            <span className="text-primary" aria-hidden="true">{ratingStars(group.ratingAverage)}</span>{" "}{Number(group.ratingAverage).toFixed(1)} / 5 from {group.ratedEventCount} rated {Number(group.ratedEventCount) === 1 ? "event" : "events"}
           </p>
         )}
         {action && <div className="mt-5">{action}</div>}
@@ -747,7 +751,7 @@ export default function GroupsPage({
                       </p>
                       {Number(group.ratedEventCount) > 0 && (
                         <p className="mt-2 text-sm text-muted-foreground">
-                          Group rating: {Number(group.ratingAverage).toFixed(1)} / 5 from {group.ratedEventCount} rated {Number(group.ratedEventCount) === 1 ? "event" : "events"}
+                          Group rating: <span className="text-primary" aria-hidden="true">{ratingStars(group.ratingAverage)}</span>{" "}{Number(group.ratingAverage).toFixed(1)} / 5 from {group.ratedEventCount} rated {Number(group.ratedEventCount) === 1 ? "event" : "events"}
                         </p>
                       )}
                     </div>
@@ -825,7 +829,7 @@ export default function GroupsPage({
                             </p>
                             {Number(event.ratingCount) > 0 && (
                               <p className="mt-3 text-sm text-muted-foreground">
-                                {Number(event.ratingAverage).toFixed(1)} / 5 ({event.ratingCount} {Number(event.ratingCount) === 1 ? "rating" : "ratings"})
+                                <span className="text-primary" aria-hidden="true">{ratingStars(event.ratingAverage)}</span>{" "}{Number(event.ratingAverage).toFixed(1)} / 5 ({event.ratingCount} {Number(event.ratingCount) === 1 ? "rating" : "ratings"})
                               </p>
                             )}
                           </div>

@@ -15,6 +15,10 @@ const eventCover = (event) =>
   event?.image ||
   event?.imageUrl ||
   "";
+const ratingStars = (rating) => {
+  const filled = Math.max(0, Math.min(5, Math.round(Number(rating) || 0)));
+  return "★".repeat(filled) + "☆".repeat(5 - filled);
+};
 const eventImageUrl = (value) => {
   if (!value) return "";
   try {
@@ -963,6 +967,7 @@ export default function EventDetailPage() {
                 <p>
                   <span className="text-muted-foreground">Rating</span>
                   <br />
+                  <span className="text-primary" aria-hidden="true">{ratingStars(event.ratingAverage)}</span>{" "}
                   {Number(event.ratingAverage).toFixed(1)} / 5 ({event.ratingCount} {Number(event.ratingCount) === 1 ? "rating" : "ratings"})
                 </p>
               )}
@@ -1035,7 +1040,7 @@ export default function EventDetailPage() {
             {token && Number(event.myRating) > 0 && !canRate && (
               <section className="mt-8 border border-border p-5">
                 <h2 className="font-display text-2xl font-semibold">Your rating</h2>
-                <p className="mt-2 text-sm text-muted-foreground">You rated this event {event.myRating} / 5.</p>
+                <p className="mt-2 text-sm text-muted-foreground"><span className="text-primary" aria-hidden="true">{ratingStars(event.myRating)}</span> You rated this event {event.myRating} / 5.</p>
               </section>
             )}
             {canRate && (
@@ -1044,8 +1049,8 @@ export default function EventDetailPage() {
                 <p className="mt-2 text-sm text-muted-foreground">Your rating is visible in the event and group averages. You can change it later.</p>
                 <div className="mt-4 flex flex-wrap gap-2" role="group" aria-label="Choose a rating from one to five">
                   {[1, 2, 3, 4, 5].map((rating) => (
-                    <button key={rating} type="button" disabled={ratingSaving} onClick={() => saveRating(rating)} aria-pressed={Number(event.myRating) === rating} className={`min-h-11 min-w-11 border px-3 text-sm disabled:opacity-50 ${Number(event.myRating) === rating ? "border-primary bg-primary text-primary-foreground" : "border-border"}`}>
-                      {rating} ★
+                    <button key={rating} type="button" disabled={ratingSaving} onClick={() => saveRating(rating)} aria-label={`${rating} stars`} aria-pressed={Number(event.myRating) === rating} className={`min-h-11 min-w-11 border px-3 text-sm disabled:opacity-50 ${Number(event.myRating) === rating ? "border-primary bg-primary text-primary-foreground" : "border-border text-primary"}`}>
+                      {ratingStars(rating)}
                     </button>
                   ))}
                 </div>
