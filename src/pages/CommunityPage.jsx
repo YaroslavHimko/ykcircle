@@ -325,7 +325,11 @@ function CommunityEventLinkPage({ post, token }) {
   );
 }
 
+const isCompletedCommunityPost = (post) =>
+  String(post?.status).toLowerCase() === "fulfilled";
+
 function PostCard({ post }) {
+  const completed = isCompletedCommunityPost(post);
   return (
     <article className="relative border border-border bg-background p-5 shadow-sm">
       <div className="pr-20">
@@ -339,9 +343,9 @@ function PostCard({ post }) {
         </h2>
       </div>
       <span
-        className={`absolute right-5 top-5 text-xs font-medium ${post.status === "fulfilled" ? "text-primary" : "text-muted-foreground"}`}
+        className={`absolute right-5 top-5 text-xs font-medium ${completed ? "text-primary" : "text-muted-foreground"}`}
       >
-        {post.status === "fulfilled" ? "Completed" : "Active"}
+        {completed ? "Completed" : "Active"}
       </span>
       <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-muted-foreground">
         {post.shortDescription}
@@ -1510,6 +1514,8 @@ export default function CommunityPage({ mode = "discover" }) {
       : selectedCategory
         ? `${selectedCategory.name} in ${city.charAt(0).toUpperCase() + city.slice(1)}`
         : `Community in ${city.charAt(0).toUpperCase() + city.slice(1)}`;
+  const activePosts = posts.filter((item) => !isCompletedCommunityPost(item));
+  const completedPosts = posts.filter(isCompletedCommunityPost);
   if (mode === "detail" && post)
     return (
       <SiteChrome>
@@ -1593,16 +1599,33 @@ export default function CommunityPage({ mode = "discover" }) {
           </Link>
         </div>
         {mode === "mine" ? (
-          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {posts.map((item) => (
-              <PostCard key={item.id} post={item} />
-            ))}
-            {!loading && posts.length === 0 && (
-              <p className="text-muted-foreground">
-                You have not posted anything yet.
-              </p>
+          <>
+            <section className="mt-10">
+              <h2 className="font-display text-3xl font-semibold">Active posts</h2>
+              <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {activePosts.map((item) => (
+                  <PostCard key={item.id} post={item} />
+                ))}
+                {!loading && activePosts.length === 0 && (
+                  <p className="text-muted-foreground">
+                    {completedPosts.length > 0
+                      ? "You have no active posts."
+                      : "You have not posted anything yet."}
+                  </p>
+                )}
+              </div>
+            </section>
+            {!loading && completedPosts.length > 0 && (
+              <section className="mt-14">
+                <h2 className="font-display text-3xl font-semibold">Completed</h2>
+                <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {completedPosts.map((item) => (
+                    <PostCard key={item.id} post={item} />
+                  ))}
+                </div>
+              </section>
             )}
-          </div>
+          </>
         ) : (
           <>
             <div className="mt-10 flex flex-wrap gap-2">
@@ -1639,17 +1662,19 @@ export default function CommunityPage({ mode = "discover" }) {
                 ))}
               </select>
             </label>
-            <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <section className="mt-8">
+              <h2 className="font-display text-3xl font-semibold">Active community posts</h2>
+              <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {loading ? (
                 <p className="text-muted-foreground">
                   Loading community posts…
                 </p>
               ) : (
-                posts.map((item) => <PostCard key={item.id} post={item} />)
+                activePosts.map((item) => <PostCard key={item.id} post={item} />)
               )}
-              {!loading && posts.length === 0 && (
+              {!loading && activePosts.length === 0 && (
                 <div className="border border-border p-6 text-muted-foreground">
-                  <p>No public posts match this view yet.</p>
+                  <p>No active public posts match this view yet.</p>
                   <Link
                     to="/stockholm/community/new"
                     className="mt-4 inline-block text-primary"
@@ -1658,7 +1683,18 @@ export default function CommunityPage({ mode = "discover" }) {
                   </Link>
                 </div>
               )}
-            </div>
+              </div>
+            </section>
+            {!loading && completedPosts.length > 0 && (
+              <section className="mt-14">
+                <h2 className="font-display text-3xl font-semibold">Completed</h2>
+                <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {completedPosts.map((item) => (
+                    <PostCard key={item.id} post={item} />
+                  ))}
+                </div>
+              </section>
+            )}
           </>
         )}
       </section>
