@@ -226,7 +226,7 @@ export default function HomePage() {
               </span>
             </Link>
             <Link
-              to="/events?category=culture"
+              to="/events?category=art"
               className="group relative aspect-[4/3] overflow-hidden"
             >
               <img
