@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
+import { Eye, EyeOff } from 'lucide-react';
 import SiteChrome from '@/components/SiteChrome';
 import { apiUrl } from '@/lib/api';
 
@@ -13,6 +14,7 @@ export default function AuthPage({ mode }) {
   const registrationRedirect = !isRegister && (location.state?.from?.startsWith('/events/') || new URLSearchParams(location.search).get('from')?.startsWith('/events/'));
   const hostIntent = isRegister && new URLSearchParams(location.search).get('intent') === 'host';
   const [form, setForm] = useState(initialForm);
+  const [passwordVisible, setPasswordVisible] = useState(false);
   const [status, setStatus] = useState({ loading: false, error: '' });
   const returnTo = location.state?.from || new URLSearchParams(location.search).get('from') || '/';
 
@@ -61,7 +63,14 @@ export default function AuthPage({ mode }) {
           <label className="block text-sm">Phone number <span className="text-muted-foreground">(optional)</span><input name="phone" value={form.phone} onChange={update} className="mt-2 min-h-12 w-full border border-border bg-background px-4" /></label>
         </>}
         <label className="block text-sm">Email<input required type="email" name="email" value={form.email} onChange={update} className="mt-2 min-h-12 w-full border border-border bg-background px-4" /></label>
-        <label className="block text-sm">Password<input required minLength={8} type="password" name="password" value={form.password} onChange={update} className="mt-2 min-h-12 w-full border border-border bg-background px-4" /></label>
+        <label className="block text-sm">Password
+          <span className="relative mt-2 block">
+            <input required minLength={8} type={passwordVisible ? 'text' : 'password'} name="password" value={form.password} onChange={update} className="min-h-12 w-full border border-border bg-background px-4 pr-12" />
+            <button type="button" onClick={() => setPasswordVisible((visible) => !visible)} className="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-muted-foreground hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-primary" aria-label={passwordVisible ? 'Hide password' : 'Show password'} aria-pressed={passwordVisible}>
+              {passwordVisible ? <EyeOff className="h-5 w-5" aria-hidden="true" /> : <Eye className="h-5 w-5" aria-hidden="true" />}
+            </button>
+          </span>
+        </label>
         {status.error && <p role="alert" className="text-sm text-destructive">{status.error}</p>}
         <button disabled={status.loading} className="min-h-12 w-full bg-primary px-7 text-sm font-medium uppercase tracking-widest text-primary-foreground disabled:opacity-60">{status.loading ? 'Please wait…' : isRegister ? 'Create account' : 'Log in'}</button>
       </form>
