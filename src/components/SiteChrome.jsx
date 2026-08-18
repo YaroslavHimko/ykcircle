@@ -21,7 +21,6 @@ export function Header() {
     // The API verifies the email address and enforces event ownership. Any
     // signed-in member can therefore access their own event workspace.
     const canManageEvents = Boolean(user);
-    const nav = [...baseNav, ...(user ? [] : [{ to: '/login', label: 'Log in' }])];
 
     React.useEffect(() => {
         const refreshUser = () => setUser(JSON.parse(localStorage.getItem('authUser') || 'null'));
@@ -63,7 +62,7 @@ export function Header() {
                 </Link>
 
                 <nav className="hidden items-center gap-8 md:flex">
-                    {nav.map((n) => (
+                    {baseNav.map((n) => (
                         <NavLink
                             key={n.to}
                             to={n.to}
@@ -111,7 +110,7 @@ export function Header() {
             {open && (
                 <div className="border-y border-border bg-background md:hidden">
                     <div className="flex flex-col px-5 py-3">
-                        {nav.map((n) => (
+                        {baseNav.map((n) => (
                             <Link
                                 key={n.to}
                                 to={n.to}
