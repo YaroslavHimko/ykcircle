@@ -745,7 +745,8 @@ function CommunityDetail({ post, token, user, onReload }) {
   });
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
-  const isOwner = user && String(user.id) === String(post.authorUserId);
+  const ownerUserId = post.authorUserId ?? post.authorId ?? post.author_id;
+  const isOwner = user && String(user.id) === String(ownerUserId);
   const isActive = post.status === "active";
   const attributes = Object.fromEntries(
     Object.entries(parseAttributes(post.attributes)).map(([key, value]) => [
@@ -1076,7 +1077,7 @@ function CommunityDetail({ post, token, user, onReload }) {
               I’m interested
             </button>
           )}
-          {token && !isOwner && <button type="button" onClick={() => openConversation(user.id, post.authorName || "Post owner")} className="inline-flex min-h-12 items-center gap-2 border border-border px-6 text-sm">Message owner <UnreadBadge count={unreadForConversation(user.id)} /></button>}
+          {token && !isOwner && ownerUserId != null && <button type="button" onClick={() => openConversation(ownerUserId, post.authorName || "Post owner")} className="inline-flex min-h-12 items-center gap-2 border border-border px-6 text-sm">Message owner <UnreadBadge count={unreadForConversation(ownerUserId)} /></button>}
           {post.groupSlug && (
             <Link
               to={`/stockholm/groups/${post.groupSlug}`}
