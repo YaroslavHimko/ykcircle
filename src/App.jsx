@@ -23,6 +23,8 @@ import CommunityPage from './pages/CommunityPage';
 import AdminCommunityReportsPage from './pages/AdminCommunityReportsPage';
 import GroupSlugRedirect from './pages/GroupSlugRedirect';
 import ArticlesPage from './pages/ArticlesPage';
+import ReportPage from './pages/ReportPage';
+import LegalDocumentsPage from './pages/LegalDocumentsPage';
 
 function App() {
     return (
@@ -33,6 +35,9 @@ function App() {
                 <Route path="/about" element={<AboutPage />} />
                 <Route path="/join" element={<JoinPage />} />
                 <Route path="/contact" element={<ContactPage />} />
+                <Route path="/report" element={<ReportPage />} />
+                <Route path="/legal" element={<LegalDocumentsPage />} />
+                <Route path="/legal/:slug" element={<LegalDocumentsPage />} />
                 <Route path="/login" element={<AuthPage mode="login" />} />
                 <Route path="/register" element={<AuthPage mode="register" />} />
                 <Route path="/check-email" element={<CheckEmailPage />} />

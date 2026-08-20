@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { Menu, X, Instagram, Send, Youtube, UserRound, LogOut, Users } from 'lucide-react';
+import { apiFetch } from '@/lib/api';
 
 const baseNav = [
     { to: '/stockholm/community', label: 'Community' },
@@ -144,6 +145,15 @@ export function Header() {
 }
 
 export function Footer() {
+    const [legalDocuments, setLegalDocuments] = useState([]);
+
+    useEffect(() => {
+        apiFetch('/api/legal-documents')
+            .then(async (response) => response.ok ? response.json() : [])
+            .then((data) => setLegalDocuments(Array.isArray(data) ? data : data.documents || []))
+            .catch(() => setLegalDocuments([]));
+    }, []);
+
     return (
         <footer className="shrink-0 border-t border-border bg-[hsl(var(--ink))] text-[hsl(40_28%_88%)]">
             <div className="mx-auto grid max-w-[72rem] gap-10 px-5 py-14 sm:px-8 md:grid-cols-[1.4fr_1fr_1fr]">
@@ -186,6 +196,9 @@ export function Footer() {
                     <ul className="space-y-2 text-[hsl(40_20%_78%)]">
                         <li><Link className="hover:text-primary" to="/articles">Articles</Link></li>
                         <li><Link className="hover:text-primary" to="/contact">Contact</Link></li>
+                        <li><Link className="hover:text-primary" to="/report">Report content</Link></li>
+                        <li><Link className="hover:text-primary" to="/legal">Legal documents</Link></li>
+                        {legalDocuments.map((document) => <li key={document.slug}><Link className="hover:text-primary" to={`/legal/${document.slug}`}>{document.title}</Link></li>)}
                     </ul>
                 </div>
             </div>
