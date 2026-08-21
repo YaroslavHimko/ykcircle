@@ -10,6 +10,8 @@ import ProfilePage from './pages/ProfilePage';
 import AdminApplicationsPage from './pages/AdminApplicationsPage';
 import CheckEmailPage from './pages/CheckEmailPage';
 import VerifyEmailPage from './pages/VerifyEmailPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 import AdminApplicationPage from './pages/AdminApplicationPage';
 import AccountDeletedPage from './pages/AccountDeletedPage';
 import ApplicationSentPage from './pages/ApplicationSentPage';
@@ -42,6 +44,8 @@ function App() {
                 <Route path="/register" element={<AuthPage mode="register" />} />
                 <Route path="/check-email" element={<CheckEmailPage />} />
                 <Route path="/verify-email" element={<VerifyEmailPage />} />
+                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                <Route path="/reset-password" element={<ResetPasswordPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/admin/applications" element={<AdminApplicationsPage />} />
                 <Route path="/admin/applications/:id" element={<AdminApplicationPage />} />

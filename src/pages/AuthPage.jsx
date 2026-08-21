@@ -74,6 +74,7 @@ export default function AuthPage({ mode }) {
         {status.error && <p role="alert" className="text-sm text-destructive">{status.error}</p>}
         <button disabled={status.loading} className="min-h-12 w-full bg-primary px-7 text-sm font-medium uppercase tracking-widest text-primary-foreground disabled:opacity-60">{status.loading ? 'Please wait…' : isRegister ? 'Create account' : 'Log in'}</button>
       </form>
+      {!isRegister && <p className="mt-5 text-sm"><Link className="text-primary underline underline-offset-4" to="/forgot-password">Forgot your password?</Link></p>}
       <p className="mt-8 text-sm text-muted-foreground">{isRegister ? 'Already have an account? ' : 'Need an account? '}<Link className="text-primary underline underline-offset-4" to={isRegister ? `/login?from=${encodeURIComponent(returnTo)}` : `/register?from=${encodeURIComponent(returnTo)}`}>{isRegister ? 'Log in' : 'Register'}</Link></p>
     </section>
   </SiteChrome>;
