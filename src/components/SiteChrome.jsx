@@ -52,12 +52,15 @@ export function Header() {
     return (
         <header className={`${overlay ? 'absolute' : 'relative'} inset-x-0 top-0 z-50 w-full max-w-full`}>
             <div className="mx-auto flex max-w-[90rem] items-center justify-between px-5 py-5 sm:px-8">
-                <Link to="/" className="group flex items-center gap-2">
+                <Link
+                    to="/"
+                    className={`group flex items-center gap-2 rounded-lg border px-2 py-1 shadow-sm md:border-0 md:bg-transparent md:p-0 md:shadow-none ${overlay ? 'border-[hsl(40_30%_88%)]/70 bg-[hsl(25_22%_12%)]' : 'border-primary/30 bg-background'}`}
+                >
                     <img src="/logo.png" alt="YKCircle" className="h-11 w-11 rounded-full object-cover" />
-                    <span className="font-display text-2xl font-black tracking-tight text-primary">
+                    <span className={`font-display text-2xl font-black tracking-tight ${overlay ? 'text-[hsl(40_30%_94%)]' : 'text-primary'}`}>
                         YKCircle
                     </span>
-                    <span className={`hidden text-[0.65rem] uppercase tracking-[0.3em] sm:block ${overlay ? 'text-[hsl(40_30%_88%)]/70' : 'text-muted-foreground'}`}>
+                    <span className={`hidden text-[0.65rem] uppercase tracking-[0.3em] sm:block ${overlay ? 'text-[hsl(40_30%_94%)]' : 'text-muted-foreground'}`}>
                         real people, real plans
                     </span>
                 </Link>
@@ -98,14 +101,25 @@ export function Header() {
                     </div>}
                 </div>
 
-                <button
-                    type="button"
-                    aria-label="Toggle menu"
-                    onClick={() => setOpen((v) => !v)}
-                    className={`inline-flex h-11 w-11 items-center justify-center md:hidden ${overlay ? 'text-[hsl(40_30%_94%)]' : 'text-foreground'}`}
-                >
-                    {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-                </button>
+                <div className="flex items-center gap-1 md:hidden">
+                    <Link
+                        to="/groups"
+                        aria-label="Find your circle"
+                        title="Find your circle"
+                        className="inline-flex h-11 w-11 items-center justify-center bg-primary text-primary-foreground transition-transform active:scale-[0.98]"
+                    >
+                        <Users className="h-5 w-5" strokeWidth={1.75} />
+                    </Link>
+                    <button
+                        type="button"
+                        aria-label="Toggle menu"
+                        aria-expanded={open}
+                        onClick={() => setOpen((v) => !v)}
+                        className={`inline-flex h-11 w-11 items-center justify-center ${overlay ? 'text-[hsl(40_30%_94%)]' : 'text-foreground'}`}
+                    >
+                        {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+                    </button>
+                </div>
             </div>
 
             {open && (
@@ -121,9 +135,6 @@ export function Header() {
                                 {n.label}
                             </Link>
                         ))}
-                        <Link to="/groups" onClick={() => setOpen(false)} className="mt-3 inline-flex min-h-[44px] items-center justify-center gap-2 bg-primary px-5 text-primary-foreground">
-                            <Users className="h-4 w-4" /> Find your circle
-                        </Link>
                         {user ? <>
                             <Link to="/profile" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">View profile</Link>
                             {canManage && <>
