@@ -36,6 +36,18 @@ const initialForm = {
   registrationType: "yaroko",
   visibility: "Public",
 };
+const testEventPresets = [
+  ["Sunrise walk at Djurgården", "Start the day with a relaxed waterside walk and coffee.", "Join a friendly sunrise walk through Djurgården. We will keep an easy pace, stop for photos and finish with coffee together.", "Rosendal Garden", "Rosendalsvägen 38, 115 21 Stockholm", "2030-06-08T08:00", "2030-06-08T10:00", "2030-06-07T18:00", "Bring comfortable shoes and a reusable cup.", "Meet by the Rosendal Garden entrance, ten minutes before we start.", "free", "0", "physical", "public", "20", "4", "16", "en", "none"],
+  ["Beginner bouldering social", "Learn the basics and meet other climbers.", "A welcoming indoor bouldering session for complete beginners. An instructor will cover safety and basic techniques before open social climbing.", "Klättercentret Telefonplan", "Tellusgången 22, 126 26 Hägersten", "2030-06-12T18:30", "2030-06-12T21:00", "2030-06-11T20:00", "Wear comfortable sports clothes; climbing shoes can be rented.", "Ask for the YKCircle host at reception.", "paid", "180", "physical", "public", "16", "3", "18", "en", "none"],
+  ["Midsummer picnic planning", "Make new plans over snacks in the park.", "Bring a small picnic item to share and help build a friendly Midsummer plan with new people in Stockholm.", "Tantolunden", "Tantolunden, 118 42 Stockholm", "2030-06-15T14:00", "2030-06-15T17:00", "2030-06-14T18:00", "A picnic blanket and something small to share.", "Meet at the main lawn near the beach volleyball court.", "free", "0", "physical", "public", "30", "6", "16", "en", "weekly"],
+  ["Stockholm street-photo walk", "Find better frames with a small creative group.", "Explore Södermalm with a camera or phone, swap composition tips and select a few favourite photos together afterwards.", "Mariatorget", "Mariatorget, 118 48 Stockholm", "2030-06-18T17:30", "2030-06-18T20:00", "2030-06-17T19:00", "Any camera or phone with space for photos.", "Gather beside the statue in the centre of Mariatorget.", "free", "0", "physical", "public", "12", "3", "14", "en", "none"],
+  ["Sunday board-game brunch", "Easy games, pastries and new people.", "A low-pressure Sunday brunch with modern board games. New players are especially welcome and rules will be explained.", "Alphaspel", "Östgötagatan 33, 116 25 Stockholm", "2030-06-23T11:00", "2030-06-23T14:00", "2030-06-22T17:00", "Optional: bring a favourite game to teach.", "Look for the YKCircle table near the café.", "paid", "90", "physical", "public", "18", "4", "16", "en", "none"],
+  ["Swedish fika conversation club", "Practice Swedish in a relaxed small group.", "Build confidence speaking Swedish through guided conversation prompts, café chat and a little help from fellow learners.", "Kulturhuset Stadsteatern", "Sergels torg, 111 57 Stockholm", "2030-06-25T18:00", "2030-06-25T19:30", "2030-06-24T18:00", "A notebook if you like taking notes.", "Meet inside the main entrance by the information desk.", "free", "0", "physical", "public", "14", "4", "18", "sv", "weekly"],
+  ["Kayak taster on Lake Mälaren", "Try kayaking with a supportive crew.", "A beginner-friendly kayak taster with equipment, safety briefing and a calm route close to shore.", "Långholmens Kajak", "Långholmsmuren 21, 117 33 Stockholm", "2030-06-29T10:00", "2030-06-29T12:30", "2030-06-27T18:00", "Swimwear, a towel and water; equipment is included.", "Arrive 15 minutes early for the safety briefing.", "paid", "350", "physical", "public", "10", "4", "18", "en", "none"],
+  ["Remote co-working sprint", "Focus together from wherever you are.", "Join a structured online co-working session with short introductions, two focus blocks and a friendly check-out.", "Online via video call", "A joining link will be sent after registration.", "2030-07-02T09:00", "2030-07-02T11:30", "2030-07-01T18:00", "Headphones and one task you want to finish.", "The video-call link is shared with registered attendees.", "free", "0", "online", "private", "25", "3", "16", "en", "weekly"],
+  ["Evening run by the water", "A social 5 km at a conversational pace.", "Run a relaxed route around Kungsholmen, with a no-drop pace and an optional cool-down drink afterwards.", "Rålambshovsparken", "Smedsuddsvägen, 112 35 Stockholm", "2030-07-05T18:30", "2030-07-05T19:45", "2030-07-04T16:00", "Running shoes and a light layer for after the run.", "Meet at the park entrance closest to Rålambshovsled.", "free", "0", "physical", "public", "24", "4", "16", "en", "none"],
+  ["Ceramics introduction workshop", "Make a small piece from clay and unwind.", "Learn simple hand-building techniques in a calm studio session. Your finished piece will be glazed and fired by the studio.", "Stockholm Ceramic Studio", "Sankt Eriksgatan 39, 112 34 Stockholm", "2030-07-09T18:00", "2030-07-09T20:30", "2030-07-07T18:00", "Wear clothes that can get a little clay on them.", "Meet the host inside the studio courtyard entrance.", "paid", "420", "physical", "public", "12", "4", "18", "en", "none"],
+];
 const toInputDate = (value) =>
   value ? new Date(value).toISOString().slice(0, 16) : "";
 const eventCover = (event) =>
@@ -103,6 +115,7 @@ export default function EventsPage({
   const canManageAllEvents = Boolean(
     user && ["manager", "admin"].includes(user.role),
   );
+  const isAdministrator = user?.role === "admin";
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [mine, setMine] = useState([]);
@@ -221,6 +234,35 @@ export default function EventsPage({
       ...current,
       [event.target.name]: event.target.value,
     }));
+  const applyTestPreset = (event) => {
+    const presetIndex = Number(event.target.value);
+    if (!Number.isInteger(presetIndex) || !testEventPresets[presetIndex]) return;
+    const [
+      title, shortDescription, description, location, address, startsAt, endsAt,
+      registrationDeadline, whatToBring, meetingInstructions, pricingType, fee,
+      locationType, locationVisibility, capacity, minimumAttendees, minimumAge,
+      languageCode, recurrenceFrequency,
+    ] = testEventPresets[presetIndex];
+    setForm((current) => ({
+      ...current,
+      title, shortDescription, description, location, address, startsAt, endsAt,
+      registrationDeadline, whatToBring, meetingInstructions, pricingType, fee,
+      locationType, locationVisibility, capacity, minimumAttendees, minimumAge,
+      languageCode, recurrenceFrequency,
+      recurrenceInterval: "1",
+      recurrenceCount: recurrenceFrequency === "none" ? "2" : "4",
+      country: "Sweden",
+      city: "Stockholm",
+      timezone: timezones.includes("Europe/Stockholm") ? "Europe/Stockholm" : current.timezone,
+      currency: "SEK",
+      registrationType: "yaroko",
+      visibility: "Public",
+      categoryId: categories.length ? String(categories[presetIndex % categories.length].id) : "",
+      typeId: types.length ? String(types[presetIndex % types.length].id) : "",
+    }));
+    setErrors({});
+    setMessage("Test event details loaded. Add a cover image if needed, then save the draft.");
+  };
   const apply = (event) => {
     setDraftId(event.id);
     setForm((current) => ({
@@ -705,6 +747,24 @@ export default function EventsPage({
               onSubmit={save}
               className="mt-8 grid gap-4 sm:grid-cols-2"
             >
+              {creationPage && isAdministrator && (
+                <label className="border border-primary/30 bg-primary/5 p-4 text-sm sm:col-span-2">
+                  Testing preset
+                  <select
+                    defaultValue=""
+                    onChange={applyTestPreset}
+                    className="mt-2 min-h-11 w-full border border-border bg-background px-3"
+                  >
+                    <option value="" disabled>Choose one of 10 sample events</option>
+                    {testEventPresets.map(([title], index) => (
+                      <option key={title} value={index}>{index + 1}. {title}</option>
+                    ))}
+                  </select>
+                  <span className="mt-1 block text-xs text-muted-foreground">
+                    Populates all event details. Cover images must still be selected from your device.
+                  </span>
+                </label>
+              )}
               {input("title", "Title", "text", true)}
               {creationPage && managedGroups.length > 0 && (
                 <label className="block text-sm">
