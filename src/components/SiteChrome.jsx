@@ -7,6 +7,7 @@ const baseNav = [
     { to: '/stockholm/community', label: 'Community' },
     { to: '/articles', label: 'Articles' },
     { to: '/events', label: 'Events' },
+    { to: '/venues', label: 'Venues' },
     { to: '/groups', label: 'Groups' },
 ];
 
@@ -93,8 +94,10 @@ export function Header() {
                             <Link to="/admin/users" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Manage user roles</Link>
                             <Link to="/profile/articles" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Manage articles</Link>
                             {isAdmin && <Link to="/admin/community/reports" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Community reports</Link>}
+                            {isAdmin && <Link to="/admin/venue-owner-applications" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Venue owner applications</Link>}
                         </>}
                         {canManageEvents && <Link to="/profile/events" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Manage events</Link>}
+                        {['venue_owner', 'manager', 'admin'].includes(user?.role) ? <Link to="/profile/venues" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">{['manager', 'admin'].includes(user?.role) ? 'Venue management' : 'My venues'}</Link> : user && <Link to="/become-a-venue-owner" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Become a venue owner</Link>}
                         {user && <Link to="/profile/community" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">My community posts</Link>}
                         {user && <Link to="/profile/groups" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Manage groups</Link>}
                         {user && <button type="button" onClick={logout} className="flex w-full items-center gap-2 px-3 py-3 text-left text-sm text-destructive hover:bg-secondary"><LogOut className="h-4 w-4" /> Log out</button>}
@@ -142,8 +145,10 @@ export function Header() {
                                 <Link to="/admin/users" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">Manage user roles</Link>
                                 <Link to="/profile/articles" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">Manage articles</Link>
                                 {isAdmin && <Link to="/admin/community/reports" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">Community reports</Link>}
+                                {isAdmin && <Link to="/admin/venue-owner-applications" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">Venue owner applications</Link>}
                             </>}
                             {canManageEvents && <Link to="/profile/events" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">Manage events</Link>}
+                            {['venue_owner', 'manager', 'admin'].includes(user?.role) ? <Link to="/profile/venues" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">{['manager', 'admin'].includes(user?.role) ? 'Venue management' : 'My venues'}</Link> : <Link to="/become-a-venue-owner" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">Become a venue owner</Link>}
                             <Link to="/profile/community" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">My community posts</Link>
                             <Link to="/profile/groups" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">Manage groups</Link>
                             <button type="button" onClick={() => { setOpen(false); logout(); }} className="flex min-h-[44px] items-center gap-2 border-b border-border/60 py-3 text-left text-base text-destructive"><LogOut className="h-4 w-4" /> Log out</button>

@@ -27,6 +27,7 @@ import GroupSlugRedirect from './pages/GroupSlugRedirect';
 import ArticlesPage from './pages/ArticlesPage';
 import ReportPage from './pages/ReportPage';
 import LegalDocumentsPage from './pages/LegalDocumentsPage';
+import { AdminVenueApplicationsPage, MyVenuesPage, VenueBookingsPage, VenueEditorPage, VenueOwnerApplicationPage, VenuesDiscoveryPage } from './pages/VenuesPage';
 
 function App() {
     return (
@@ -51,6 +52,14 @@ function App() {
                 <Route path="/admin/applications/:id" element={<AdminApplicationPage />} />
                 <Route path="/admin/users" element={<UserRolesPage />} />
                 <Route path="/admin/community/reports" element={<AdminCommunityReportsPage />} />
+                <Route path="/admin/venue-owner-applications" element={<AdminVenueApplicationsPage />} />
+                <Route path="/become-a-venue-owner" element={<VenueOwnerApplicationPage />} />
+                <Route path="/profile/venues" element={<MyVenuesPage />} />
+                <Route path="/profile/venues/new" element={<VenueEditorPage />} />
+                <Route path="/profile/venues/:id/edit" element={<VenueEditorPage />} />
+                <Route path="/profile/venues/:id/bookings" element={<VenueBookingsPage />} />
+                <Route path="/venues" element={<VenuesDiscoveryPage />} />
+                <Route path="/venues/:id" element={<VenuesDiscoveryPage detail />} />
                 <Route path="/account-deleted" element={<AccountDeletedPage />} />
                 <Route path="/application-sent" element={<ApplicationSentPage />} />
                 <Route path="/events" element={<EventsPage key="events" />} />

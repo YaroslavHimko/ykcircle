@@ -156,6 +156,9 @@ export default function EventDetailPage() {
   const [registered, setRegistered] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [confirmationMessage, setConfirmationMessage] = useState("");
+  const [venues, setVenues] = useState([]);
+  const [selectedVenueId, setSelectedVenueId] = useState("");
+  const [bookingSaving, setBookingSaving] = useState(false);
   useEffect(() => {
     if (!error) return undefined;
     const timer = window.setTimeout(() => setError(""), 5000);
@@ -342,6 +345,16 @@ export default function EventDetailPage() {
       .catch((requestError) => setError(requestError.message))
       .finally(() => setLoading(false));
   }, [id, token, canManageEvents]);
+  useEffect(() => {
+    if (!canManageEvents) return;
+    apiFetch("/api/venues", { headers: { Authorization: `Bearer ${token}` } }).then(async (response) => {
+      const data = await response.json(); if (!response.ok) throw new Error(data.error || "Unable to load venues.");
+      setVenues((Array.isArray(data) ? data : data.venues || []).filter((venue) => venue.isActive !== false));
+    }).catch((requestError) => setError(requestError.message));
+  }, [canManageEvents, token]);
+  const venueBooking = event?.venueBooking || event?.venue_booking || event?.booking;
+  const requestVenueBooking = async () => { if (!selectedVenueId) return setError("Choose a venue first."); setBookingSaving(true); try { const response = await apiFetch(`/api/events/${id}/venue-booking`, { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify({ venueId: Number(selectedVenueId) }) }); const data = await response.json(); if (!response.ok) throw new Error(data.error || data.message || "Unable to request this venue."); setEvent((current) => ({ ...current, venueBooking: data.booking || data })); } catch (requestError) { setError(requestError.message); } finally { setBookingSaving(false); } };
+  const cancelVenueBooking = async () => { setBookingSaving(true); try { const response = await apiFetch(`/api/events/${id}/venue-booking/cancel`, { method: "POST", headers: { Authorization: `Bearer ${token}` } }); const data = await response.json(); if (!response.ok) throw new Error(data.error || data.message || "Unable to cancel venue booking."); setEvent((current) => ({ ...current, venueBooking: data.booking || { ...venueBooking, status: "cancelled" } })); } catch (requestError) { setError(requestError.message); } finally { setBookingSaving(false); } };
   useEffect(
     () => setImageLoaded(false),
     [id, event?.coverImage, event?.coverImageUrl],
@@ -945,8 +958,10 @@ export default function EventDetailPage() {
             )}
             <p className="mt-5 text-muted-foreground">
               {new Date(event.startsAt).toLocaleString()} -{" "}
-              {event.location || "Location to be announced"}
+              {venueBooking?.status === "confirmed" ? (venueBooking.venue?.name || venueBooking.venueName || event.venue?.name || event.location) : (event.location || "Location to be announced")}
             </p>
+            {venueBooking?.status === "confirmed" && <p className="mt-2 text-sm text-muted-foreground">Confirmed venue: {venueBooking.venue?.name || venueBooking.venueName}{(venueBooking.venue?.location || venueBooking.venueLocation) && ` — ${venueBooking.venue?.location || venueBooking.venueLocation}`}</p>}
+            {canManageEvents && <section className="mt-8 max-w-2xl border border-border p-5"><h2 className="font-display text-2xl font-semibold">Venue booking</h2>{venueBooking ? <><p className="mt-2 text-sm">Status: <span className="capitalize text-primary">{venueBooking.status}</span>{venueBooking.ownerNote && ` — ${venueBooking.ownerNote}`}</p>{["pending", "confirmed"].includes(venueBooking.status) && <button type="button" disabled={bookingSaving} onClick={cancelVenueBooking} className="mt-4 border border-border px-4 py-2 text-sm disabled:opacity-60">Cancel booking request</button>}</> : <><p className="mt-2 text-sm text-muted-foreground">Choose an active venue. The venue owner must confirm before it is shown as confirmed.</p><div className="mt-4 flex flex-wrap gap-3"><select value={selectedVenueId} onChange={(e) => setSelectedVenueId(e.target.value)} className="min-h-11 min-w-64 border border-border bg-background px-3"><option value="">Choose a venue</option>{venues.map((venue) => <option key={venue.id} value={venue.id}>{venue.name}{venue.city ? ` — ${venue.city}` : ""}</option>)}</select><button type="button" disabled={bookingSaving} onClick={requestVenueBooking} className="bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-60">Request booking</button></div></>}</section>}
             {event.description && (
               <p className="mt-6 max-w-2xl leading-relaxed">
                 {event.description}

@@ -1108,6 +1108,9 @@ export default function EventsPage({
                         event.location ||
                         "Location to be announced"}
                     </p>
+                    {(event.venueBooking?.status === "confirmed" || event.venue_booking?.status === "confirmed") && (
+                      <p className="mt-2 text-sm text-primary">Confirmed venue: {event.venueBooking?.venue?.name || event.venueBooking?.venueName || event.venue_booking?.venue?.name || event.venue_booking?.venueName}</p>
+                    )}
                   </div>
                   {canManage ? (
                     <div className="mt-5 grid grid-cols-2 gap-2">
