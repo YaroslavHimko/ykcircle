@@ -665,6 +665,14 @@ function CommunityForm({
                 className="mt-2 min-h-11 border border-border bg-background px-3"
               />
             </label>
+            <label className="mt-5 block text-sm">
+              Visibility
+              <select value={form.visibility} onChange={(event) => update("visibility", event.target.value)} className="mt-2 min-h-11 border border-border bg-background px-3">
+                <option value="public">Public</option>
+                <option value="private">Private</option>
+              </select>
+              {form.visibility === "public" && <span className="mt-2 block border-l-2 border-amber-500 bg-amber-500/10 px-3 py-2 text-xs leading-relaxed text-foreground">Public — anyone can view this and it may appear in search engines.</span>}
+            </label>
           </div>
         )}
         {step === 6 && (

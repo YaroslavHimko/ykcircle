@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Helmet } from "react-helmet";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import SiteChrome from "@/components/SiteChrome";
@@ -26,16 +26,16 @@ export function AdminVenueApplicationsPage() {
 
 export function MyVenuesPage() {
   const user = JSON.parse(localStorage.getItem("authUser") || "null"); const isAdmin = user?.role === "admin"; const isManager = user?.role === "manager"; const endpoint = isAdmin ? "/api/admin/venues" : isManager ? "/api/manager/venues" : "/api/venues/mine"; const dashboardTitle = isAdmin ? "All venues" : isManager ? "Venue management" : "My venues";
-  const [venues,setVenues]=useState([]); const [error,setError]=useState(""); const [emptyMessage,setEmptyMessage]=useState(""); const load=()=>apiFetch(endpoint,{headers:auth()}).then(async r=>{const d=await r.json();if(r.status===404){setVenues([]);setEmptyMessage(errorText(d,"No venues found."));setError("");return;}if(!r.ok)throw new Error(errorText(d,"Unable to load venues."));setVenues(list(d,"venues"));setEmptyMessage("");}).catch(e=>setError(e.message)); useEffect(load,[endpoint]);
+  const [venues,setVenues]=useState([]); const [error,setError]=useState(""); const [emptyMessage,setEmptyMessage]=useState(""); const [loading,setLoading]=useState(true); const loadVersion=useRef(0); const load=useCallback(async()=>{const version=++loadVersion.current;setLoading(true);setError("");try{const r=await apiFetch(endpoint,{headers:auth()});const d=await r.json();if(version!==loadVersion.current)return;if(r.status===404){setVenues([]);setEmptyMessage(errorText(d,"No venues found."));return;}if(!r.ok)throw new Error(errorText(d,"Unable to load venues."));setVenues(list(d,"venues"));setEmptyMessage("");}catch(e){if(version===loadVersion.current)setError(e.message);}finally{if(version===loadVersion.current)setLoading(false);}},[endpoint]); useEffect(()=>{load();},[load]);
   const remove=async id=>{if(!window.confirm("Delete this venue?"))return; try {const r=await apiFetch(`/api/venues/${id}`,{method:"DELETE",headers:auth()});const d=await r.json();if(!r.ok)throw new Error(errorText(d,"Unable to delete venue."));load();}catch(e){setError(e.message);}};
-  return <Shell title={dashboardTitle}><div className="flex flex-wrap justify-between gap-4"><div><h1 className="font-display text-4xl font-bold">{dashboardTitle}</h1><p className="mt-2 text-muted-foreground">{isAdmin || isManager ? "Review all active and inactive venues." : "Create spaces and respond to event booking requests."}</p></div><Link to="/profile/venues/new" className="bg-primary px-5 py-3 text-sm text-primary-foreground">Add venue</Link></div>{error&&<Error text={error}/>}<div className="mt-8 grid gap-4 md:grid-cols-2">{venues.map(v=>{const owner=v.owner||v.user||{};const ownerName=owner.name||v.ownerName||v.ownerEmail||"Not supplied";return <article key={v.id} className="border border-border p-5"><div className="flex justify-between gap-3"><h2 className="font-display text-2xl font-semibold">{v.name}</h2><Status status={v.isActive === false ? "inactive" : "active"}/></div><dl className="mt-4 grid gap-2 text-sm"><div><dt className="inline text-muted-foreground">Business: </dt><dd className="inline">{v.businessName||"Not supplied"}</dd></div><div><dt className="inline text-muted-foreground">Owner: </dt><dd className="inline">{ownerName}</dd></div><div><dt className="inline text-muted-foreground">Location: </dt><dd className="inline">{[v.location,v.address,v.city,v.country].filter(Boolean).join(", ")||"Not supplied"}</dd></div><div><dt className="inline text-muted-foreground">Timezone: </dt><dd className="inline">{v.timezone||"Not supplied"}</dd></div></dl><div className="mt-5 flex flex-wrap gap-3 text-sm"><Link className="text-primary underline" to={`/venues/${v.id}`}>Venue details</Link><Link className="text-primary underline" to={`/profile/venues/${v.id}/bookings`}>Booking list</Link>{!isAdmin&&!isManager&&<><Link className="text-primary underline" to={`/profile/venues/${v.id}/edit`}>Edit & availability</Link><button onClick={()=>remove(v.id)} className="text-destructive underline">Delete</button></>}</div></article>})}</div>{!venues.length&&!error&&<p className="mt-8 text-muted-foreground">{emptyMessage||"No venues found."}</p>}</Shell>;
+  return <Shell title={dashboardTitle}><div className="flex flex-wrap justify-between gap-4"><div><h1 className="font-display text-4xl font-bold">{dashboardTitle}</h1><p className="mt-2 text-muted-foreground">{isAdmin || isManager ? "Review all active and inactive venues." : "Create spaces and respond to event booking requests."}</p></div><Link to="/profile/venues/new" className="bg-primary px-5 py-3 text-sm text-primary-foreground">Add venue</Link></div>{error&&<Error text={error}/>} {loading?<Loading label="Loading venues…"/>:<><div className="mt-8 grid gap-4 md:grid-cols-2">{venues.map(v=>{const owner=v.owner||v.user||{};const ownerName=owner.name||v.ownerName||v.ownerEmail||"Not supplied";return <article key={v.id} className="border border-border p-5"><div className="flex justify-between gap-3"><h2 className="font-display text-2xl font-semibold">{v.name}</h2><Status status={v.isActive === false ? "inactive" : "active"}/></div><dl className="mt-4 grid gap-2 text-sm"><div><dt className="inline text-muted-foreground">Business: </dt><dd className="inline">{v.businessName||"Not supplied"}</dd></div><div><dt className="inline text-muted-foreground">Owner: </dt><dd className="inline">{ownerName}</dd></div><div><dt className="inline text-muted-foreground">Location: </dt><dd className="inline">{[v.location,v.address,v.city,v.country].filter(Boolean).join(", ")||"Not supplied"}</dd></div><div><dt className="inline text-muted-foreground">Timezone: </dt><dd className="inline">{v.timezone||"Not supplied"}</dd></div></dl><div className="mt-5 flex flex-wrap gap-3 text-sm"><Link className="text-primary underline" to={`/venues/${v.id}`}>Venue details</Link><Link className="text-primary underline" to={`/profile/venues/${v.id}/bookings`}>Booking list</Link>{!isAdmin&&!isManager&&<><Link className="text-primary underline" to={`/profile/venues/${v.id}/edit`}>Edit & availability</Link><button onClick={()=>remove(v.id)} className="text-destructive underline">Delete</button></>}</div></article>})}</div>{!venues.length&&!error&&<p className="mt-8 text-muted-foreground">{emptyMessage||"No venues found."}</p>}</>}</Shell>;
 }
 
 export function VenuesDiscoveryPage({ detail = false }) {
   const { id } = useParams(); const [venues, setVenues] = useState([]); const [venue, setVenue] = useState(null); const [error, setError] = useState(""); const [emptyMessage, setEmptyMessage] = useState("");
   useEffect(() => { const path = detail ? `/api/venues/${id}` : "/api/venues"; apiFetch(path).then(async r => { const d = await r.json(); if (r.status === 404 && !detail) { setVenues([]); setEmptyMessage(errorText(d, "No venues are available yet.")); return; } if (!r.ok) throw new Error(errorText(d, "Unable to load venues.")); detail ? setVenue(d.venue || d) : setVenues(list(d, "venues")); }).catch(e => setError(e.message)); }, [detail, id]);
   if (detail) return <Shell title={venue?.name || "Venue"}><Link to="/venues" className="text-sm text-primary underline">Back to venues</Link>{error && <Error text={error}/>} {venue && <article className="mt-6 max-w-2xl"><h1 className="font-display text-4xl font-bold">{venue.name}</h1>{venue.businessName && <p className="mt-2 text-muted-foreground">{venue.businessName}</p>}<p className="mt-6 leading-relaxed">{venue.description}</p><p className="mt-6 text-sm text-muted-foreground">{[venue.location, venue.address, venue.city, venue.country].filter(Boolean).join(", ")}</p></article>}</Shell>;
-  return <Shell title="Discover venues"><h1 className="font-display text-4xl font-bold">Discover venues</h1><p className="mt-3 text-muted-foreground">Places available for community events.</p>{error && <Error text={error}/>}<div className="mt-8 grid gap-4 md:grid-cols-2">{venues.map(v => <Link key={v.id} to={`/venues/${v.id}`} className="border border-border p-5 hover:border-primary"><h2 className="font-display text-2xl font-semibold">{v.name}</h2><p className="mt-2 text-sm text-muted-foreground">{[v.location, v.city, v.country].filter(Boolean).join(", ")}</p>{v.description && <p className="mt-3 line-clamp-2 text-sm">{v.description}</p>}</Link>)}</div>{!venues.length&&!error&&<p className="mt-8 text-muted-foreground">{emptyMessage||"No venues are available yet."}</p>}</Shell>;
+  return <Shell title="Discover venues"><h1 className="font-display text-4xl font-bold">Discover venues</h1><p className="mt-3 text-muted-foreground">Places available for community events.</p><p className="mt-4 border-l-2 border-amber-500 bg-amber-500/10 px-3 py-2 text-sm leading-relaxed">Public venue information is supplied by venue owners or businesses and may be visible to anyone, including search engines.</p>{error && <Error text={error}/>}<div className="mt-8 grid gap-4 md:grid-cols-2">{venues.map(v => <Link key={v.id} to={`/venues/${v.id}`} className="border border-border p-5 hover:border-primary"><h2 className="font-display text-2xl font-semibold">{v.name}</h2><p className="mt-2 text-sm text-muted-foreground">{[v.location, v.city, v.country].filter(Boolean).join(", ")}</p>{v.description && <p className="mt-3 line-clamp-2 text-sm">{v.description}</p>}</Link>)}</div>{!venues.length&&!error&&<p className="mt-8 text-muted-foreground">{emptyMessage||"No venues are available yet."}</p>}</Shell>;
 }
 
 export function VenueEditorPage() {
@@ -46,6 +46,75 @@ export function VenueEditorPage() {
   return <Shell title={editing?"Edit venue":"Add venue"}><Link to="/profile/venues" className="text-sm text-primary underline">Back to my venues</Link><h1 className="mt-5 font-display text-4xl font-bold">{editing?"Edit venue":"Add a venue"}</h1>{error&&<Error text={error}/>}<form onSubmit={save} className="mt-8 grid max-w-3xl gap-5 sm:grid-cols-2"><Field label="Venue name" required value={form.name} onChange={v=>setForm({...form,name:v})}/><Field label="Business name" value={form.businessName||""} onChange={v=>setForm({...form,businessName:v})}/><label className="sm:col-span-2 text-sm font-medium">Description<textarea value={form.description||""} onChange={e=>setForm({...form,description:e.target.value})} className="mt-2 min-h-28 w-full border border-border bg-background p-3"/></label>{[["location","Location"],["country","Country"],["city","City"],["address","Address"],["latitude","Latitude"],["longitude","Longitude"],["timezone","Timezone"]].map(([key,label])=><Field key={key} label={label} required={["location","country","city","address","timezone"].includes(key)} value={form[key]||""} onChange={v=>setForm({...form,[key]:v})}/>) }<label className="flex items-center gap-3 text-sm"><input type="checkbox" checked={Boolean(form.isActive)} onChange={e=>setForm({...form,isActive:e.target.checked})}/> Active and available for bookings</label>{editing&&<section className="sm:col-span-2 border-t border-border pt-7"><h2 className="font-display text-2xl font-semibold">Weekly availability</h2><p className="mt-1 text-sm text-muted-foreground">Times use your venue timezone. Sunday is weekday 0.</p><div className="mt-4 space-y-3">{availability.map((slot,i)=><div key={i} className="flex flex-wrap items-end gap-3"><label className="text-sm">Day<select value={slot.weekday} onChange={e=>setSlot(i,"weekday",Number(e.target.value))} className="ml-2 border border-border bg-background p-2">{days.map((d,n)=><option key={d} value={n}>{d}</option>)}</select></label><label className="text-sm">Start<input type="time" value={slot.startTime} onChange={e=>setSlot(i,"startTime",e.target.value)} className="ml-2 border border-border p-2"/></label><label className="text-sm">End<input type="time" value={slot.endTime} onChange={e=>setSlot(i,"endTime",e.target.value)} className="ml-2 border border-border p-2"/></label><button type="button" onClick={()=>setAvailability(a=>a.filter((_,x)=>x!==i))} className="text-sm text-destructive">Remove</button></div>)}</div><button type="button" onClick={()=>setAvailability(a=>[...a,{weekday:0,startTime:"09:00",endTime:"17:00"}])} className="mt-4 border border-border px-4 py-2 text-sm">Add time slot</button></section>}<button disabled={saving} className="sm:col-span-2 justify-self-start bg-primary px-5 py-3 text-sm text-primary-foreground disabled:opacity-60">{saving?"Saving…":"Save venue"}</button></form></Shell>;
 }
 
-export function VenueBookingsPage(){const {id}=useParams();const [bookings,setBookings]=useState([]);const [error,setError]=useState("");const load=()=>apiFetch(`/api/venues/${id}/bookings`,{headers:auth()}).then(async r=>{const d=await r.json();if(!r.ok)throw new Error(errorText(d,"Unable to load bookings."));setBookings(list(d,"bookings"));}).catch(e=>setError(e.message));useEffect(load,[id]);const review=async(booking,status)=>{const ownerNote=window.prompt("Optional note to event owner:",booking.ownerNote||"");if(ownerNote===null)return;try{const r=await apiFetch(`/api/venue-bookings/${booking.id}`,{method:"PATCH",headers:{...auth(),"Content-Type":"application/json"},body:JSON.stringify({status,ownerNote})});const d=await r.json();if(!r.ok)throw new Error(errorText(d,"Unable to update booking."));load();}catch(e){setError(e.message);}};return <Shell title="Venue booking requests"><Link to="/profile/venues" className="text-sm text-primary underline">Back to my venues</Link><h1 className="mt-5 font-display text-4xl font-bold">Booking requests</h1>{error&&<Error text={error}/>}<div className="mt-8 space-y-3">{bookings.map(b=><div key={b.id} className="border border-border p-5"><div className="flex justify-between gap-4"><div><p className="font-semibold">{b.event?.title||b.eventTitle||"Event booking"}</p><p className="mt-1 text-sm text-muted-foreground">{b.event?.startsAt||b.startsAt?new Date(b.event?.startsAt||b.startsAt).toLocaleString():"Date not supplied"}</p>{b.ownerNote&&<p className="mt-2 text-sm">Note: {b.ownerNote}</p>}</div><Status status={b.status}/></div>{b.status==="pending"&&<div className="mt-4 flex gap-2"><button onClick={()=>review(b,"confirmed")} className="bg-primary px-4 py-2 text-sm text-primary-foreground">Confirm</button><button onClick={()=>review(b,"declined")} className="border border-border px-4 py-2 text-sm">Decline</button></div>}</div>)}</div></Shell>}
+export function VenueBookingsPage() {
+  const { id } = useParams();
+  const [bookings, setBookings] = useState([]);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
+  const loadVersion = useRef(0);
 
-function Shell({title,children}){return <SiteChrome><Helmet><title>{title} | YKCircle</title></Helmet><section className="mx-auto max-w-[72rem] px-5 pb-24 pt-32 sm:px-8 sm:pt-40">{children}</section></SiteChrome>}; function Field({label,required,value,onChange}){return <label className="block text-sm font-medium">{label}{required&&" *"}<input required={required} value={value} onChange={e=>onChange(e.target.value)} className="mt-2 min-h-11 w-full border border-border bg-background px-3"/></label>}; function Error({text}){return <p role="alert" className="mt-5 border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">{text}</p>}; function Status({status}){return <span className="whitespace-nowrap text-sm capitalize text-primary">{status||"pending"}</span>}; function StatusCard({item,label}){return <div className="mt-8 max-w-xl border border-border p-6"><div className="flex justify-between gap-3"><div><p className="font-semibold">{item.businessName}</p><p className="mt-2 text-sm text-muted-foreground">{item.message}</p></div><Status status={item.status}/></div><p className="mt-4 text-sm text-muted-foreground">{label} received. We will notify you when it has been reviewed.</p></div>}
+  const load = useCallback(async () => {
+    const version = ++loadVersion.current;
+    setLoading(true);
+    setError("");
+    try {
+      const response = await apiFetch(`/api/venues/${id}/bookings`, { headers: auth() });
+      const data = await response.json();
+      if (version !== loadVersion.current) return;
+      if (!response.ok) throw new Error(errorText(data, "Unable to load bookings."));
+      setBookings(list(data, "bookings"));
+    } catch (requestError) {
+      if (version === loadVersion.current) setError(requestError.message);
+    } finally {
+      if (version === loadVersion.current) setLoading(false);
+    }
+  }, [id]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const review = async (booking, status) => {
+    const ownerNote = window.prompt("Optional note to event owner:", booking.ownerNote || "");
+    if (ownerNote === null) return;
+    try {
+      const response = await apiFetch(`/api/venue-bookings/${booking.id}`, {
+        method: "PATCH",
+        headers: { ...auth(), "Content-Type": "application/json" },
+        body: JSON.stringify({ status, ownerNote }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(errorText(data, "Unable to update booking."));
+      load();
+    } catch (requestError) {
+      setError(requestError.message);
+    }
+  };
+
+  return <Shell title="Venue booking requests">
+    <Link to="/profile/venues" className="text-sm text-primary underline">Back to my venues</Link>
+    <h1 className="mt-5 font-display text-4xl font-bold">Booking requests</h1>
+    {error && <Error text={error} />}
+    {loading ? <Loading label="Loading booking requests…" /> : <div className="mt-8 space-y-3">
+      {bookings.map((booking) => <div key={booking.id} className="border border-border p-5">
+        <div className="flex justify-between gap-4">
+          <div>
+            <p className="font-semibold">{booking.event?.title || booking.eventTitle || "Event booking"}</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {booking.event?.startsAt || booking.startsAt
+                ? new Date(booking.event?.startsAt || booking.startsAt).toLocaleString()
+                : "Date not supplied"}
+            </p>
+            {booking.ownerNote && <p className="mt-2 text-sm">Note: {booking.ownerNote}</p>}
+          </div>
+          <Status status={booking.status} />
+        </div>
+        {booking.status === "pending" && <div className="mt-4 flex gap-2">
+          <button onClick={() => review(booking, "confirmed")} className="bg-primary px-4 py-2 text-sm text-primary-foreground">Confirm</button>
+          <button onClick={() => review(booking, "declined")} className="border border-border px-4 py-2 text-sm">Decline</button>
+        </div>}
+      </div>)}
+      {!bookings.length && <p className="text-muted-foreground">No booking requests yet.</p>}
+    </div>}
+  </Shell>;
+}
+
+function Shell({title,children}){return <SiteChrome><Helmet><title>{title} | YKCircle</title></Helmet><section className="mx-auto max-w-[72rem] px-5 pb-24 pt-32 sm:px-8 sm:pt-40">{children}</section></SiteChrome>}; function Loading({label="Loading…"}){return <p role="status" className="mt-8 text-muted-foreground">{label}</p>}; function Field({label,required,value,onChange}){return <label className="block text-sm font-medium">{label}{required&&" *"}<input required={required} value={value} onChange={e=>onChange(e.target.value)} className="mt-2 min-h-11 w-full border border-border bg-background px-3"/></label>}; function Error({text}){return <p role="alert" className="mt-5 border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">{text}</p>}; function Status({status}){return <span className="whitespace-nowrap text-sm capitalize text-primary">{status||"pending"}</span>}; function StatusCard({item,label}){return <div className="mt-8 max-w-xl border border-border p-6"><div className="flex justify-between gap-3"><div><p className="font-semibold">{item.businessName}</p><p className="mt-2 text-sm text-muted-foreground">{item.message}</p></div><Status status={item.status}/></div><p className="mt-4 text-sm text-muted-foreground">{label} received. We will notify you when it has been reviewed.</p></div>}

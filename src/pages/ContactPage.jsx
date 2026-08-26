@@ -1,38 +1,24 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
 import { Helmet } from 'react-helmet';
 import SiteChrome from '@/components/SiteChrome';
-import { apiUrl } from '@/lib/api';
+import { apiFetch } from '@/lib/api';
 
-const initialForm = { name: '', email: '', contact: '', activity: '', additionalInformation: '' };
+const initialForm = { name: '', email: '', category: 'General', message: '' };
 
-const ContactPage = () => {
+export default function ContactPage() {
   const [form, setForm] = useState(initialForm);
-  const [activities, setActivities] = useState([]);
-  const [activitiesLoading, setActivitiesLoading] = useState(true);
-  const [activitiesError, setActivitiesError] = useState('');
-  const [status, setStatus] = useState({ loading: false, message: '', error: false });
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    fetch(apiUrl('/api/application-activities')).then(async (response) => {
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Unable to load activities.');
-      setActivities(Array.isArray(data) ? data : []);
-    }).catch((error) => setActivitiesError(error.message || 'Unable to load activities.')).finally(() => setActivitiesLoading(false));
-  }, []);
-
+  const [status, setStatus] = useState({ loading: false, error: '', reference: '' });
   const update = (event) => setForm((current) => ({ ...current, [event.target.name]: event.target.value }));
   const submit = async (event) => {
-    event.preventDefault(); setStatus({ loading: true, message: '', error: false });
+    event.preventDefault(); setStatus({ loading: true, error: '', reference: '' });
     try {
-      const response = await fetch(apiUrl('/api/contact'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
+      const token = localStorage.getItem('authToken');
+      const response = await apiFetch('/api/contact', { method: 'POST', headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify(form) });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Something went wrong.');
-      navigate('/application-sent');
-    } catch (error) { setStatus({ loading: false, message: error.message || 'Something went wrong.', error: true }); }
+      if (!response.ok) throw new Error(data.error || 'Unable to send your message.');
+      setStatus({ loading: false, error: '', reference: data.reference || '' });
+      setForm(initialForm);
+    } catch (error) { setStatus({ loading: false, error: error.message, reference: '' }); }
   };
-
-  return <SiteChrome><Helmet><title>Contact Yaro Himko</title></Helmet><section className="mx-auto max-w-[56rem] px-5 pb-24 pt-32 sm:px-8 sm:pt-40"><p className="text-[0.7rem] uppercase tracking-[0.35em] text-primary">Get in touch</p><h1 className="mt-4 font-display text-5xl font-black leading-[0.95] sm:text-6xl">Tell me what you are planning.</h1><p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">Leave your details and the activity you are interested in. I will get back to you soon.</p><form onSubmit={submit} className="mt-12 space-y-6"><label className="block text-sm">Name<input required name="name" value={form.name} onChange={update} className="mt-2 min-h-12 w-full border border-border bg-background px-4" /></label><label className="block text-sm">Email<input required type="email" name="email" value={form.email} onChange={update} className="mt-2 min-h-12 w-full border border-border bg-background px-4" /></label><label className="block text-sm">WhatsApp / LINE / Telegram number <span className="text-muted-foreground">(optional)</span><input name="contact" value={form.contact} onChange={update} placeholder="Include country code" className="mt-2 min-h-12 w-full border border-border bg-background px-4" /></label><label className="block text-sm">Additional information <span className="text-muted-foreground">(optional)</span><textarea name="additionalInformation" value={form.additionalInformation} onChange={update} rows="5" className="mt-2 w-full border border-border bg-background px-4 py-3" /></label><label className="block text-sm">Desired activity<select required name="activity" value={form.activity} onChange={update} disabled={activitiesLoading || Boolean(activitiesError)} className="mt-2 min-h-12 w-full border border-border bg-background px-4"><option value="">{activitiesLoading ? 'Loading activities…' : 'Select an activity'}</option>{activities.map((activity) => <option key={activity.id} value={activity.name}>{activity.name}</option>)}</select></label>{activitiesError && <p className="text-sm text-destructive">{activitiesError}</p>}<button disabled={status.loading || activitiesLoading || Boolean(activitiesError) || activities.length === 0} className="min-h-12 bg-primary px-7 text-sm font-medium uppercase tracking-widest text-primary-foreground disabled:opacity-60">{status.loading ? 'Sending…' : 'Send enquiry'}</button>{status.message && <p className={status.error ? 'text-destructive' : 'text-primary'}>{status.message}</p>}</form></section></SiteChrome>;
-};
-export default ContactPage;
+  return <SiteChrome><Helmet><title>Contact YKCircle</title><meta name="robots" content="noindex" /></Helmet><section className="mx-auto max-w-[42rem] px-5 pb-24 pt-32 sm:px-8 sm:pt-40"><p className="text-[0.7rem] uppercase tracking-[0.35em] text-primary">Get in touch</p><h1 className="mt-4 font-display text-5xl font-black leading-[0.95]">How can we help?</h1><p className="mt-6 leading-relaxed text-muted-foreground">Choose Privacy for data-rights requests, Account for account help, or Safety to flag an urgent safety concern. Privacy requests receive a reference number.</p>{status.reference ? <div className="mt-10 border border-primary bg-primary/5 p-6" role="status"><h2 className="font-display text-3xl">Message received</h2><p className="mt-3 text-muted-foreground">Keep this reference for follow-up: <span className="font-mono text-foreground">{status.reference}</span></p><button type="button" onClick={() => setStatus({ loading: false, error: '', reference: '' })} className="mt-5 text-sm text-primary underline">Send another message</button></div> : <form onSubmit={submit} className="mt-10 space-y-6"><label className="block text-sm">Name<input required name="name" value={form.name} onChange={update} className="mt-2 min-h-12 w-full border border-border bg-background px-4" /></label><label className="block text-sm">Email<input required type="email" name="email" value={form.email} onChange={update} className="mt-2 min-h-12 w-full border border-border bg-background px-4" /></label><label className="block text-sm">Category<select name="category" value={form.category} onChange={update} className="mt-2 min-h-12 w-full border border-border bg-background px-4"><option>General</option><option>Privacy</option><option>Account</option><option>Safety</option><option>Other</option></select></label><label className="block text-sm">Message<textarea required maxLength="10000" name="message" value={form.message} onChange={update} rows="7" className="mt-2 w-full border border-border bg-background px-4 py-3" /></label>{status.error && <p role="alert" className="text-sm text-destructive">{status.error}</p>}<button disabled={status.loading} className="min-h-12 bg-primary px-7 text-sm font-medium uppercase tracking-widest text-primary-foreground disabled:opacity-60">{status.loading ? 'Sending…' : 'Send message'}</button></form>}</section></SiteChrome>;
+}

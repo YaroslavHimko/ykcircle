@@ -24,14 +24,23 @@ export default function iframeRouteRestorationPlugin() {
 				} catch {}
 			};
 
-			const replaceHistoryState = (url) => {
-				try {
-					history.replaceState(null, '', url);
-					window.dispatchEvent(new PopStateEvent('popstate', { state: history.state }));
-					return true;
-				} catch {}
-				return false;
+			let pendingRoute = null;
+
+			const requestRouterNavigation = (route) => {
+				if (typeof route !== 'string' || !route.startsWith('/')) return;
+
+				pendingRoute = route;
+				window.dispatchEvent(new CustomEvent('horizons:router-navigate', {
+					detail: { route }
+				}));
 			};
+
+			// The React app dispatches this after its router has mounted. This keeps
+			// route restoration from changing browser history behind React Router's
+			// back, which previously left the router and address bar out of sync.
+			window.addEventListener('horizons:router-ready', () => {
+				if (pendingRoute) requestRouterNavigation(pendingRoute);
+			});
 
 			const restore = () => {
 				try {
@@ -45,20 +54,7 @@ export default function iframeRouteRestorationPlugin() {
 
 					const current = getCurrentRoute();
 					if (current !== saved) {
-						if (!replaceHistoryState(saved)) {
-							replaceHistoryState('/');
-						}
-
-						requestAnimationFrame(() => setTimeout(() => {
-							try {
-							const text = (document.body?.innerText || '').trim();
-
-							// If the restored route results in too little content, assume it is invalid and navigate home
-							if (text.length < 50) {
-								replaceHistoryState('/');
-							}
-							} catch {}
-						}, 1000));
+						requestRouterNavigation(saved);
 					}
 				} catch {}
 			};
@@ -103,7 +99,7 @@ export default function iframeRouteRestorationPlugin() {
 				if (event.data?.type === "redirect-home") {
 					const saved = sessionStorage.getItem(STORAGE_KEY);
 					if (saved && saved !== '/') {
-						replaceHistoryState('/');
+						requestRouterNavigation('/');
 					}
 				}
 
@@ -111,7 +107,7 @@ export default function iframeRouteRestorationPlugin() {
 					const target = event.data.path.startsWith('/') ? event.data.path : '/' + event.data.path;
 					const current = getCurrentRoute();
 					if (current !== target) {
-						replaceHistoryState(target);
+						requestRouterNavigation(target);
 					}
 				}
 			});

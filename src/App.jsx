@@ -1,5 +1,5 @@
 import React from 'react';
-import { Route, Routes, BrowserRouter as Router } from 'react-router-dom';
+import { Route, Routes, BrowserRouter as Router, useNavigate } from 'react-router-dom';
 import ScrollToTop from './components/ScrollToTop';
 import HomePage from './pages/HomePage';
 import AboutPage from './pages/AboutPage';
@@ -27,11 +27,32 @@ import GroupSlugRedirect from './pages/GroupSlugRedirect';
 import ArticlesPage from './pages/ArticlesPage';
 import ReportPage from './pages/ReportPage';
 import LegalDocumentsPage from './pages/LegalDocumentsPage';
+import AppealPage from './pages/AppealPage';
 import { AdminVenueApplicationsPage, MyVenuesPage, VenueBookingsPage, VenueEditorPage, VenueOwnerApplicationPage, VenuesDiscoveryPage } from './pages/VenuesPage';
+
+function IframeRouteNavigation() {
+    const navigate = useNavigate();
+
+    React.useEffect(() => {
+        const handleNavigation = (event) => {
+            const route = event.detail?.route;
+            if (typeof route === 'string' && route.startsWith('/')) {
+                navigate(route, { replace: true });
+            }
+        };
+
+        window.addEventListener('horizons:router-navigate', handleNavigation);
+        window.dispatchEvent(new Event('horizons:router-ready'));
+        return () => window.removeEventListener('horizons:router-navigate', handleNavigation);
+    }, [navigate]);
+
+    return null;
+}
 
 function App() {
     return (
         <Router>
+            <IframeRouteNavigation />
             <ScrollToTop />
             <Routes>
                 <Route path="/" element={<HomePage />} />
@@ -39,8 +60,13 @@ function App() {
                 <Route path="/join" element={<JoinPage />} />
                 <Route path="/contact" element={<ContactPage />} />
                 <Route path="/report" element={<ReportPage />} />
+                <Route path="/appeal" element={<AppealPage />} />
                 <Route path="/legal" element={<LegalDocumentsPage />} />
                 <Route path="/legal/:slug" element={<LegalDocumentsPage />} />
+                <Route path="/terms" element={<LegalDocumentsPage documentSlug="terms" />} />
+                <Route path="/privacy" element={<LegalDocumentsPage documentSlug="privacy" />} />
+                <Route path="/community-guidelines" element={<LegalDocumentsPage documentSlug="community-guidelines" />} />
+                <Route path="/cookies" element={<LegalDocumentsPage documentSlug="cookies" />} />
                 <Route path="/login" element={<AuthPage mode="login" />} />
                 <Route path="/register" element={<AuthPage mode="register" />} />
                 <Route path="/check-email" element={<CheckEmailPage />} />

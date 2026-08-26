@@ -165,6 +165,7 @@ function GroupForm({ initial, onCancel, onSave, saving }) {
           <option value="Public">Public</option>
           <option value="Private">Private</option>
         </select>
+        {form.visibility === "Public" && <span className="mt-2 block border-l-2 border-amber-500 bg-amber-500/10 px-3 py-2 text-xs leading-relaxed text-foreground">Public — anyone can view this and it may appear in search engines.</span>}
       </label>
       <div className="flex flex-wrap gap-3">
         <button

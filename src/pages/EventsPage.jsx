@@ -926,6 +926,14 @@ export default function EventsPage({
               {form.pricingType === "paid" &&
                 input("fee", "Fee", "number", true)}
               <label className="block text-sm">
+                Event visibility
+                <select name="visibility" value={form.visibility} onChange={update} className="mt-2 min-h-11 w-full border border-border bg-background px-3">
+                  <option value="Public">Public</option>
+                  <option value="Private">Private</option>
+                </select>
+                {form.visibility === "Public" && <span className="mt-2 block border-l-2 border-amber-500 bg-amber-500/10 px-3 py-2 text-xs leading-relaxed text-foreground">Public — anyone can view this and it may appear in search engines.</span>}
+              </label>
+              <label className="block text-sm">
                 Location type
                 <select
                   name="locationType"

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { Menu, X, Instagram, Send, Youtube, UserRound, LogOut, Users } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
+import CookieSettings, { openCookieSettings } from '@/components/CookieSettings';
 
 const baseNav = [
     { to: '/stockholm/community', label: 'Community' },
@@ -213,6 +214,12 @@ export function Footer() {
                         <li><Link className="hover:text-primary" to="/articles">Articles</Link></li>
                         <li><Link className="hover:text-primary" to="/contact">Contact</Link></li>
                         <li><Link className="hover:text-primary" to="/report">Report content</Link></li>
+                        <li><Link className="hover:text-primary" to="/appeal">Appeal a decision</Link></li>
+                        <li><Link className="hover:text-primary" to="/terms">Terms</Link></li>
+                        <li><Link className="hover:text-primary" to="/privacy">Privacy</Link></li>
+                        <li><Link className="hover:text-primary" to="/community-guidelines">Community Guidelines</Link></li>
+                        <li><Link className="hover:text-primary" to="/cookies">Cookie Policy</Link></li>
+                        <li><button type="button" onClick={openCookieSettings} className="hover:text-primary">Cookie Settings</button></li>
                         <li><Link className="hover:text-primary" to="/legal">Legal documents</Link></li>
                         {legalDocuments.map((document) => <li key={document.slug}><Link className="hover:text-primary" to={`/legal/${document.slug}`}>{document.title}</Link></li>)}
                     </ul>
@@ -231,6 +238,7 @@ export default function SiteChrome({ children }) {
             <Header />
             <main className="flex-1">{children}</main>
             <Footer />
+            <CookieSettings />
         </div>
     );
 }

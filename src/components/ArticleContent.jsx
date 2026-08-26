@@ -36,11 +36,9 @@ function youtubeVideoId(value) {
   }
 }
 
-function YouTubeEmbed({ line }) {
-  const markdownLink = line.match(/^\[[^\]]*\]\((https?:\/\/[^\s)]+)\)$/);
-  const videoId = youtubeVideoId(markdownLink?.[1] || line);
-  if (!videoId) return null;
-
+function YouTubeFrame({ videoId }) {
+  const [enabled, setEnabled] = React.useState(false);
+  if (!enabled) return <figure className="my-8 max-w-xl border border-border bg-secondary/30 p-6"><p className="font-medium">YouTube video</p><p className="mt-2 text-sm leading-relaxed text-muted-foreground">This video is hosted by YouTube. Loading it may allow YouTube to process your device and connection data.</p><button type="button" onClick={() => setEnabled(true)} className="mt-4 min-h-10 border border-border px-4 text-sm">Load YouTube video</button></figure>;
   return <figure className="my-8 w-full max-w-xl overflow-hidden border border-border bg-black shadow-sm">
     <div className="aspect-video">
       <iframe
@@ -53,6 +51,12 @@ function YouTubeEmbed({ line }) {
       />
     </div>
   </figure>;
+}
+
+function YouTubeEmbed({ line }) {
+  const markdownLink = line.match(/^\[[^\]]*\]\((https?:\/\/[^\s)]+)\)$/);
+  const videoId = youtubeVideoId(markdownLink?.[1] || line);
+  return videoId ? <YouTubeFrame videoId={videoId} /> : null;
 }
 
 export default function ArticleContent({ body, className = '' }) {
