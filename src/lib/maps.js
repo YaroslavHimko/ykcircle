@@ -63,6 +63,19 @@ export const getMapsConfig = () => {
   return configRequest;
 };
 
+// A Places request is made directly to Google from the browser, so the API
+// cannot observe it. Report only an unusual aggregate from an authenticated
+// location editor; never send a search string, address, place ID, or key.
+export const reportHighPlacesActivity = (count, windowMs) => {
+  const token = localStorage.getItem("authToken");
+  if (!token) return Promise.resolve();
+  return apiFetch("/api/maps/places-activity", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ count, windowMs }),
+  }).catch(() => undefined);
+};
+
 export const readMapConsent = () => {
   try { return Boolean(JSON.parse(localStorage.getItem("ykcircle-cookie-consent") || "{}").externalMedia); }
   catch { return false; }

@@ -42,6 +42,14 @@ response. This reduces pointless application traffic, but it does **not**
 protect the browser key itself: a browser key is still visible to an authorised
 website visitor.
 
+Rate-limit venue and event writes at the backend, after authentication and
+authorisation, using both account and IP keys. A practical starting policy is
+five creates per account per ten minutes, and thirty updates per account per
+ten minutes, with a tighter temporary IP limit to absorb distributed abuse.
+Return `429 Too Many Requests` with `Retry-After`, log the account, IP hash,
+route, action, and decision, and alert on sustained denials. Apply the same
+limits to bulk or draft endpoints that can create equivalent records.
+
 If the backend later calls Geocoding, Places, or Routes APIs, use a *different*
 server key restricted by server egress IP address and to only the required APIs.
 Require an authenticated user, authorise the action, rate-limit per account and
@@ -61,8 +69,21 @@ and [usage and billing documentation](https://developers.google.com/maps/documen
   page is rendered; rerenders do not inject or download another script.
 - Maps do not load until external-media consent is granted when the backend
   requires that consent.
-- The address picker uses Google's Maps/Places UI directly. The frontend does
-  not expose a generic geocoding request function or persist the key in storage.
+- Places is loaded only after a user presses **Search address on map** in a
+  venue or event editor. Displaying an existing event or venue imports only the
+  Maps library; it never imports or calls Places.
+- Searches are delayed 400 ms, require three characters, discard stale results,
+  and use one Places session token from the first query through the selected
+  place's details request. The token is discarded immediately after selection.
+- The selected record stores the Google place ID, coordinates, and formatted
+  address. The frontend does not expose a generic geocoding request function or
+  persist the key in storage.
+
+For high Places activity, configure a Google Cloud Monitoring alert for an
+unexpected rise in Places Autocomplete/Place Details requests for this browser
+key. Backend logs cannot reliably observe direct browser-to-Google calls;
+backend audit logs should instead alert on unusually high venue/event create or
+edit rates.
 
 These measures reduce accidental usage. Website/API restrictions, quotas,
 budget alerts, App Check, and backend controls are the enforcement layer
