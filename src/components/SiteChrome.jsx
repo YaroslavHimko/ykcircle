@@ -20,9 +20,6 @@ export function Header() {
     const overlay = pathname === '/';
     const canManage = Boolean(user && ['admin', 'manager'].includes(user.role));
     const isAdmin = user?.role === 'admin';
-    // The API verifies the email address and enforces event ownership. Any
-    // signed-in member can therefore access their own event workspace.
-    const canManageEvents = Boolean(user);
 
     React.useEffect(() => {
         const refreshUser = () => setUser(JSON.parse(localStorage.getItem('authUser') || 'null'));
@@ -87,19 +84,26 @@ export function Header() {
                     <button type="button" aria-label="Open profile menu" aria-expanded={profileOpen} onClick={() => setProfileOpen((value) => !value)} className={`inline-flex h-11 w-11 items-center justify-center rounded-full border ${overlay ? 'border-white/40 text-[hsl(40_30%_94%)]' : 'border-border text-foreground'} transition-colors hover:border-primary hover:text-primary`}>
                         <UserRound className="h-5 w-5" strokeWidth={1.75} />
                     </button>
-                    {profileOpen && <div className="absolute right-0 top-14 z-50 w-52 border border-border bg-background p-2 shadow-xl">
-                        {user ? <><p className="border-b border-border px-3 py-2 text-xs text-muted-foreground">{user.name}</p><Link to="/profile" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">View profile</Link></> : <Link to="/login" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Log in</Link>}
-                        {canManage && <>
-                            <Link to="/admin/applications" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Manage applications</Link>
-                            <Link to="/admin/users" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Manage user roles</Link>
-                            <Link to="/profile/articles" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Manage articles</Link>
-                            {isAdmin && <Link to="/admin/reports" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Content reports</Link>}
-                            {isAdmin && <Link to="/admin/venue-owner-applications" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Venue owner applications</Link>}
-                        </>}
-                        {canManageEvents && <Link to="/profile/events" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Manage events</Link>}
-                        {user && <><Link to="/profile/venues" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">My venues</Link><Link to="/profile/saved-venues" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Saved venues</Link></>}
-                        {user && <Link to="/profile/groups" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Manage groups</Link>}
-                        {user && <button type="button" onClick={logout} className="flex w-full items-center gap-2 px-3 py-3 text-left text-sm text-destructive hover:bg-secondary"><LogOut className="h-4 w-4" /> Log out</button>}
+                    {profileOpen && <div className="absolute right-0 top-14 z-50 w-60 border border-border bg-background p-2 shadow-xl">
+                        {user ? <>
+                            <p className="border-b border-border px-3 py-2 text-xs text-muted-foreground">{user.name}</p>
+                            <p className="px-3 pt-4 text-[0.65rem] font-medium uppercase tracking-[0.2em] text-muted-foreground">Your account</p>
+                            <Link to="/profile" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">View profile</Link>
+                            <Link to="/profile/saved-venues" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Saved venues</Link>
+                            <p className="mt-2 border-t border-border px-3 pt-4 text-[0.65rem] font-medium uppercase tracking-[0.2em] text-muted-foreground">Manage</p>
+                            <Link to="/profile/events" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Events</Link>
+                            <Link to="/profile/groups" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Groups</Link>
+                            <Link to="/profile/venues" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Venues</Link>
+                            {canManage && <>
+                                <p className="mt-2 border-t border-border px-3 pt-4 text-[0.65rem] font-medium uppercase tracking-[0.2em] text-muted-foreground">Administration</p>
+                                <Link to="/admin/applications" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Applications</Link>
+                                <Link to="/admin/users" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">User roles</Link>
+                                <Link to="/profile/articles" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Articles</Link>
+                                {isAdmin && <Link to="/admin/reports" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Content reports</Link>}
+                                {isAdmin && <Link to="/admin/venue-owner-applications" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Venue owner applications</Link>}
+                            </>}
+                            <button type="button" onClick={logout} className="mt-2 flex w-full items-center gap-2 border-t border-border px-3 py-3 text-left text-sm text-destructive hover:bg-secondary"><LogOut className="h-4 w-4" /> Log out</button>
+                        </> : <Link to="/login" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Log in</Link>}
                     </div>}
                 </div>
 
@@ -138,18 +142,22 @@ export function Header() {
                             </Link>
                         ))}
                         {user ? <>
+                            <p className="pt-4 text-[0.65rem] font-medium uppercase tracking-[0.2em] text-muted-foreground">Your account</p>
                             <Link to="/profile" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">View profile</Link>
+                            <Link to="/profile/saved-venues" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">Saved venues</Link>
+                            <p className="pt-5 text-[0.65rem] font-medium uppercase tracking-[0.2em] text-muted-foreground">Manage</p>
+                            <Link to="/profile/events" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">Events</Link>
+                            <Link to="/profile/groups" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">Groups</Link>
+                            <Link to="/profile/venues" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">Venues</Link>
                             {canManage && <>
-                                <Link to="/admin/applications" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">Manage applications</Link>
-                                <Link to="/admin/users" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">Manage user roles</Link>
-                                <Link to="/profile/articles" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">Manage articles</Link>
+                                <p className="pt-5 text-[0.65rem] font-medium uppercase tracking-[0.2em] text-muted-foreground">Administration</p>
+                                <Link to="/admin/applications" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">Applications</Link>
+                                <Link to="/admin/users" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">User roles</Link>
+                                <Link to="/profile/articles" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">Articles</Link>
                                 {isAdmin && <Link to="/admin/reports" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">Content reports</Link>}
                                 {isAdmin && <Link to="/admin/venue-owner-applications" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">Venue owner applications</Link>}
                             </>}
-                            {canManageEvents && <Link to="/profile/events" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">Manage events</Link>}
-                            <Link to="/profile/venues" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">My venues</Link><Link to="/profile/saved-venues" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">Saved venues</Link>
-                            <Link to="/profile/groups" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">Manage groups</Link>
-                            <button type="button" onClick={() => { setOpen(false); logout(); }} className="flex min-h-[44px] items-center gap-2 border-b border-border/60 py-3 text-left text-base text-destructive"><LogOut className="h-4 w-4" /> Log out</button>
+                            <button type="button" onClick={() => { setOpen(false); logout(); }} className="mt-3 flex min-h-[44px] items-center gap-2 border-b border-border/60 py-3 text-left text-base text-destructive"><LogOut className="h-4 w-4" /> Log out</button>
                         </> : <Link to="/login" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">Log in</Link>}
                     </div>
                 </div>
@@ -160,6 +168,17 @@ export function Header() {
 
 export function Footer() {
     const [legalDocuments, setLegalDocuments] = useState([]);
+    const defaultLegalDocuments = [
+        { slug: 'terms', title: 'Terms' },
+        { slug: 'privacy', title: 'Privacy' },
+        { slug: 'cookies', title: 'Cookies' },
+    ];
+    const additionalLegalDocuments = legalDocuments.filter((document) =>
+        document?.slug &&
+        !defaultLegalDocuments.some((defaultDocument) => defaultDocument.slug === document.slug) &&
+        !document.slug.toLowerCase().includes('community') &&
+        !String(document.title || '').toLowerCase().includes('community'),
+    );
 
     useEffect(() => {
         apiFetch('/api/legal-documents')
@@ -170,7 +189,7 @@ export function Footer() {
 
     return (
         <footer className="shrink-0 border-t border-border bg-[hsl(var(--ink))] text-[hsl(40_28%_88%)]">
-            <div className="mx-auto grid max-w-[72rem] gap-10 px-5 py-14 sm:px-8 md:grid-cols-[1.4fr_1fr_1fr]">
+            <div className="mx-auto grid max-w-[72rem] gap-10 px-5 py-14 sm:px-8 md:grid-cols-[1.4fr_0.8fr_1.2fr]">
                 <div>
                     <div className="flex items-center gap-3"><img src="/logo.png" alt="" className="h-10 w-10 rounded-full object-cover" /><p className="font-display text-2xl font-semibold">YKCircle</p></div>
                     <p className="mt-3 max-w-sm text-sm leading-relaxed text-[hsl(40_20%_78%)]">
@@ -201,23 +220,27 @@ export function Footer() {
                     <ul className="space-y-2">
                         <li><Link className="hover:text-primary" to="/groups">Groups</Link></li>
                         <li><Link className="hover:text-primary" to="/events">Events</Link></li>
+                        <li><Link className="hover:text-primary" to="/venues">Venues</Link></li>
+                        <li><Link className="hover:text-primary" to="/articles">Articles</Link></li>
                     </ul>
                 </div>
 
                 <div className="text-sm">
-                    <p className="mb-4 text-[0.7rem] uppercase tracking-[0.25em] text-[hsl(40_20%_60%)]">More</p>
+                    <p className="mb-4 text-[0.7rem] uppercase tracking-[0.25em] text-[hsl(40_20%_60%)]">Help</p>
                     <ul className="space-y-2 text-[hsl(40_20%_78%)]">
-                        <li><Link className="hover:text-primary" to="/articles">Articles</Link></li>
                         <li><Link className="hover:text-primary" to="/contact">Contact</Link></li>
                         <li><Link className="hover:text-primary" to="/report">Report content</Link></li>
                         <li><Link className="hover:text-primary" to="/appeal">Appeal a decision</Link></li>
-                        <li><Link className="hover:text-primary" to="/terms">Terms</Link></li>
-                        <li><Link className="hover:text-primary" to="/privacy">Privacy</Link></li>
-                        <li><Link className="hover:text-primary" to="/cookies">Cookie Policy</Link></li>
-                        <li><button type="button" onClick={openCookieSettings} className="hover:text-primary">Cookie Settings</button></li>
-                        <li><Link className="hover:text-primary" to="/legal">Legal documents</Link></li>
-                        {legalDocuments.map((document) => <li key={document.slug}><Link className="hover:text-primary" to={`/legal/${document.slug}`}>{document.title}</Link></li>)}
                     </ul>
+                    <div className="mt-7 border-t border-white/10 pt-5">
+                        <p className="mb-3 text-[0.7rem] uppercase tracking-[0.25em] text-[hsl(40_20%_60%)]">Legal</p>
+                        <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-[hsl(40_20%_78%)]">
+                            {defaultLegalDocuments.map((document) => <Link key={document.slug} className="hover:text-primary" to={`/${document.slug}`}>{document.title}</Link>)}
+                            {additionalLegalDocuments.map((document) => <Link key={document.slug} className="hover:text-primary" to={`/legal/${document.slug}`}>{document.title}</Link>)}
+                            <Link className="hover:text-primary" to="/legal">All documents</Link>
+                            <button type="button" onClick={openCookieSettings} className="hover:text-primary">Cookie settings</button>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div className="border-t border-white/10 px-5 py-5 text-center text-xs text-[hsl(40_15%_62%)] sm:px-8">
