@@ -907,8 +907,8 @@ export default function EventDetailPage() {
         <title>{event?.title || "Event"} | Yaro Himko</title>
       </Helmet>
       <section className="mx-auto max-w-[72rem] px-5 pb-24 pt-32 sm:px-8 sm:pt-40">
-        <Link to="/events" className="text-sm text-primary underline">
-          Back to all events
+        <Link to={manageView ? "/profile/events" : "/events"} className="text-sm text-primary underline">
+          Back to {manageView ? "manage events" : "all events"}
         </Link>
         {loading && (
           <div className="mt-12 flex items-center gap-3 text-muted-foreground">

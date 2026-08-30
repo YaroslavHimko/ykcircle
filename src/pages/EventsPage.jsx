@@ -1095,7 +1095,7 @@ export default function EventsPage({
                       </p>
                     )}
                     {event.groupName && (
-                      <Link to={`/groups/${event.groupId}`} className="mt-2 inline-block text-xs font-medium text-primary hover:underline">
+                      <Link to={`/groups/${event.groupId}${managementOnly ? "?manage=1" : ""}`} className="mt-2 inline-block text-xs font-medium text-primary hover:underline">
                         From {event.groupName}
                       </Link>
                     )}

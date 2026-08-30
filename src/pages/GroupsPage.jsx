@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Helmet } from "react-helmet";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { Users } from "lucide-react";
 import SiteChrome from "@/components/SiteChrome";
 import ConfirmationDialog from "@/components/ConfirmationDialog";
@@ -62,7 +62,7 @@ function GroupImage({ group, className = "" }) {
   );
 }
 
-function GroupCard({ group, action }) {
+function GroupCard({ group, action, managementView = false }) {
   return (
     <article className="overflow-hidden border border-border bg-background shadow-sm">
       <GroupImage group={group} className="aspect-[16/7] w-full" />
@@ -73,7 +73,7 @@ function GroupCard({ group, action }) {
               {group.visibility} group
             </p>
             <h2 className="mt-2 font-display text-3xl font-semibold">
-              <Link className="hover:text-primary" to={`/groups/${group.id}`}>
+              <Link className="hover:text-primary" to={`/groups/${group.id}${managementView ? "?manage=1" : ""}`}>
                 {group.name}
               </Link>
             </h2>
@@ -374,7 +374,9 @@ export default function GroupsPage({
   focusedManagement = false,
 }) {
   const { id } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
+  const managementView = new URLSearchParams(location.search).get("manage") === "1";
   const token = localStorage.getItem("authToken");
   const user = JSON.parse(localStorage.getItem("authUser") || "null");
   const isAdministrator = user?.role === "admin";
@@ -815,8 +817,8 @@ export default function GroupsPage({
           ) : (
             group && (
               <>
-                <Link to="/groups" className="text-sm text-primary">
-                  ← All groups
+                <Link to={managementView ? "/profile/groups" : "/groups"} className="text-sm text-primary">
+                  ← {managementView ? "Manage groups" : "All groups"}
                 </Link>
                 <div className="mt-6 overflow-hidden border-y border-border">
                   <GroupImage group={group} className="aspect-[16/6] w-full" />
@@ -1003,10 +1005,10 @@ export default function GroupsPage({
         </Helmet>
         <section className="mx-auto max-w-[72rem] px-5 pb-24 pt-32 sm:px-8 sm:pt-40">
           {loading ? <p className="text-muted-foreground">Loading group…</p> : !focusedGroup ? <><h1 className="font-display text-4xl font-semibold">Group unavailable</h1><p className="mt-4 text-muted-foreground">You do not have permission to manage this group.</p><Link to="/profile/groups" className="mt-6 inline-flex text-primary">Back to your groups</Link></> : <>
-            <Link to={`/groups/${focusedGroup.id}`} className="text-sm text-primary">← Back to group</Link>
+            <Link to={`/groups/${focusedGroup.id}?manage=1`} className="text-sm text-primary">← Back to group</Link>
             <p className="mt-8 text-xs uppercase tracking-[0.25em] text-primary">Group management</p>
             <h1 className="mt-3 font-display text-5xl font-black">Manage {focusedGroup.name}</h1>
-            <GroupForm initial={focusedGroup} onSave={(form, image) => saveGroup(form, image, focusedGroup)} onCancel={() => navigate(`/groups/${focusedGroup.id}`)} saving={saving} />
+            <GroupForm initial={focusedGroup} onSave={(form, image) => saveGroup(form, image, focusedGroup)} onCancel={() => navigate(`/groups/${focusedGroup.id}?manage=1`)} saving={saving} />
             <div className="mt-8 flex flex-wrap gap-3">
               <button type="button" onClick={() => openMembers(focusedGroup)} className="min-h-11 border border-border px-5 text-sm">Manage members</button>
               <Link to={`/profile/events/new?groupId=${focusedGroup.id}`} className="inline-flex min-h-11 items-center bg-primary px-5 text-sm text-primary-foreground">Create event</Link>
@@ -1100,11 +1102,12 @@ export default function GroupsPage({
                 <GroupCard
                   key={item.id}
                   group={item}
+                  managementView={managementOnly}
                   action={
                     managementOnly ? (
                       <div className="flex flex-wrap gap-3">
                         <Link
-                          to={`/groups/${item.id}`}
+                          to={`/groups/${item.id}?manage=1`}
                           className="inline-flex min-h-10 items-center border border-border px-4 text-sm"
                         >
                           Open
