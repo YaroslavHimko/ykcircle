@@ -41,9 +41,20 @@ const clearAuthAndRedirect = () => {
 };
 
 export const apiFetch = async (path, options = {}) => {
-  const response = await fetch(apiUrl(path), options);
+  // Endpoints that use optionalAuthenticate (venue/group/event detail lookups,
+  // for example) personalize their response - e.g. deciding whether a private
+  // or draft resource's image needs a signed token - only when a bearer token
+  // is actually sent. Attach one whenever we have it and the caller hasn't
+  // already set an explicit Authorization header, without changing whether a
+  // 401 is treated as "your session expired": that still only fires for
+  // callers that explicitly required auth, so a stray 401 from an unrelated
+  // endpoint (e.g. a failed login attempt) can't log out an unrelated session.
+  const requiresAuth = Boolean(options.headers?.Authorization);
+  const token = !requiresAuth && localStorage.getItem('authToken');
+  const headers = token ? { ...options.headers, Authorization: `Bearer ${token}` } : options.headers;
+  const response = await fetch(apiUrl(path), { ...options, headers });
 
-  if (response.status === 401 && options.headers?.Authorization) {
+  if (response.status === 401 && requiresAuth) {
     clearAuthAndRedirect();
   }
 

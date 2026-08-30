@@ -22,9 +22,11 @@ const testGroupPresets = [
 ];
 const asList = (data, key = "groups") =>
   Array.isArray(data) ? data : data?.[key] || [];
+// coverImageUrl carries a signed token for a private group's cover, so it
+// must win over the bare coverImage filename, which has no token attached.
 const groupImageValue = (group) =>
-  group?.coverImage ||
   group?.coverImageUrl ||
+  group?.coverImage ||
   group?.image ||
   group?.imageUrl ||
   group?.groupImage ||

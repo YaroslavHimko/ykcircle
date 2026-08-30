@@ -81,14 +81,9 @@ const eventCover = (event) =>
 const coverImageUrl = (value) => {
   if (!value) return "";
   if (value.startsWith("/images/")) return value;
-  try {
-    const parsed = new URL(value, window.location.origin);
-    if (parsed.pathname.startsWith("/uploads/event-covers/"))
-      return apiAssetUrl(parsed.pathname);
-    if (/^https?:\/\//i.test(value)) return parsed.toString();
-  } catch {
-    // A bare filename is handled below.
-  }
+  // A signed token for a draft/private cover rides in the query string, so
+  // this must not round-trip through URL().pathname, which would drop it.
+  if (/^https?:\/\//i.test(value)) return value;
   return apiAssetUrl(
     value.startsWith("/") ? value : "/uploads/event-covers/" + value,
   );
