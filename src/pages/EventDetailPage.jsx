@@ -1207,6 +1207,14 @@ export default function EventDetailPage() {
                 </button>}
               </div>
             )}
+            <div className="mt-5">
+              <Link
+                to={`/report?entityType=event&entityId=${encodeURIComponent(event.id)}&contentUrl=${encodeURIComponent(window.location.href)}`}
+                className="inline-flex min-h-10 items-center border border-border px-4 text-xs uppercase tracking-widest text-muted-foreground hover:border-destructive hover:text-destructive"
+              >
+                Report event
+              </Link>
+            </div>
             {(canManageEvents || currentUserParticipates) && <ForumDiscussion title="Event discussion" basePath={`/api/events/${event.id}/threads`} token={token} canPost={Boolean(token)} canModerate={canManageEvents} emptyText="No event discussions yet." />}
             {canManageEvents && (
               <>

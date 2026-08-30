@@ -6,7 +6,7 @@ import { apiFetch } from "@/lib/api";
 
 const fallbackDocuments = [
   { slug: "privacy", title: "Privacy Policy" }, { slug: "terms", title: "Terms of Service" },
-  { slug: "community-guidelines", title: "Community Guidelines" }, { slug: "organizer-terms", title: "Organizer Terms" },
+  { slug: "organizer-terms", title: "Organizer Terms" },
   { slug: "tickets-refunds", title: "Tickets & Refunds" }, { slug: "cookies", title: "Cookie Policy" },
 ];
 const asDocuments = (data) => Array.isArray(data) ? data : data?.documents || fallbackDocuments;

@@ -1,22 +1,27 @@
 import React, { useState } from "react";
 import { Helmet } from "react-helmet";
+import { useLocation } from "react-router-dom";
 import SiteChrome from "@/components/SiteChrome";
 import { apiFetch } from "@/lib/api";
 
-const initialForm = {
-  entityType: "",
-  entityId: "",
-  contentUrl: window.location.href,
+const initialForm = (search = "") => {
+  const params = new URLSearchParams(search);
+  return {
+  entityType: params.get("entityType") || "",
+  entityId: params.get("entityId") || "",
+  contentUrl: params.get("contentUrl") || window.location.href,
   reasonCode: "",
   description: "",
   supportingDetails: "",
   reporterEmail: "",
   allegedIllegal: false,
   goodFaithDeclared: false,
+  };
 };
 
 export default function ReportPage() {
-  const [form, setForm] = useState(initialForm);
+  const location = useLocation();
+  const [form, setForm] = useState(() => initialForm(location.search));
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [reference, setReference] = useState("");
@@ -78,7 +83,7 @@ export default function ReportPage() {
           </div>
         ) : (
           <form onSubmit={submit} className="mt-10 space-y-6">
-            <label className="block text-sm">Content type<select required name="entityType" value={form.entityType} onChange={update} className="mt-2 min-h-12 w-full border border-border bg-background px-4"><option value="">Select content type</option><option value="community_post">Community post</option><option value="image">Image</option><option value="event">Event</option><option value="group">Group</option><option value="review">Review</option><option value="profile">Profile</option><option value="organization">Organization</option></select></label>
+            <label className="block text-sm">Content type<select required name="entityType" value={form.entityType} onChange={update} className="mt-2 min-h-12 w-full border border-border bg-background px-4"><option value="">Select content type</option><option value="image">Image</option><option value="event">Event</option><option value="group">Group</option><option value="venue">Venue</option><option value="review">Review</option><option value="profile">Profile</option><option value="organization">Organization</option></select></label>
             <label className="block text-sm">Content ID <span className="text-muted-foreground">(optional if you provide a URL)</span><input name="entityId" value={form.entityId} onChange={update} className="mt-2 min-h-12 w-full border border-border bg-background px-4" /></label>
             <label className="block text-sm">Content URL <span className="text-muted-foreground">(optional if you provide an ID)</span><input name="contentUrl" type="url" value={form.contentUrl} onChange={update} className="mt-2 min-h-12 w-full border border-border bg-background px-4" /></label>
             <label className="block text-sm">Reason<select required name="reasonCode" value={form.reasonCode} onChange={update} className="mt-2 min-h-12 w-full border border-border bg-background px-4"><option value="">Select a reason</option><option value="illegal_content">Suspected illegal content</option><option value="harassment">Harassment or abuse</option><option value="unsafe_event">Unsafe event</option><option value="scam_fraud">Fraud or scam</option><option value="privacy">Privacy concern</option><option value="other">Other</option></select></label>

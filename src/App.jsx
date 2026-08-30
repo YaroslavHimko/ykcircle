@@ -21,14 +21,14 @@ import InvitationResponsePage from './pages/InvitationResponsePage';
 import GroupInvitationPage from './pages/GroupInvitationPage';
 import UserRolesPage from './pages/UserRolesPage';
 import GroupsPage from './pages/GroupsPage';
-import CommunityPage from './pages/CommunityPage';
-import AdminCommunityReportsPage from './pages/AdminCommunityReportsPage';
 import GroupSlugRedirect from './pages/GroupSlugRedirect';
 import ArticlesPage from './pages/ArticlesPage';
 import ReportPage from './pages/ReportPage';
 import LegalDocumentsPage from './pages/LegalDocumentsPage';
 import AppealPage from './pages/AppealPage';
-import { AdminVenueApplicationsPage, MyVenuesPage, VenueBookingsPage, VenueEditorPage, VenueOwnerApplicationPage, VenuesDiscoveryPage } from './pages/VenuesPage';
+import AdminReportsPage from './pages/AdminReportsPage';
+import { AdminVenueApplicationsPage, MyVenuesPage, VenueBookingsPage, VenueOwnerApplicationPage } from './pages/VenuesPage';
+import { SavedVenuesPage, VenueCityOrDetailPage, VenueDetailPage, VenueEditorPage, VenuesDiscoveryPage, VenueSearchRoutePage } from './pages/VenueMarketplace';
 
 function IframeRouteNavigation() {
     const navigate = useNavigate();
@@ -65,7 +65,6 @@ function App() {
                 <Route path="/legal/:slug" element={<LegalDocumentsPage />} />
                 <Route path="/terms" element={<LegalDocumentsPage documentSlug="terms" />} />
                 <Route path="/privacy" element={<LegalDocumentsPage documentSlug="privacy" />} />
-                <Route path="/community-guidelines" element={<LegalDocumentsPage documentSlug="community-guidelines" />} />
                 <Route path="/cookies" element={<LegalDocumentsPage documentSlug="cookies" />} />
                 <Route path="/login" element={<AuthPage mode="login" />} />
                 <Route path="/register" element={<AuthPage mode="register" />} />
@@ -77,15 +76,18 @@ function App() {
                 <Route path="/admin/applications" element={<AdminApplicationsPage />} />
                 <Route path="/admin/applications/:id" element={<AdminApplicationPage />} />
                 <Route path="/admin/users" element={<UserRolesPage />} />
-                <Route path="/admin/community/reports" element={<AdminCommunityReportsPage />} />
+                <Route path="/admin/reports" element={<AdminReportsPage />} />
                 <Route path="/admin/venue-owner-applications" element={<AdminVenueApplicationsPage />} />
                 <Route path="/become-a-venue-owner" element={<VenueOwnerApplicationPage />} />
                 <Route path="/profile/venues" element={<MyVenuesPage />} />
+                <Route path="/profile/saved-venues" element={<SavedVenuesPage />} />
                 <Route path="/profile/venues/new" element={<VenueEditorPage />} />
                 <Route path="/profile/venues/:id/edit" element={<VenueEditorPage />} />
                 <Route path="/profile/venues/:id/bookings" element={<VenueBookingsPage />} />
                 <Route path="/venues" element={<VenuesDiscoveryPage />} />
-                <Route path="/venues/:id" element={<VenuesDiscoveryPage detail />} />
+                <Route path="/venues/slug/:slug" element={<VenueDetailPage />} />
+                <Route path="/venues/:city/:venueType" element={<VenueSearchRoutePage />} />
+                <Route path="/venues/:city" element={<VenueCityOrDetailPage />} />
                 <Route path="/account-deleted" element={<AccountDeletedPage />} />
                 <Route path="/application-sent" element={<ApplicationSentPage />} />
                 <Route path="/events" element={<EventsPage key="events" />} />
@@ -97,21 +99,12 @@ function App() {
                 <Route path="/groups/:id" element={<GroupsPage detailPage />} />
                 <Route path="/profile/groups/:id" element={<GroupsPage managementOnly focusedManagement />} />
                 <Route path="/profile/groups" element={<GroupsPage managementOnly />} />
-                <Route path="/profile/community" element={<CommunityPage mode="mine" />} />
-                <Route path="/profile/community/:id/event" element={<CommunityPage mode="event-link" />} />
-                <Route path="/profile/community/:id/edit" element={<CommunityPage mode="edit" />} />
                 <Route path="/profile/articles" element={<ArticlesPage view="workspace" />} />
                 <Route path="/profile/articles/new" element={<ArticlesPage view="new" />} />
                 <Route path="/profile/articles/:id/edit" element={<ArticlesPage view="edit" />} />
                 <Route path="/articles/category/:category" element={<ArticlesPage />} />
                 <Route path="/articles/:slug" element={<ArticlesPage view="detail" />} />
                 <Route path="/articles" element={<ArticlesPage />} />
-                <Route path="/:city/community/new" element={<CommunityPage mode="create" />} />
-                <Route path="/:city/community/post/:slug/events" element={<CommunityPage mode="linked-events" />} />
-                <Route path="/:city/community/post/:slug" element={<CommunityPage mode="detail" />} />
-                <Route path="/:city/community/:category/:subcategory" element={<CommunityPage />} />
-                <Route path="/:city/community/:category" element={<CommunityPage />} />
-                <Route path="/:city/community" element={<CommunityPage />} />
                 <Route path="/:city/groups/:id" element={<GroupSlugRedirect />} />
                 <Route path="/invitation-response" element={<InvitationResponsePage />} />
                 <Route path="/group-invitation" element={<GroupInvitationPage />} />

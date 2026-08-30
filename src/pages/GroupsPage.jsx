@@ -6,9 +6,20 @@ import SiteChrome from "@/components/SiteChrome";
 import ConfirmationDialog from "@/components/ConfirmationDialog";
 import ForumDiscussion from "@/components/ForumDiscussion";
 import { apiAssetUrl, apiFetch } from "@/lib/api";
-import { asList as communityList, communityPostUrl } from "@/lib/community";
 
 const managementRoles = ["organizer", "manager", "admin"];
+const testGroupPresets = [
+  ["Sunday Board-Game Circle", "A friendly Stockholm group for relaxed board games, pastries and meeting new people.", "Public"],
+  ["Stockholm Photo Walks", "Explore new streets with a camera or phone, swap ideas and share your favourite shots.", "Public"],
+  ["Beginner Runners by the Water", "A no-drop running group for gentle 5 km routes and post-run coffee.", "Public"],
+  ["Swedish Fika Conversations", "Practise everyday Swedish in a patient, welcoming group over coffee.", "Public"],
+  ["Weekend Hikes Near Stockholm", "Plan accessible day hikes, pack a lunch and discover trails together.", "Public"],
+  ["Acoustic Evening Jam", "An informal group for singers and instrumentalists who enjoy relaxed acoustic sessions.", "Private"],
+  ["Creative Co-working Club", "Meet for quiet focus sessions, small goals and supportive accountability.", "Public"],
+  ["Neighbourhood Cooking Club", "Share easy recipes, seasonal dinners and new food ideas with local people.", "Private"],
+  ["Park Yoga and Stretching", "A calm outdoor movement group for gentle weekend sessions in the park.", "Public"],
+  ["New in Stockholm Socials", "Low-pressure meetups for people who want to make real connections in the city.", "Public"],
+];
 const asList = (data, key = "groups") =>
   Array.isArray(data) ? data : data?.[key] || [];
 const groupImageValue = (group) =>
@@ -90,7 +101,7 @@ function GroupCard({ group, action }) {
   );
 }
 
-function GroupForm({ initial, onCancel, onSave, saving }) {
+function GroupForm({ initial, onCancel, onSave, saving, showTestPresets = false }) {
   const [form, setForm] = useState({
     name: initial?.name || "",
     description: initial?.description || "",
@@ -110,6 +121,13 @@ function GroupForm({ initial, onCancel, onSave, saving }) {
       ...current,
       [event.target.name]: event.target.value,
     }));
+  const applyTestPreset = (event) => {
+    const preset = testGroupPresets[Number(event.target.value)];
+    if (!preset) return;
+    const [name, description, visibility] = preset;
+    setForm({ name, description, visibility });
+    setImage(null);
+  };
   return (
     <form
       id="group-editor"
@@ -119,6 +137,16 @@ function GroupForm({ initial, onCancel, onSave, saving }) {
       }}
       className="mt-6 grid gap-4 border-y border-border py-6"
     >
+      {!initial && showTestPresets && (
+        <label className="border border-primary/30 bg-primary/5 p-4 text-sm">
+          Testing preset
+          <select defaultValue="" onChange={applyTestPreset} className="mt-2 min-h-11 w-full border border-border bg-background px-3">
+            <option value="" disabled>Choose one of 10 sample groups</option>
+            {testGroupPresets.map(([name], index) => <option key={name} value={index}>{index + 1}. {name}</option>)}
+          </select>
+          <span className="mt-1 block text-xs text-muted-foreground">Populates the group name, description and visibility. Add a picture if you want one.</span>
+        </label>
+      )}
       <label className="text-sm">
         Group name
         <input
@@ -349,6 +377,7 @@ export default function GroupsPage({
   const navigate = useNavigate();
   const token = localStorage.getItem("authToken");
   const user = JSON.parse(localStorage.getItem("authUser") || "null");
+  const isAdministrator = user?.role === "admin";
   const canManage = Boolean(token && managementRoles.includes(user?.role));
   const canManageOwnGroups = Boolean(token);
   const headers = token ? { Authorization: `Bearer ${token}` } : {};
@@ -356,7 +385,6 @@ export default function GroupsPage({
   const [myGroups, setMyGroups] = useState([]);
   const [managedGroups, setManagedGroups] = useState([]);
   const [group, setGroup] = useState(null);
-  const [sourceCommunityPost, setSourceCommunityPost] = useState(null);
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [members, setMembers] = useState([]);
   const [invitations, setInvitations] = useState([]);
@@ -428,24 +456,6 @@ export default function GroupsPage({
     );
     setGroup(data.group || data);
   };
-  useEffect(() => {
-    setSourceCommunityPost(null);
-    if (!detailPage || !group?.sourcePostId) return undefined;
-    let active = true;
-    apiFetch("/api/community/posts?limit=50")
-      .then(async (response) => {
-        if (!response.ok) return;
-        const data = await response.json();
-        const post = communityList(data, "posts").find(
-          (item) => String(item.id) === String(group.sourcePostId),
-        );
-        if (active) setSourceCommunityPost(post || null);
-      })
-      .catch(() => {});
-    return () => {
-      active = false;
-    };
-  }, [detailPage, group?.sourcePostId]);
   const load = async () => {
     setLoading(true);
     setError("");
@@ -832,14 +842,6 @@ export default function GroupsPage({
                       )}
                     </div>
                     <div className="flex flex-wrap gap-3">
-                      {sourceCommunityPost && (
-                        <Link
-                          to={communityPostUrl(sourceCommunityPost)}
-                          className="inline-flex min-h-11 items-center border border-border px-5 text-sm"
-                        >
-                          View community post
-                        </Link>
-                      )}
                       {canManageGroup ? (
                         <>
                           <Link
@@ -1029,7 +1031,7 @@ export default function GroupsPage({
         <div className="flex flex-wrap items-end justify-between gap-5">
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-primary">
-              Community groups
+              Groups
             </p>
             <h1 className="mt-3 font-display text-5xl font-black">
               {managementOnly ? "Your groups" : "Find your people."}
@@ -1058,6 +1060,7 @@ export default function GroupsPage({
             onSave={saveGroup}
             onCancel={() => setCreating(false)}
             saving={saving}
+            showTestPresets={isAdministrator}
           />
         )}
         {editing && (

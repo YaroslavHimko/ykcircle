@@ -5,7 +5,6 @@ import { apiFetch } from '@/lib/api';
 import CookieSettings, { openCookieSettings } from '@/components/CookieSettings';
 
 const baseNav = [
-    { to: '/stockholm/community', label: 'Community' },
     { to: '/articles', label: 'Articles' },
     { to: '/events', label: 'Events' },
     { to: '/venues', label: 'Venues' },
@@ -94,12 +93,11 @@ export function Header() {
                             <Link to="/admin/applications" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Manage applications</Link>
                             <Link to="/admin/users" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Manage user roles</Link>
                             <Link to="/profile/articles" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Manage articles</Link>
-                            {isAdmin && <Link to="/admin/community/reports" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Community reports</Link>}
+                            {isAdmin && <Link to="/admin/reports" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Content reports</Link>}
                             {isAdmin && <Link to="/admin/venue-owner-applications" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Venue owner applications</Link>}
                         </>}
                         {canManageEvents && <Link to="/profile/events" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Manage events</Link>}
-                        {['venue_owner', 'manager', 'admin'].includes(user?.role) ? <Link to="/profile/venues" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">{['manager', 'admin'].includes(user?.role) ? 'Venue management' : 'My venues'}</Link> : user && <Link to="/become-a-venue-owner" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Become a venue owner</Link>}
-                        {user && <Link to="/profile/community" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">My community posts</Link>}
+                        {user && <><Link to="/profile/venues" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">My venues</Link><Link to="/profile/saved-venues" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Saved venues</Link></>}
                         {user && <Link to="/profile/groups" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Manage groups</Link>}
                         {user && <button type="button" onClick={logout} className="flex w-full items-center gap-2 px-3 py-3 text-left text-sm text-destructive hover:bg-secondary"><LogOut className="h-4 w-4" /> Log out</button>}
                     </div>}
@@ -145,12 +143,11 @@ export function Header() {
                                 <Link to="/admin/applications" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">Manage applications</Link>
                                 <Link to="/admin/users" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">Manage user roles</Link>
                                 <Link to="/profile/articles" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">Manage articles</Link>
-                                {isAdmin && <Link to="/admin/community/reports" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">Community reports</Link>}
+                                {isAdmin && <Link to="/admin/reports" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">Content reports</Link>}
                                 {isAdmin && <Link to="/admin/venue-owner-applications" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">Venue owner applications</Link>}
                             </>}
                             {canManageEvents && <Link to="/profile/events" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">Manage events</Link>}
-                            {['venue_owner', 'manager', 'admin'].includes(user?.role) ? <Link to="/profile/venues" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">{['manager', 'admin'].includes(user?.role) ? 'Venue management' : 'My venues'}</Link> : <Link to="/become-a-venue-owner" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">Become a venue owner</Link>}
-                            <Link to="/profile/community" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">My community posts</Link>
+                            <Link to="/profile/venues" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">My venues</Link><Link to="/profile/saved-venues" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">Saved venues</Link>
                             <Link to="/profile/groups" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">Manage groups</Link>
                             <button type="button" onClick={() => { setOpen(false); logout(); }} className="flex min-h-[44px] items-center gap-2 border-b border-border/60 py-3 text-left text-base text-destructive"><LogOut className="h-4 w-4" /> Log out</button>
                         </> : <Link to="/login" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">Log in</Link>}
@@ -202,7 +199,6 @@ export function Footer() {
                 <div className="text-sm">
                     <p className="mb-4 text-[0.7rem] uppercase tracking-[0.25em] text-[hsl(40_20%_60%)]">Explore</p>
                     <ul className="space-y-2">
-                        <li><Link className="hover:text-primary" to="/stockholm/community">Communities</Link></li>
                         <li><Link className="hover:text-primary" to="/groups">Groups</Link></li>
                         <li><Link className="hover:text-primary" to="/events">Events</Link></li>
                     </ul>
@@ -217,7 +213,6 @@ export function Footer() {
                         <li><Link className="hover:text-primary" to="/appeal">Appeal a decision</Link></li>
                         <li><Link className="hover:text-primary" to="/terms">Terms</Link></li>
                         <li><Link className="hover:text-primary" to="/privacy">Privacy</Link></li>
-                        <li><Link className="hover:text-primary" to="/community-guidelines">Community Guidelines</Link></li>
                         <li><Link className="hover:text-primary" to="/cookies">Cookie Policy</Link></li>
                         <li><button type="button" onClick={openCookieSettings} className="hover:text-primary">Cookie Settings</button></li>
                         <li><Link className="hover:text-primary" to="/legal">Legal documents</Link></li>
