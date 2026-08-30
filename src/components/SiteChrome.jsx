@@ -45,6 +45,7 @@ export function Header() {
         localStorage.removeItem('authUser');
         setProfileOpen(false);
         window.dispatchEvent(new Event('auth-change'));
+        window.location.assign('/');
     };
 
     return (
