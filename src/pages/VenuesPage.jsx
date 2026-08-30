@@ -8,7 +8,8 @@ const blankVenue = { name: "", businessName: "", description: "", location: "", 
 const isVenueActive = (value) => value === true || value === 1 || value === "1" || value === "true";
 const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const list = (data, key) => Array.isArray(data) ? data : data?.[key] || [];
-const normalizeVenue = (venue) => ({ ...venue, id: venue?.id ?? venue?.venueId ?? venue?.venue_id ?? venue?.venue?.id });
+const locationText = (location) => typeof location === "string" ? location : location?.addressLine1 || location?.address || location?.locality || location?.city || location?.municipality || location?.region || location?.country || "";
+const normalizeVenue = (venue) => ({ ...venue, id: venue?.id ?? venue?.venueId ?? venue?.venue_id ?? venue?.venue?.id, location: locationText(venue?.location) });
 const auth = () => ({ Authorization: `Bearer ${localStorage.getItem("authToken")}` });
 const errorText = (data, fallback) => [data?.error || data?.message, data?.fields && Object.entries(data.fields).map(([field, message]) => `${field}: ${message}`).join(" ")].filter(Boolean).join(" ") || fallback;
 
@@ -52,6 +53,7 @@ export function VenueEditorPage() {
 export function VenueBookingsPage() {
   const { id } = useParams();
   const [bookings, setBookings] = useState([]);
+  const [inquiries, setInquiries] = useState([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const loadVersion = useRef(0);
@@ -61,11 +63,20 @@ export function VenueBookingsPage() {
     setLoading(true);
     setError("");
     try {
-      const response = await apiFetch(`/api/venues/${id}/bookings`, { headers: auth() });
-      const data = await response.json();
+      if (!id) throw new Error("This venue is missing its ID.");
+      const [bookingsResponse, inquiriesResponse] = await Promise.all([
+        apiFetch(`/api/venues/${id}/bookings`, { headers: auth() }),
+        apiFetch(`/api/venues/${id}/inquiries`, { headers: auth() }),
+      ]);
+      const [bookingsData, inquiriesData] = await Promise.all([
+        bookingsResponse.json(),
+        inquiriesResponse.json(),
+      ]);
       if (version !== loadVersion.current) return;
-      if (!response.ok) throw new Error(errorText(data, "Unable to load bookings."));
-      setBookings(list(data, "bookings"));
+      if (!bookingsResponse.ok) throw new Error(errorText(bookingsData, "Unable to load event bookings."));
+      if (!inquiriesResponse.ok) throw new Error(errorText(inquiriesData, "Unable to load venue inquiries."));
+      setBookings(list(bookingsData, "bookings"));
+      setInquiries(list(inquiriesData, "inquiries"));
     } catch (requestError) {
       if (version === loadVersion.current) setError(requestError.message);
     } finally {
@@ -92,11 +103,21 @@ export function VenueBookingsPage() {
     }
   };
 
-  return <Shell title="Venue booking requests">
+  return <Shell title="Venue requests">
     <Link to="/profile/venues" className="text-sm text-primary underline">Back to my venues</Link>
-    <h1 className="mt-5 font-display text-4xl font-bold">Booking requests</h1>
+    <h1 className="mt-5 font-display text-4xl font-bold">Venue requests</h1>
+    <p className="mt-3 max-w-2xl text-muted-foreground">Direct venue inquiries and event bookings are separate request types. Both are shown below.</p>
     {error && <Error text={error} />}
     {loading ? <Loading label="Loading booking requests…" /> : <div className="mt-8 space-y-3">
+      <section className="border-b border-border pb-8">
+        <div className="flex flex-wrap items-baseline justify-between gap-3"><h2 className="font-display text-2xl font-semibold">Venue inquiries</h2><p className="text-sm text-muted-foreground">{inquiries.length} request{inquiries.length === 1 ? "" : "s"}</p></div>
+        <p className="mt-2 text-sm text-muted-foreground">Requests sent through the “Request venue” form.</p>
+        <div className="mt-5 space-y-3">{inquiries.map((inquiry) => <article key={inquiry.id} className="border border-border p-5"><div className="flex flex-wrap items-start justify-between gap-4"><div><h3 className="font-semibold">{inquiry.eventName || inquiry.title || "Venue inquiry"}</h3><p className="mt-1 text-sm text-muted-foreground">{inquiry.requestedDate ? new Date(inquiry.requestedDate).toLocaleDateString() : "Date not supplied"}{inquiry.startTime && ` · ${inquiry.startTime}`}{inquiry.endTime && `–${inquiry.endTime}`}</p>{(inquiry.expectedGuests || inquiry.budget) && <p className="mt-1 text-sm text-muted-foreground">{inquiry.expectedGuests ? `${inquiry.expectedGuests} guests` : ""}{inquiry.expectedGuests && inquiry.budget ? " · " : ""}{inquiry.budget ? `Budget: ${inquiry.budget} SEK` : ""}</p>}<p className="mt-3 text-sm">From {inquiry.requesterName || inquiry.user?.name || inquiry.contactName || "Guest"}{(inquiry.requesterEmail || inquiry.user?.email || inquiry.email) && ` · ${inquiry.requesterEmail || inquiry.user?.email || inquiry.email}`}</p>{inquiry.message && <p className="mt-4 whitespace-pre-wrap text-sm leading-relaxed">{inquiry.message}</p>}</div><Status status={inquiry.status || "new"} /></div></article>)}{!inquiries.length && <p className="text-sm text-muted-foreground">No venue inquiries yet.</p>}</div>
+      </section>
+      <section className="pt-2">
+        <div className="flex flex-wrap items-baseline justify-between gap-3"><h2 className="font-display text-2xl font-semibold">Event bookings</h2><p className="text-sm text-muted-foreground">{bookings.length} booking{bookings.length === 1 ? "" : "s"}</p></div>
+        <p className="mt-2 text-sm text-muted-foreground">Bookings created from an event’s venue-booking flow.</p>
+        <div className="mt-5 space-y-3">
       {bookings.map((booking) => <div key={booking.id} className="border border-border p-5">
         <div className="flex justify-between gap-4">
           <div>
@@ -115,7 +136,9 @@ export function VenueBookingsPage() {
           <button onClick={() => review(booking, "declined")} className="border border-border px-4 py-2 text-sm">Decline</button>
         </div>}
       </div>)}
-      {!bookings.length && <p className="text-muted-foreground">No booking requests yet.</p>}
+      {!bookings.length && <p className="text-sm text-muted-foreground">No event bookings yet.</p>}
+        </div>
+      </section>
     </div>}
   </Shell>;
 }
