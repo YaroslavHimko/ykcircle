@@ -5,6 +5,21 @@ import { Check, X } from "lucide-react";
 import SiteChrome from "@/components/SiteChrome";
 import ForumDiscussion from "@/components/ForumDiscussion";
 import { apiAssetUrl, apiFetch } from "@/lib/api";
+import MapLocation from "@/components/MapLocation";
+import { locationLines } from "@/lib/maps";
+
+const eventLocation = (event) => {
+  if (event?.locationType === "venue") return event.venue || {};
+  if (event?.locationType === "custom") return event.location || {};
+  return { location: event?.location, address: event?.address, city: event?.city, country: event?.country, latitude: event?.latitude, longitude: event?.longitude, googlePlaceId: event?.googlePlaceId };
+};
+
+const eventLocationText = (event) => {
+  if (event?.locationType === "online") return "Online event";
+  const location = eventLocation(event);
+  const lines = locationLines(location, { exact: event?.locationVisibility !== "private" });
+  return [event?.locationType === "venue" ? event.venue?.name : "", ...lines].filter(Boolean).join(", ") || "To be announced";
+};
 
 const eventCover = (event) =>
   event?.thumbnailUrl ||
@@ -603,7 +618,7 @@ export default function EventDetailPage() {
       current
         ? {
             ...current,
-            location: [current.location].filter(Boolean).join(" · "),
+            location: current.location,
           }
         : current,
     );
@@ -958,7 +973,7 @@ export default function EventDetailPage() {
             )}
             <p className="mt-5 text-muted-foreground">
               {new Date(event.startsAt).toLocaleString()} -{" "}
-              {venueBooking?.status === "confirmed" ? (venueBooking.venue?.name || venueBooking.venueName || event.venue?.name || event.location) : (event.location || "Location to be announced")}
+              {venueBooking?.status === "confirmed" ? (venueBooking.venue?.name || venueBooking.venueName || event.venue?.name || eventLocationText(event)) : eventLocationText(event)}
             </p>
             {venueBooking?.status === "confirmed" && <p className="mt-2 text-sm text-muted-foreground">Confirmed venue: {venueBooking.venue?.name || venueBooking.venueName}{(venueBooking.venue?.location || venueBooking.venueLocation) && ` — ${venueBooking.venue?.location || venueBooking.venueLocation}`}</p>}
             {canManageEvents && <section className="mt-8 max-w-2xl border border-border p-5"><h2 className="font-display text-2xl font-semibold">Venue booking</h2>{venueBooking ? <><p className="mt-2 text-sm">Status: <span className="capitalize text-primary">{venueBooking.status}</span>{venueBooking.ownerNote && ` — ${venueBooking.ownerNote}`}</p>{["pending", "confirmed"].includes(venueBooking.status) && <button type="button" disabled={bookingSaving} onClick={cancelVenueBooking} className="mt-4 border border-border px-4 py-2 text-sm disabled:opacity-60">Cancel booking request</button>}</> : <><p className="mt-2 text-sm text-muted-foreground">Choose an active venue. The venue owner must confirm before it is shown as confirmed.</p><div className="mt-4 flex flex-wrap gap-3"><select value={selectedVenueId} onChange={(e) => setSelectedVenueId(e.target.value)} className="min-h-11 min-w-64 border border-border bg-background px-3"><option value="">Choose a venue</option>{venues.map((venue) => <option key={venue.id} value={venue.id}>{venue.name}{venue.city ? ` — ${venue.city}` : ""}</option>)}</select><button type="button" disabled={bookingSaving} onClick={requestVenueBooking} className="bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-60">Request booking</button></div></>}</section>}
@@ -1013,9 +1028,7 @@ export default function EventDetailPage() {
               <p>
                 <span className="text-muted-foreground">Location</span>
                 <br />
-                {[event.location, event.address, event.city, event.country]
-                  .filter(Boolean)
-                  .join(", ") || "To be announced"}
+                {eventLocationText(event)}
               </p>
               <p>
                 <span className="text-muted-foreground">
@@ -1034,6 +1047,15 @@ export default function EventDetailPage() {
                 </p>
               )}
             </div>
+            <section className="mt-8 max-w-2xl border-t border-border pt-7">
+              <h2 className="font-display text-2xl font-semibold">Location</h2>
+              {event.locationType === "online" ? <p className="mt-3 text-muted-foreground">Online event</p> : <>
+                {event.locationType === "venue" && event.venue?.name && <p className="mt-3 font-medium">{event.venue.name}</p>}
+                <p className="mt-2 whitespace-pre-line text-muted-foreground">{locationLines(eventLocation(event), { exact: event.locationVisibility !== "private" }).join("\n") || "Location to be announced"}</p>
+                <MapLocation location={eventLocation(event)} label={event.venue?.name || event.title} hidden={event.locationVisibility === "private" || event.venue?.locationVisibility === "private" || event.venue?.locationVisibility === "private_until_booking"} />
+                {event.locationType === "venue" && event.venue?.id && <Link className="mt-4 inline-block text-sm text-primary underline" to={event.venue.slug ? `/venues/slug/${event.venue.slug}` : `/venues/${event.venue.id}`}>View venue</Link>}
+              </>}
+            </section>
             {event.whatToBring && (
               <section className="mt-8">
                 <h2 className="font-display text-3xl font-semibold">

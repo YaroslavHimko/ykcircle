@@ -3,6 +3,7 @@ import { Helmet } from "react-helmet";
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import SiteChrome from "@/components/SiteChrome";
 import { apiAssetUrl, apiFetch } from "@/lib/api";
+import GoogleLocationPicker from "@/components/GoogleLocationPicker";
 
 const initialForm = {
   title: "",
@@ -13,10 +14,22 @@ const initialForm = {
   typeId: "",
   country: "",
   city: "Stockholm",
-  locationType: "physical",
-  locationVisibility: "public",
+  locationType: "custom",
+  venueId: "",
   location: "",
-  address: "",
+  addressLine1: "",
+  addressLine2: "",
+  postalCode: "",
+  locality: "Stockholm",
+  municipality: "",
+  region: "",
+  countryCode: "SE",
+  latitude: "",
+  longitude: "",
+  googlePlaceId: "",
+  formattedAddress: "",
+  onlineUrl: "",
+  onlinePlatform: "",
   startsAt: "",
   endsAt: "",
   recurrenceFrequency: "none",
@@ -124,6 +137,7 @@ export default function EventsPage({
   const [types, setTypes] = useState([]);
   const [timezones, setTimezones] = useState([]);
   const [managedGroups, setManagedGroups] = useState([]);
+  const [venues, setVenues] = useState([]);
   const [form, setForm] = useState(initialForm);
   const [draftId, setDraftId] = useState(null);
   const [draftSaved, setDraftSaved] = useState(false);
@@ -229,6 +243,13 @@ export default function EventsPage({
       })
       .catch(() => {});
   }, [canManage, token]);
+  useEffect(() => {
+    if (!canManage) return;
+    apiFetch("/api/venues", token ? { headers: { Authorization: `Bearer ${token}` } } : {})
+      .then(async (response) => response.ok ? response.json() : [])
+      .then((data) => setVenues(Array.isArray(data) ? data : data.venues || []))
+      .catch(() => setVenues([]));
+  }, [canManage, token]);
   const update = (event) =>
     setForm((current) => ({
       ...current,
@@ -247,7 +268,7 @@ export default function EventsPage({
       ...current,
       title, shortDescription, description, location, address, startsAt, endsAt,
       registrationDeadline, whatToBring, meetingInstructions, pricingType, fee,
-      locationType, locationVisibility, capacity, minimumAttendees, minimumAge,
+      locationType: locationType === "physical" ? "custom" : locationType, locationVisibility, capacity, minimumAttendees, minimumAge,
       languageCode, recurrenceFrequency,
       recurrenceInterval: "1",
       recurrenceCount: recurrenceFrequency === "none" ? "2" : "4",
@@ -280,10 +301,23 @@ export default function EventsPage({
       registrationDeadline: toInputDate(eventValue(event, "registrationDeadline", "registration_deadline")),
       categoryId: eventValue(event, "categoryId", "category_id") || event.category?.id || "",
       typeId: eventValue(event, "typeId", "type_id") || event.type?.id || "",
-      country: eventValue(event, "country"),
-      city: eventValue(event, "city"),
-      location: eventValue(event, "location", "venue"),
-      address: eventValue(event, "address"),
+      country: eventValue(event, "country") || event.location?.country || current.country,
+      city: eventValue(event, "city") || event.location?.locality || current.city,
+      location: typeof event.location === "string" ? event.location : "",
+      venueId: eventValue(event, "venueId", "venue_id") || event.venue?.id || "",
+      addressLine1: event.location?.addressLine1 || event.location?.address_line_1 || eventValue(event, "address") || "",
+      addressLine2: event.location?.addressLine2 || event.location?.address_line_2 || "",
+      postalCode: event.location?.postalCode || event.location?.postal_code || "",
+      locality: event.location?.locality || event.city || "",
+      municipality: event.location?.municipality || "",
+      region: event.location?.region || "",
+      countryCode: event.location?.countryCode || event.location?.country_code || "",
+      latitude: event.location?.latitude ?? event.latitude ?? "",
+      longitude: event.location?.longitude ?? event.longitude ?? "",
+      googlePlaceId: event.location?.googlePlaceId || event.location?.google_place_id || "",
+      formattedAddress: event.location?.formattedAddress || event.location?.formatted_address || "",
+      onlineUrl: eventValue(event, "onlineUrl", "online_url"),
+      onlinePlatform: eventValue(event, "onlinePlatform", "online_platform"),
       timezone: eventValue(event, "timezone", "timeZone") || current.timezone,
       capacity: eventValue(event, "capacity"),
       minimumAttendees: eventValue(event, "minimumAttendees", "minimum_attendees"),
@@ -292,8 +326,7 @@ export default function EventsPage({
       whatToBring: eventValue(event, "whatToBring", "what_to_bring"),
       meetingInstructions: eventValue(event, "meetingInstructions", "meeting_instructions"),
       groupId: eventValue(event, "groupId", "group_id"),
-      locationType: eventValue(event, "locationType", "location_type") || current.locationType,
-      locationVisibility: eventValue(event, "locationVisibility", "location_visibility") || current.locationVisibility,
+      locationType: eventValue(event, "locationType", "location_type") === "physical" ? "custom" : eventValue(event, "locationType", "location_type") || current.locationType,
       pricingType: Number(eventValue(event, "fee")) > 0 ? "paid" : "free",
       fee: eventValue(event, "fee") || 0,
     }));
@@ -303,6 +336,25 @@ export default function EventsPage({
       recurrenceFrequency,
       recurrenceInterval,
       recurrenceCount,
+      venueId,
+      location,
+      address,
+      addressLine1,
+      addressLine2,
+      postalCode,
+      locality,
+      municipality,
+      region,
+      countryCode,
+      latitude,
+      longitude,
+      googlePlaceId,
+      formattedAddress,
+      onlineUrl,
+      onlinePlatform,
+      city,
+      country,
+      locationVisibility,
       ...eventForm
     } = form;
     const recurrence = !draftId && recurrenceFrequency !== "none"
@@ -315,6 +367,14 @@ export default function EventsPage({
     return Object.fromEntries(
       Object.entries({
         ...eventForm,
+        venueId: form.locationType === "venue" ? Number(venueId) || undefined : undefined,
+        location: form.locationType === "custom" ? {
+          addressLine1, addressLine2, postalCode, locality, municipality, region, country,
+          countryCode, latitude: latitude === "" ? undefined : Number(latitude), longitude: longitude === "" ? undefined : Number(longitude),
+          googlePlaceId, formattedAddress,
+        } : undefined,
+        onlineUrl: form.locationType === "online" ? onlineUrl : undefined,
+        onlinePlatform: form.locationType === "online" ? onlinePlatform : undefined,
         recurrence,
         categoryId: form.categoryId ? Number(form.categoryId) : undefined,
         typeId: form.typeId ? Number(form.typeId) : undefined,
@@ -332,8 +392,6 @@ export default function EventsPage({
           ? Number(form.minimumAttendees)
           : undefined,
         minimumAge: form.minimumAge ? Number(form.minimumAge) : undefined,
-        latitude: form.latitude ? Number(form.latitude) : undefined,
-        longitude: form.longitude ? Number(form.longitude) : undefined,
         fee: form.pricingType === "paid" ? Number(form.fee) : 0,
       }).filter(
         ([, value]) => value !== "" && value !== null && value !== undefined,
@@ -371,6 +429,10 @@ export default function EventsPage({
     setError("");
     setMessage("");
     try {
+      if (form.locationType === "custom" && (!form.formattedAddress || !Number.isFinite(Number(form.latitude)) || !Number.isFinite(Number(form.longitude)))) {
+        setErrors({ location: "Choose an address from the Google suggestions so its location can be saved." });
+        throw new Error("Choose an address from the Google suggestions.");
+      }
       const selectedGroupId = managedGroups.some(
         (group) => String(group.id) === String(form.groupId),
       )
@@ -847,10 +909,15 @@ export default function EventsPage({
                   ))}
                 </select>
               </label>
-              {input("country", "Country", "text", true)}
-              {input("city", "City", "text", true)}
-              {input("location", "Location")}
-              {input("address", "Address")}
+              <fieldset className="grid gap-4 border border-border p-4 sm:col-span-2 sm:grid-cols-2">
+                <legend className="px-1 text-sm font-medium">Where is your event?</legend>
+                <label className="flex items-center gap-2 text-sm"><input type="radio" name="locationType" value="venue" checked={form.locationType === "venue"} onChange={update} />At a YKCircle venue</label>
+                <label className="flex items-center gap-2 text-sm"><input type="radio" name="locationType" value="custom" checked={form.locationType === "custom"} onChange={() => setForm((current) => ({ ...current, locationType: "custom" }))} />At another location</label>
+                <label className="flex items-center gap-2 text-sm"><input type="radio" name="locationType" value="online" checked={form.locationType === "online"} onChange={() => setForm((current) => ({ ...current, locationType: "online" }))} />Online</label>
+                {form.locationType === "venue" && <label className="sm:col-span-2 text-sm">Choose a venue<select required name="venueId" value={form.venueId} onChange={update} className="mt-2 min-h-11 w-full border border-border bg-background px-3"><option value="">Search venues…</option>{venues.map((venue) => <option key={venue.id} value={venue.id}>{venue.name}{venue.location?.locality || venue.city ? ` — ${venue.location?.locality || venue.city}` : ""}</option>)}</select></label>}
+                {form.locationType === "custom" && <div className="sm:col-span-2"><p className="text-sm font-medium">Search for an address</p><div className="mt-2"><GoogleLocationPicker onSelect={(place) => setForm((current) => ({ ...current, ...place, country: place.country || current.country, city: place.locality || current.city }))} /></div>{form.formattedAddress ? <p className="mt-3 border border-border bg-secondary/20 p-3 text-sm"><span className="text-muted-foreground">Selected location</span><br />{form.formattedAddress}</p> : <p className="mt-2 text-xs text-muted-foreground">Search and choose an address on the map. Google will save its address details and coordinates automatically.</p>}</div>}
+                {form.locationType === "online" && <div className="grid gap-4 sm:col-span-2 sm:grid-cols-2"><p className="sm:col-span-2 text-sm text-muted-foreground">The event is online. Joining links are shown only to the event manager/admin.</p>{input("onlinePlatform", "Platform (for example, Zoom)")}{input("onlineUrl", "Joining URL", "url")}</div>}
+              </fieldset>
               {input("startsAt", "Starts", "datetime-local", true)}
               {input("endsAt", "Ends", "datetime-local")}
               {creationPage && !draftId && (
@@ -932,30 +999,6 @@ export default function EventsPage({
                   <option value="Private">Private</option>
                 </select>
                 {form.visibility === "Public" && <span className="mt-2 block border-l-2 border-amber-500 bg-amber-500/10 px-3 py-2 text-xs leading-relaxed text-foreground">Public — anyone can view this and it may appear in search engines.</span>}
-              </label>
-              <label className="block text-sm">
-                Location type
-                <select
-                  name="locationType"
-                  value={form.locationType}
-                  onChange={update}
-                  className="mt-2 min-h-11 w-full border border-border bg-background px-3"
-                >
-                  <option value="physical">Physical</option>
-                  <option value="online">Online</option>
-                </select>
-              </label>
-              <label className="block text-sm">
-                Location visibility
-                <select
-                  name="locationVisibility"
-                  value={form.locationVisibility}
-                  onChange={update}
-                  className="mt-2 min-h-11 w-full border border-border bg-background px-3"
-                >
-                  <option value="public">Public</option>
-                  <option value="private">Private</option>
-                </select>
               </label>
               {input(
                 "registrationDeadline",

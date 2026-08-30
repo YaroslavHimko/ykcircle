@@ -4,6 +4,11 @@
 @tailwind components;
 @tailwind utilities;
 
+.google-place-autocomplete gmp-place-autocomplete {
+  display: block;
+  width: 100%;
+}
+
 @layer base {
   :root {
     --background: 30 22% 96%;
