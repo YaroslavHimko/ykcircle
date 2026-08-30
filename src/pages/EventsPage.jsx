@@ -138,6 +138,8 @@ export default function EventsPage({
   const [timezones, setTimezones] = useState([]);
   const [managedGroups, setManagedGroups] = useState([]);
   const [venues, setVenues] = useState([]);
+  const [venueSchedule, setVenueSchedule] = useState({ loading: false, error: "", date: "", timezone: "", slots: [] });
+  const [pendingVenueSlot, setPendingVenueSlot] = useState(null);
   const [form, setForm] = useState(initialForm);
   const [draftId, setDraftId] = useState(null);
   const [draftSaved, setDraftSaved] = useState(false);
@@ -250,6 +252,24 @@ export default function EventsPage({
       .then((data) => setVenues(Array.isArray(data) ? data : data.venues || []))
       .catch(() => setVenues([]));
   }, [canManage, token]);
+  const selectedVenueDate = form.startsAt?.slice(0, 10) || "";
+  useEffect(() => {
+    let cancelled = false;
+    setPendingVenueSlot(null);
+    if (!canManage || !token || form.locationType !== "venue" || !form.venueId || !/^\d{4}-\d{2}-\d{2}$/.test(selectedVenueDate)) {
+      setVenueSchedule({ loading: false, error: "", date: "", timezone: "", slots: [] });
+      return undefined;
+    }
+    setVenueSchedule({ loading: true, error: "", date: selectedVenueDate, timezone: "", slots: [] });
+    apiFetch(`/api/venues/${form.venueId}/availability?date=${encodeURIComponent(selectedVenueDate)}`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Unable to load venue availability.");
+        if (!cancelled) setVenueSchedule({ loading: false, error: "", date: data.date, timezone: data.timezone || "", slots: data.slots || [] });
+      })
+      .catch((requestError) => !cancelled && setVenueSchedule({ loading: false, error: requestError.message, date: selectedVenueDate, timezone: "", slots: [] }));
+    return () => { cancelled = true; };
+  }, [canManage, token, form.locationType, form.venueId, selectedVenueDate]);
   const update = (event) =>
     setForm((current) => ({
       ...current,
@@ -914,7 +934,7 @@ export default function EventsPage({
                 <label className="flex items-center gap-2 text-sm"><input type="radio" name="locationType" value="venue" checked={form.locationType === "venue"} onChange={update} />At a YKCircle venue</label>
                 <label className="flex items-center gap-2 text-sm"><input type="radio" name="locationType" value="custom" checked={form.locationType === "custom"} onChange={() => setForm((current) => ({ ...current, locationType: "custom" }))} />At another location</label>
                 <label className="flex items-center gap-2 text-sm"><input type="radio" name="locationType" value="online" checked={form.locationType === "online"} onChange={() => setForm((current) => ({ ...current, locationType: "online" }))} />Online</label>
-                {form.locationType === "venue" && <label className="sm:col-span-2 text-sm">Choose a venue<select required name="venueId" value={form.venueId} onChange={update} className="mt-2 min-h-11 w-full border border-border bg-background px-3"><option value="">Search venues…</option>{venues.map((venue) => <option key={venue.id} value={venue.id}>{venue.name}{venue.location?.locality || venue.city ? ` — ${venue.location?.locality || venue.city}` : ""}</option>)}</select></label>}
+                {form.locationType === "venue" && <div className="sm:col-span-2"><label className="block text-sm">Choose a venue<select required name="venueId" value={form.venueId} onChange={update} className="mt-2 min-h-11 w-full border border-border bg-background px-3"><option value="">Search venues…</option>{venues.map((venue) => <option key={venue.id} value={venue.id}>{venue.name}{venue.location?.locality || venue.city ? ` — ${venue.location?.locality || venue.city}` : ""}</option>)}</select></label>{!selectedVenueDate ? <p className="mt-2 text-xs text-muted-foreground">Choose the event start date below to view this venue’s available times.</p> : venueSchedule.loading ? <p className="mt-2 text-sm text-muted-foreground">Loading availability…</p> : venueSchedule.error ? <p className="mt-2 text-sm text-destructive">{venueSchedule.error}</p> : venueSchedule.date ? <div className="mt-3 border border-border bg-secondary/20 p-3"><p className="text-sm font-medium">Available on {venueSchedule.date}{venueSchedule.timezone ? ` (${venueSchedule.timezone})` : ""}</p>{venueSchedule.slots.length ? <div className="mt-2 flex flex-wrap gap-2">{venueSchedule.slots.map((slot) => <button key={`${slot.startTime}-${slot.endTime}`} type="button" onClick={() => setPendingVenueSlot(slot)} className="border border-primary bg-background px-3 py-2 text-sm text-primary hover:bg-primary hover:text-primary-foreground">{slot.startTime}–{slot.endTime}</button>)}</div> : <p className="mt-2 text-sm text-muted-foreground">No scheduled hours are available on this date.</p>}{pendingVenueSlot && <div className="mt-3 border border-primary/40 bg-background p-3 text-sm"><p>Use {pendingVenueSlot.startTime}–{pendingVenueSlot.endTime} at this venue on {venueSchedule.date}?</p><div className="mt-3 flex gap-2"><button type="button" onClick={() => { setForm((current) => ({ ...current, startsAt: `${venueSchedule.date}T${pendingVenueSlot.startTime}`, endsAt: `${venueSchedule.date}T${pendingVenueSlot.endTime}`, timezone: venueSchedule.timezone || current.timezone })); setPendingVenueSlot(null); }} className="bg-primary px-3 py-2 text-primary-foreground">Confirm timeslot</button><button type="button" onClick={() => setPendingVenueSlot(null)} className="border border-border px-3 py-2">Cancel</button></div></div>}<p className="mt-2 text-xs text-muted-foreground">Selecting a time asks for confirmation before filling the event start and end times.</p></div> : null}</div>}
                 {form.locationType === "custom" && <div className="sm:col-span-2"><p className="text-sm font-medium">Search for an address</p><div className="mt-2"><GoogleLocationPicker onSelect={(place) => setForm((current) => ({ ...current, ...place, country: place.country || current.country, city: place.locality || current.city }))} /></div>{form.formattedAddress ? <p className="mt-3 border border-border bg-secondary/20 p-3 text-sm"><span className="text-muted-foreground">Selected location</span><br />{form.formattedAddress}</p> : <p className="mt-2 text-xs text-muted-foreground">Search and choose an address on the map. Google will save its address details and coordinates automatically.</p>}</div>}
                 {form.locationType === "online" && <div className="grid gap-4 sm:col-span-2 sm:grid-cols-2"><p className="sm:col-span-2 text-sm text-muted-foreground">The event is online. Joining links are shown only to the event manager/admin.</p>{input("onlinePlatform", "Platform (for example, Zoom)")}{input("onlineUrl", "Joining URL", "url")}</div>}
               </fieldset>
