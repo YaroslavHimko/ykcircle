@@ -5,6 +5,7 @@ import { Check, X } from "lucide-react";
 import SiteChrome from "@/components/SiteChrome";
 import ForumDiscussion from "@/components/ForumDiscussion";
 import { apiAssetUrl, apiFetch } from "@/lib/api";
+import { eventMediaUrl, mediaRenderDebug } from "@/lib/media";
 import MapLocation from "@/components/MapLocation";
 import { locationLines } from "@/lib/maps";
 
@@ -21,27 +22,10 @@ const eventLocationText = (event) => {
   return [event?.locationType === "venue" ? event.venue?.name : "", ...lines].filter(Boolean).join(", ") || "To be announced";
 };
 
-const eventCover = (event) =>
-  event?.thumbnailUrl ||
-  event?.coverImage ||
-  event?.coverImageUrl ||
-  event?.cover_image ||
-  event?.cover_url ||
-  event?.image ||
-  event?.imageUrl ||
-  "";
+const eventCover = eventMediaUrl;
 const ratingStars = (rating) => {
   const filled = Math.max(0, Math.min(5, Math.round(Number(rating) || 0)));
   return "★".repeat(filled) + "☆".repeat(5 - filled);
-};
-const eventImageUrl = (value) => {
-  if (!value) return "";
-  // A signed token for a draft/private cover rides in the query string, so
-  // this must not round-trip through URL().pathname, which would drop it.
-  if (/^https?:\/\//i.test(value)) return value;
-  return apiAssetUrl(
-    value.startsWith("/") ? value : `/uploads/event-covers/${value}`,
-  );
 };
 
 const participantPictureUrl = (value) => {
@@ -958,8 +942,9 @@ export default function EventDetailPage() {
                     aria-label="Loading event image"
                   />
                 )}
+                {mediaRenderDebug({ component: "EventDetailPage", eventId: event.id, rawUrl: eventCover(event) })}
                 <img
-                  src={eventImageUrl(eventCover(event))}
+                  src={eventCover(event)}
                   alt={`${event.title} cover`}
                   onLoad={() => setImageLoaded(true)}
                   className={`h-full w-full object-cover transition-opacity duration-300 ${imageLoaded ? "opacity-100" : "opacity-0"}`}

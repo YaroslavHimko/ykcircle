@@ -6,6 +6,7 @@ import SiteChrome from "@/components/SiteChrome";
 import ConfirmationDialog from "@/components/ConfirmationDialog";
 import ForumDiscussion from "@/components/ForumDiscussion";
 import { apiAssetUrl, apiFetch } from "@/lib/api";
+import { eventMediaUrl, mediaRenderDebug } from "@/lib/media";
 
 const managementRoles = ["organizer", "manager", "admin"];
 const testGroupPresets = [
@@ -32,13 +33,13 @@ const groupImageValue = (group) =>
   group?.groupImage ||
   group?.groupImageUrl ||
   "";
-const eventImageValue = (event) =>
-  event?.thumbnailUrl ||
-  event?.coverImage ||
-  event?.coverImageUrl ||
-  event?.image ||
-  event?.imageUrl ||
-  "";
+const eventImageValue = eventMediaUrl;
+const EventImage = ({ event, className, component }) => {
+  const src = eventImageValue(event);
+  if (!src) return null;
+  mediaRenderDebug({ component, eventId: event.id, rawUrl: src });
+  return <img src={src} alt="" className={className} />;
+};
 const ratingStars = (rating) => {
   const filled = Math.max(0, Math.min(5, Math.round(Number(rating) || 0)));
   return "★".repeat(filled) + "☆".repeat(5 - filled);
@@ -887,16 +888,7 @@ export default function GroupsPage({
                           to={`/events/${event.id}`}
                           className="overflow-hidden border border-border bg-background hover:border-primary"
                         >
-                          {eventImageValue(event) && (
-                            <img
-                              src={imageUrl(
-                                eventImageValue(event),
-                                "event-covers",
-                              )}
-                              alt=""
-                              className="aspect-[16/8] w-full object-cover"
-                            />
-                          )}
+                          <EventImage event={event} component="GroupEventCard" className="aspect-[16/8] w-full object-cover" />
                           <div className="relative z-20 p-5">
                             <p className="text-xs uppercase tracking-[0.2em] text-primary">
                               {event.startsAt
@@ -931,7 +923,7 @@ export default function GroupsPage({
                       {archivedEvents.map((event) => (
                         <article key={event.id} className="relative overflow-hidden border border-border bg-secondary/40 opacity-75">
                           <div className="pointer-events-none absolute inset-0 z-10 bg-white/35" aria-hidden="true" />
-                          {eventImageValue(event) && <img src={imageUrl(eventImageValue(event), "event-covers")} alt="" className="aspect-[16/8] w-full object-cover grayscale" />}
+                          <EventImage event={event} component="GroupArchivedEventCard" className="aspect-[16/8] w-full object-cover grayscale" />
                           <div className="relative z-20 p-5">
                             <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Archived</p>
                             <h3 className="mt-2 font-display text-2xl text-muted-foreground">{event.title}</h3>

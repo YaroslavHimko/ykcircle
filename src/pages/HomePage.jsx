@@ -3,7 +3,8 @@ import { Helmet } from "react-helmet";
 import { Link } from "react-router-dom";
 import { ArrowRight, CalendarDays, MapPin, Users } from "lucide-react";
 import SiteChrome from "@/components/SiteChrome";
-import { apiAssetUrl, apiFetch } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
+import { eventMediaUrl, mediaRenderDebug } from "@/lib/media";
 
 const images = {
   hero: `/images/hero.png?v=${import.meta.env.VITE_HERO_IMAGE_VERSION}`,
@@ -23,23 +24,8 @@ const formatDate = (value) =>
     : "Date to be announced";
 
 function EventCard({ event }) {
-  const imageValue =
-    event.thumbnailUrl ||
-    event.coverImage ||
-    event.coverImageUrl ||
-    event.cover_image ||
-    event.cover_url ||
-    event.image ||
-    event.imageUrl;
-  const image = imageValue?.startsWith("http")
-    ? imageValue
-    : imageValue
-      ? apiAssetUrl(
-          imageValue.startsWith("/")
-            ? imageValue
-            : `/uploads/event-covers/${imageValue}`,
-        )
-      : "";
+  const image = eventMediaUrl(event);
+  if (image) mediaRenderDebug({ component: "HomeEventCard", eventId: event.id, rawUrl: image });
   return (
     <Link
       to={`/events/${event.id}`}

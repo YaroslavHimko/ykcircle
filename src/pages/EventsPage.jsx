@@ -2,7 +2,8 @@ import React, { useEffect, useRef, useState } from "react";
 import { Helmet } from "react-helmet";
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import SiteChrome from "@/components/SiteChrome";
-import { apiAssetUrl, apiFetch } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
+import { eventMediaUrl, mediaRenderDebug } from "@/lib/media";
 import GoogleLocationPicker from "@/components/GoogleLocationPicker";
 
 const initialForm = {
@@ -63,30 +64,12 @@ const testEventPresets = [
 ];
 const toInputDate = (value) =>
   value ? new Date(value).toISOString().slice(0, 16) : "";
-const eventCover = (event) =>
-  event?.thumbnailUrl ||
-  event?.thumbnail_url ||
-  event?.thumbnail ||
-  event?.coverImage ||
-  event?.coverImageUrl ||
-  event?.cover_image_url ||
-  event?.cover_image ||
-  event?.coverUrl ||
-  event?.cover_url ||
-  event?.cover ||
-  event?.image ||
-  event?.image_url ||
-  event?.imageUrl ||
-  "";
-const coverImageUrl = (value) => {
-  if (!value) return "";
-  if (value.startsWith("/images/")) return value;
-  // A signed token for a draft/private cover rides in the query string, so
-  // this must not round-trip through URL().pathname, which would drop it.
-  if (/^https?:\/\//i.test(value)) return value;
-  return apiAssetUrl(
-    value.startsWith("/") ? value : "/uploads/event-covers/" + value,
-  );
+const eventCover = eventMediaUrl;
+const EventCoverImage = ({ event, className, alt = "", component }) => {
+  const src = eventCover(event);
+  if (!src) return null;
+  mediaRenderDebug({ component, eventId: event.id, rawUrl: src });
+  return <img src={src} alt={alt} className={className} />;
 };
 const eventValue = (event, ...keys) =>
   keys.map((key) => event?.[key]).find((value) => value !== undefined && value !== null) ?? "";
@@ -1067,13 +1050,7 @@ export default function EventsPage({
             <div className="mt-4 space-y-3">
               {drafts.map((event) => (
                 <article key={event.id} className="border border-border p-5">
-                  {eventCover(event) && (
-                    <img
-                      src={coverImageUrl(eventCover(event))}
-                      alt=""
-                      className="mb-4 aspect-[16/7] w-full object-cover"
-                    />
-                  )}
+                  <EventCoverImage event={event} component="EventsPageDraft" className="mb-4 aspect-[16/7] w-full object-cover" />
                   <span className="text-xs uppercase tracking-[0.2em] text-primary">
                     Draft
                   </span>
@@ -1132,11 +1109,7 @@ export default function EventsPage({
                 >
                   <div className="min-w-0 flex-1">
                     {eventCover(event) ? (
-                      <img
-                        src={coverImageUrl(eventCover(event))}
-                        alt={`${event.title} cover`}
-                        className="mb-4 aspect-[16/10] w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
-                      />
+                      <EventCoverImage event={event} component="EventsPageCard" alt={`${event.title} cover`} className="mb-4 aspect-[16/10] w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]" />
                     ) : (
                       <div className="mb-4 flex aspect-[16/10] w-full items-end bg-gradient-to-br from-primary/90 via-primary/65 to-slate-900 p-5 text-white">
                         <span className="font-display text-2xl leading-none">
@@ -1228,7 +1201,7 @@ export default function EventsPage({
               {archived.map((event) => (
                 <article key={event.id} className="relative overflow-hidden border border-border bg-secondary/25 p-4 opacity-75">
                   <div className="pointer-events-none absolute inset-0 z-10 bg-white/35" aria-hidden="true" />
-                  {eventCover(event) && <img src={coverImageUrl(eventCover(event))} alt="" className="mb-4 aspect-[16/10] w-full object-cover" />}
+                  <EventCoverImage event={event} component="EventsPageArchived" className="mb-4 aspect-[16/10] w-full object-cover" />
                   <div className="relative z-20">
                     <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Archived</p>
                     <h3 className="mt-2 font-display text-2xl text-muted-foreground">{event.title}</h3>

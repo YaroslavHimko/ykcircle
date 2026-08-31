@@ -4,7 +4,8 @@ import { Link as RouterLink, useNavigate, useParams } from "react-router-dom";
 import { Check, ChevronLeft, ChevronRight, Heart, MapPin, Users, X } from "lucide-react";
 import SiteChrome from "@/components/SiteChrome";
 import { Skeleton } from "@/components/ui/skeleton";
-import { apiAssetUrl, apiFetch } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
+import { mediaRenderDebug, resolveMediaUrl, selectMediaUrl, venueMediaUrl } from "@/lib/media";
 import MapLocation from "@/components/MapLocation";
 import GoogleLocationPicker from "@/components/GoogleLocationPicker";
 
@@ -39,11 +40,17 @@ const capacityLabel = (venue) => {
   const value = capacity.max ?? venue.capacityMax ?? capacity.standing ?? venue.standingCapacity;
   return value ? `Up to ${value} guests` : "Capacity on request";
 };
-// Venue image URLs come pre-resolved from the API (coverImageUrl / images[].url).
-// A draft venue's image URL carries a short-lived signed token in its query
-// string, so it must be forwarded as-is rather than rebuilt from a filename.
-const resolveImageUrl = (value) => (!value ? "" : /^https?:\/\//i.test(value) ? value : apiAssetUrl(value));
-const imageUrl = (venue) => resolveImageUrl(venue.coverImageUrl || venue.images?.find((item) => item.isCover)?.url || venue.images?.[0]?.url || "");
+// Venue image URLs are API-supplied and may carry a short-lived signed token.
+// A bare filename is intentionally not a renderable media URL.
+const imageUrl = venueMediaUrl;
+const galleryImageUrl = (image) => resolveMediaUrl(selectMediaUrl(
+  image?.url,
+  image?.imageUrl,
+  image?.image_url,
+  image?.mediaUrl,
+  image?.media_url,
+  image?.filename,
+));
 
 async function loadTaxonomy() {
   try {
@@ -89,6 +96,7 @@ function ErrorState({ error, retry }) {
 
 function VenueCard({ venue, compact = false }) {
   const photo = imageUrl(venue);
+  if (photo) mediaRenderDebug({ component: "VenueCard", venueId: venueId(venue), rawUrl: photo });
   const amenities = (venue.amenities || []).slice(0, 3);
   const destination = venue.slug || venueId(venue);
   return <article className="group relative overflow-hidden border border-border bg-background transition-colors hover:border-primary">
@@ -206,12 +214,17 @@ export function VenueDetailPage({ legacyId = false, managed = false }) {
   if (state.loading) return <Shell title="Venue"><div className="mx-auto max-w-5xl"><Skeleton className="h-96 w-full" /><Skeleton className="mt-8 h-12 w-1/2" /><Skeleton className="mt-4 h-6 w-1/3" /></div></Shell>;
   if (state.error || !venue) return <Shell title="Venue"><DetailLink to="/venues" className="text-sm text-primary underline">Back to {managed ? "manage venues" : "venues"}</DetailLink><ErrorState error={state.error || "Venue not found."} retry={load} /></Shell>;
   const photo = imageUrl(venue);
-  const galleryImages = (venue.images || []).map((item) => ({ src: resolveImageUrl(item.url), caption: item.caption || "" })).filter((entry) => entry.src);
+  const galleryImages = (venue.images || []).map((item) => {
+    const src = galleryImageUrl(item);
+    if (src) mediaRenderDebug({ component: "VenueDetailGallery", venueId: venueId(venue), rawUrl: src });
+    return { src, caption: item.caption || "" };
+  }).filter((entry) => entry.src);
   const heroInGallery = galleryImages.some((entry) => entry.src === photo);
   const lightboxImages = photo && !heroInGallery ? [{ src: photo, caption: "" }, ...galleryImages] : galleryImages;
   const galleryOffset = photo && !heroInGallery ? 1 : 0;
   const heroLightboxIndex = photo ? Math.max(lightboxImages.findIndex((entry) => entry.src === photo), 0) : null;
   const verified = venue.verificationStatus === "verified" || venue.isVerified;
+  if (photo) mediaRenderDebug({ component: "VenueDetailPage", venueId: venueId(venue), rawUrl: photo });
   return <Shell title={`${venue.name} — ${venue.venueTypeName || "Venue"}`} description={venue.shortDescription || venue.description}><DetailLink to="/venues" className="inline-flex items-center gap-1 text-sm text-primary underline"><ChevronLeft className="h-4 w-4" />Back to {managed ? "manage venues" : "venues"}</DetailLink><article className="mx-auto mt-6 max-w-5xl"><div className="overflow-hidden border border-border bg-background">{photo ? <button type="button" onClick={() => setLightboxIndex(heroLightboxIndex)} className="block w-full cursor-zoom-in"><img src={photo} alt="" className="h-72 w-full object-cover sm:h-[28rem]" onError={handleImageError} /></button> : <div className="flex h-64 items-end bg-secondary/60 p-7 font-display text-4xl text-muted-foreground">{venue.name}</div>}<div className="grid gap-8 p-6 lg:grid-cols-[minmax(0,1fr)_18rem]"><div><div className="flex flex-wrap items-start gap-3"><h1 className="font-display text-4xl font-bold sm:text-5xl">{venue.name}</h1>{verified && <span className="inline-flex items-center gap-1 border border-primary/40 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-primary"><Check className="h-3.5 w-3.5" />Verified</span>}{venue.sponsored && <span className="border border-primary/40 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-primary">Sponsored</span>}</div><p className="mt-3 flex items-center gap-1 text-muted-foreground"><MapPin className="h-4 w-4" />{publicLocation(venue)}</p><p className="mt-5 text-lg">{venue.venueTypeName || humanize(venue.venueType || "Venue")} · {capacityLabel(venue)}</p><p className="mt-5 text-xl font-semibold text-primary">{priceLabel(venue)}</p></div><aside className="border border-border bg-secondary/20 p-4"><button type="button" onClick={request} className="min-h-12 w-full bg-primary px-4 text-sm font-medium text-primary-foreground">Request venue</button><button type="button" onClick={toggleSaved} className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 border border-border px-4 text-sm"><Heart className={`h-4 w-4 ${saved ? "fill-primary text-primary" : ""}`} />{saved ? "Saved" : "Save venue"}</button>{venue.contactEmail && <a href={`mailto:${venue.contactEmail}`} className="mt-3 flex min-h-11 items-center justify-center border border-border px-4 text-sm">Message venue</a>}{saveError && <p role="alert" className="mt-3 text-sm text-destructive">{saveError}</p>}</aside></div></div>
     {galleryImages.length > 1 && <section className="mt-10"><h2 className="font-display text-3xl font-semibold">Gallery</h2><div className="mt-5 grid gap-3 sm:grid-cols-3">{galleryImages.slice(0, 20).map((item, index) => <button key={index} type="button" onClick={() => setLightboxIndex(index + galleryOffset)} className="aspect-[4/3] cursor-zoom-in overflow-hidden"><img src={item.src} alt={item.caption || ""} className="h-full w-full object-cover transition-transform hover:scale-105" onError={handleImageError} /></button>)}</div></section>}
     <section className="mt-10 grid gap-10 border-t border-border pt-8 lg:grid-cols-2"><div><h2 className="font-display text-3xl font-semibold">About this venue</h2><p className="mt-4 whitespace-pre-wrap leading-relaxed text-muted-foreground">{venue.description || venue.shortDescription || "More details will be shared by the venue."}</p>{venue.suitableEventTypes?.length > 0 && <><h3 className="mt-8 font-display text-2xl font-semibold">Suitable for</h3><TagList items={venue.suitableEventTypes} /></>}</div><div><h2 className="font-display text-3xl font-semibold">Capacity</h2><Capacity venue={venue} /><h3 className="mt-8 font-display text-2xl font-semibold">Amenities</h3><TagList items={venue.amenities} empty="Amenities are shared on request." /></div></section>
