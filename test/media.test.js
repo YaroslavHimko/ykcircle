@@ -4,6 +4,8 @@ import { eventMediaValue, hasMediaToken, isExplicitMediaUrl, venueMediaValue } f
 
 const signedEvent = "/api/media/event/private-event.png?token=event-signature";
 const signedVenue = "/api/media/venue/private-venue.png?token=venue-signature";
+const pathSignedEvent = "/api/media/event/path-token-signature/private-event.png";
+const pathSignedVenue = "/api/media/venue/path-token-signature/private-venue.png";
 
 test("private event image renders the complete signed URL, not its filename", () => {
   const src = eventMediaValue({
@@ -12,6 +14,16 @@ test("private event image renders the complete signed URL, not its filename", ()
   });
 
   assert.equal(src, signedEvent);
+  assert.equal(hasMediaToken(src), true);
+});
+
+test("event images preserve a signed path-token URL returned by the API", () => {
+  const src = eventMediaValue({
+    coverImage: "private-event.png",
+    coverImageUrl: pathSignedEvent,
+  });
+
+  assert.equal(src, pathSignedEvent);
   assert.equal(hasMediaToken(src), true);
 });
 
@@ -33,6 +45,13 @@ test("private venue image renders the complete signed URL, not its filename", ()
   });
 
   assert.equal(src, signedVenue);
+  assert.equal(hasMediaToken(src), true);
+});
+
+test("venue images preserve a signed path-token URL returned by the API", () => {
+  const src = venueMediaValue({ coverImageUrl: pathSignedVenue });
+
+  assert.equal(src, pathSignedVenue);
   assert.equal(hasMediaToken(src), true);
 });
 

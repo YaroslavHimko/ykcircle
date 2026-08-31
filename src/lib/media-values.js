@@ -1,9 +1,11 @@
 const signedTokenPattern = /[?&]token=[^&]+/;
+const pathTokenPattern = /\/api\/media\/(?:event|venue)\/[^/?#]+\/[^/?#]+(?:[?#]|$)/i;
 const apiMediaPattern = /^\/?api\/media\//i;
 const legacyProtectedUploadPattern = /(?:^|\/)uploads\/(?:event-covers|venue-images|venue-covers)(?:\/|$)/i;
 
 export const hasMediaToken = (value) =>
-  typeof value === "string" && signedTokenPattern.test(value);
+  typeof value === "string" &&
+  (signedTokenPattern.test(value) || pathTokenPattern.test(value));
 
 const asUrl = (value) => (typeof value === "string" ? value.trim() : "");
 

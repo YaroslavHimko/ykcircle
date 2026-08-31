@@ -10,6 +10,9 @@ import {
 export { hasMediaToken, isExplicitMediaUrl, selectMediaUrl };
 
 const asUrl = (value) => (typeof value === "string" ? value.trim() : "");
+const redactMediaUrl = (value) => asUrl(value)
+  .replace(/(\/api\/media\/(?:event|venue)\/)[^/?#]+(?=\/)/i, "$1[TOKEN]")
+  .replace(/([?&]token=)[^&#]*/i, "$1[redacted]");
 
 // Deliberately accept only a URL/path the API supplied. In particular, do not
 // turn a filename such as "cover.png" into a protected media URL.
@@ -28,14 +31,14 @@ export const eventMediaUrl = (event) => resolveMediaUrl(eventMediaValue(event));
 export const venueMediaUrl = (venue) => resolveMediaUrl(venueMediaValue(venue));
 
 export const mediaRenderDebug = ({ component, eventId, venueId, rawUrl }) => {
-  // Never print signed query parameters. The redacted URL still identifies the
-  // media resource in DevTools while hasToken proves whether it was signed.
+  // Never print signed query or path parameters. The redacted URL still
+  // identifies the media resource in DevTools while hasToken proves access.
   const value = asUrl(rawUrl);
   console.debug("MEDIA_RENDER", {
     component,
     eventId,
     venueId,
-    rawUrl: value ? value.split("?", 1)[0] : value,
+    rawUrl: redactMediaUrl(value),
     hasToken: hasMediaToken(value),
   });
 };
@@ -49,6 +52,6 @@ export const eventImageRenderDebug = ({ component, event }) => {
       : event?.coverImagePath
         ? "legacy-path"
         : "none",
-    hasToken: Boolean(event?.coverImageUrl?.includes("token=")),
+    hasToken: hasMediaToken(event?.coverImageUrl),
   });
 };
