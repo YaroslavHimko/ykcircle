@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { eventMediaValue, hasMediaToken, isExplicitMediaUrl, venueMediaValue } from "../src/lib/media-values.js";
 
@@ -36,6 +37,33 @@ test("draft event image renders the complete signed URL even when legacy fields 
 
   assert.equal(src, signedEvent);
   assert.equal(hasMediaToken(src), true);
+});
+
+test("a draft event keeps its exact path-token URL when every legacy cover field is also present", () => {
+  const productionStylePathToken = "/api/media/event/eyJmaWxlbmFtZSI6ImV2ZW50LTIucG5nIn0.signature/event-2.png";
+  const src = eventMediaValue({
+    status: "Draft",
+    visibility: "Private",
+    coverImage: "event-2.png",
+    coverImagePath: "/uploads/event-covers/event-2.png",
+    coverImageUrl: "/uploads/event-covers/event-2.png",
+    cover_image_url: productionStylePathToken,
+  });
+
+  assert.equal(src, productionStylePathToken);
+  assert.equal(hasMediaToken(src), true);
+  assert.equal(src.includes("/uploads/event-covers/"), false);
+});
+
+test("a signed event URL is never truncated or replaced when it has query parameters", () => {
+  const signedWithQuery = "/api/media/event/private-event.png?token=event-signature&variant=cover";
+  const src = eventMediaValue({
+    status: "Draft",
+    coverImage: "private-event.png",
+    coverImageUrl: signedWithQuery,
+  });
+
+  assert.equal(src, signedWithQuery);
 });
 
 test("private venue image renders the complete signed URL, not its filename", () => {
@@ -90,6 +118,8 @@ test("a published public event can use the API-supplied public upload URL", () =
 test("a draft/private event never uses a legacy public upload URL", () => {
   const publicCoverUrl = "/uploads/event-covers/private-event.png";
   assert.equal(eventMediaValue({ status: "Draft", visibility: "Private", coverImageUrl: publicCoverUrl }), "");
+  assert.equal(eventMediaValue({ status: "draft", visibility: "Public", coverImageUrl: publicCoverUrl }), "");
+  assert.equal(eventMediaValue({ status: "Published", visibility: "Private", coverImageUrl: publicCoverUrl }), "");
 });
 
 test("an error retry keeps the refreshed signed URL intact", () => {
@@ -98,4 +128,19 @@ test("an error retry keeps the refreshed signed URL intact", () => {
 
   assert.equal(src, refreshed);
   assert.equal(hasMediaToken(src), true);
+});
+
+test("event rendering surfaces cannot reintroduce the legacy event-covers URL", async () => {
+  const surfaces = [
+    "src/pages/EventsPage.jsx",
+    "src/pages/EventDetailPage.jsx",
+    "src/pages/HomePage.jsx",
+    "src/pages/GroupsPage.jsx",
+  ];
+
+  await Promise.all(surfaces.map(async (file) => {
+    const source = await readFile(new URL(`../${file}`, import.meta.url), "utf8");
+    assert.doesNotMatch(source, /uploads\/event-covers/i, file);
+    assert.match(source, /eventMediaUrl/, file);
+  }));
 });
