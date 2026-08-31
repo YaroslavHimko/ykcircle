@@ -14,6 +14,13 @@ export const isExplicitMediaUrl = (value) =>
   !legacyProtectedUploadPattern.test(value) &&
   (/^(?:https?:)?\/\//i.test(value) || apiMediaPattern.test(value));
 
+export const isLegacyMediaUploadUrl = (value) =>
+  typeof value === "string" && legacyProtectedUploadPattern.test(value);
+
+export const isPublicEvent = (event) =>
+  String(event?.status || "").toLowerCase() === "published" &&
+  String(event?.visibility || "").toLowerCase() === "public";
+
 // API responses include both legacy filename fields and a resolved URL. Always
 // prefer the signed URL, regardless of the order in which aliases are listed.
 export const selectMediaUrl = (...values) => {
@@ -24,10 +31,18 @@ export const selectMediaUrl = (...values) => {
 // Event images must use the resolved URL returned by the API. Legacy fields
 // such as coverImage, coverImagePath, and imageFilename are filenames/paths,
 // not browser-safe sources for private or draft media.
-export const eventMediaValue = (event) => selectMediaUrl(
-  event?.coverImageUrl,
-  event?.cover_image_url,
-);
+export const eventMediaValue = (event) => {
+  const apiUrl = selectMediaUrl(event?.coverImageUrl, event?.cover_image_url);
+  if (apiUrl) return apiUrl;
+
+  // Published public events retain their existing public-media route. This is
+  // deliberately unavailable to drafts/private events, which must provide a
+  // signed path-token URL through coverImageUrl.
+  const publicCoverUrl = asUrl(event?.coverImageUrl || event?.cover_image_url);
+  return isPublicEvent(event) && isLegacyMediaUploadUrl(publicCoverUrl)
+    ? publicCoverUrl
+    : "";
+};
 
 export const venueMediaValue = (venue) => selectMediaUrl(
   venue?.coverImageUrl,

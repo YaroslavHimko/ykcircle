@@ -78,6 +78,20 @@ test("no protected event image URL can use the legacy public upload path", () =>
   assert.equal(isExplicitMediaUrl("/uploads/venue-images/private-venue.png"), false);
 });
 
+test("a published public event can use the API-supplied public upload URL", () => {
+  const publicCoverUrl = "/uploads/event-covers/public-event.png";
+  assert.equal(eventMediaValue({
+    status: "Published",
+    visibility: "Public",
+    coverImageUrl: publicCoverUrl,
+  }), publicCoverUrl);
+});
+
+test("a draft/private event never uses a legacy public upload URL", () => {
+  const publicCoverUrl = "/uploads/event-covers/private-event.png";
+  assert.equal(eventMediaValue({ status: "Draft", visibility: "Private", coverImageUrl: publicCoverUrl }), "");
+});
+
 test("an error retry keeps the refreshed signed URL intact", () => {
   const refreshed = "/api/media/venue/private-venue.png?token=fresh-signature";
   const src = venueMediaValue({ coverImage: "private-venue.png", coverImageUrl: refreshed });
