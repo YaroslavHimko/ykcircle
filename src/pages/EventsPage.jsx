@@ -3,7 +3,7 @@ import { Helmet } from "react-helmet";
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import SiteChrome from "@/components/SiteChrome";
 import { apiFetch } from "@/lib/api";
-import { eventMediaUrl, mediaRenderDebug } from "@/lib/media";
+import { eventImageRenderDebug, eventMediaUrl } from "@/lib/media";
 import GoogleLocationPicker from "@/components/GoogleLocationPicker";
 
 const initialForm = {
@@ -68,7 +68,7 @@ const eventCover = eventMediaUrl;
 const EventCoverImage = ({ event, className, alt = "", component }) => {
   const src = eventCover(event);
   if (!src) return null;
-  mediaRenderDebug({ component, eventId: event.id, rawUrl: src });
+  eventImageRenderDebug({ component, event });
   return <img src={src} alt={alt} className={className} />;
 };
 const eventValue = (event, ...keys) =>

@@ -39,3 +39,16 @@ export const mediaRenderDebug = ({ component, eventId, venueId, rawUrl }) => {
     hasToken: hasMediaToken(value),
   });
 };
+
+export const eventImageRenderDebug = ({ component, event }) => {
+  console.debug("EVENT_IMAGE_RENDER", {
+    component,
+    eventId: event?.id,
+    sourceType: event?.coverImageUrl
+      ? "signed-url"
+      : event?.coverImagePath
+        ? "legacy-path"
+        : "none",
+    hasToken: Boolean(event?.coverImageUrl?.includes("token=")),
+  });
+};

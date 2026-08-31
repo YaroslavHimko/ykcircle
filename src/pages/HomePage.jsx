@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight, CalendarDays, MapPin, Users } from "lucide-react";
 import SiteChrome from "@/components/SiteChrome";
 import { apiFetch } from "@/lib/api";
-import { eventMediaUrl, mediaRenderDebug } from "@/lib/media";
+import { eventImageRenderDebug, eventMediaUrl } from "@/lib/media";
 
 const images = {
   hero: `/images/hero.png?v=${import.meta.env.VITE_HERO_IMAGE_VERSION}`,
@@ -25,7 +25,7 @@ const formatDate = (value) =>
 
 function EventCard({ event }) {
   const image = eventMediaUrl(event);
-  if (image) mediaRenderDebug({ component: "HomeEventCard", eventId: event.id, rawUrl: image });
+  if (image) eventImageRenderDebug({ component: "HomeEventCard", event });
   return (
     <Link
       to={`/events/${event.id}`}

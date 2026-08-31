@@ -18,8 +18,8 @@ test("private event image renders the complete signed URL, not its filename", ()
 test("draft event image renders the complete signed URL even when legacy fields arrive first", () => {
   const src = eventMediaValue({
     thumbnail: "draft-event.png",
-    thumbnailUrl: signedEvent,
     coverImage: "draft-event.png",
+    coverImageUrl: signedEvent,
   });
 
   assert.equal(src, signedEvent);
@@ -49,6 +49,14 @@ test("a protected-media fallback cannot generate an unsigned request from a file
   assert.equal(isExplicitMediaUrl("private-event.png"), false);
   assert.equal(eventMediaValue({ coverImage: "private-event.png" }), "");
   assert.equal(venueMediaValue({ coverImage: "private-venue.png" }), "");
+});
+
+test("no protected event image URL can use the legacy public upload path", () => {
+  assert.equal(eventMediaValue({ coverImageUrl: "/uploads/event-covers/private-event.png" }), "");
+  assert.equal(eventMediaValue({ coverImageUrl: "https://api.example.test/uploads/event-covers/private-event.png" }), "");
+  assert.equal(eventMediaValue({ coverImage: "/uploads/event-covers/private-event.png" }), "");
+  assert.equal(eventMediaValue({ coverImagePath: "/uploads/event-covers/private-event.png" }), "");
+  assert.equal(isExplicitMediaUrl("/uploads/venue-images/private-venue.png"), false);
 });
 
 test("an error retry keeps the refreshed signed URL intact", () => {

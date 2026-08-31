@@ -5,7 +5,7 @@ import { Check, X } from "lucide-react";
 import SiteChrome from "@/components/SiteChrome";
 import ForumDiscussion from "@/components/ForumDiscussion";
 import { apiAssetUrl, apiFetch } from "@/lib/api";
-import { eventMediaUrl, mediaRenderDebug } from "@/lib/media";
+import { eventImageRenderDebug, eventMediaUrl } from "@/lib/media";
 import MapLocation from "@/components/MapLocation";
 import { locationLines } from "@/lib/maps";
 
@@ -942,7 +942,7 @@ export default function EventDetailPage() {
                     aria-label="Loading event image"
                   />
                 )}
-                {mediaRenderDebug({ component: "EventDetailPage", eventId: event.id, rawUrl: eventCover(event) })}
+                {eventImageRenderDebug({ component: "EventDetailPage", event })}
                 <img
                   src={eventCover(event)}
                   alt={`${event.title} cover`}

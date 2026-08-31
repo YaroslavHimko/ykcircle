@@ -6,7 +6,7 @@ import SiteChrome from "@/components/SiteChrome";
 import ConfirmationDialog from "@/components/ConfirmationDialog";
 import ForumDiscussion from "@/components/ForumDiscussion";
 import { apiAssetUrl, apiFetch } from "@/lib/api";
-import { eventMediaUrl, mediaRenderDebug } from "@/lib/media";
+import { eventImageRenderDebug, eventMediaUrl } from "@/lib/media";
 
 const managementRoles = ["organizer", "manager", "admin"];
 const testGroupPresets = [
@@ -37,7 +37,7 @@ const eventImageValue = eventMediaUrl;
 const EventImage = ({ event, className, component }) => {
   const src = eventImageValue(event);
   if (!src) return null;
-  mediaRenderDebug({ component, eventId: event.id, rawUrl: src });
+  eventImageRenderDebug({ component, event });
   return <img src={src} alt="" className={className} />;
 };
 const ratingStars = (rating) => {
