@@ -81,7 +81,7 @@ function SelectedBookingTimeGrid({ schedule, value }) {
   return <div className="mt-5 overflow-auto border border-border bg-background" style={{ maxHeight: "30rem" }}><div className="min-w-[19rem]"><div className="grid grid-cols-[4.5rem_1fr] border-b border-border bg-secondary/30"><div className="border-r border-border" /><div className="px-3 py-2 text-sm font-medium">Selected venue time</div></div><div className="grid grid-cols-[4.5rem_1fr]"><div className="relative border-r border-border" style={{ height }}>{hours.map((hour) => <span key={hour} className="absolute right-2 -translate-y-2 text-xs text-muted-foreground" style={{ top: (hour - 7) * hourHeight }}>{toTime(hour * 60)}</span>)}</div><div className="relative" style={{ height }}>{hours.map((hour) => <span key={hour} className="absolute left-0 right-0 border-b border-border/80" style={{ top: (hour - 7) * hourHeight }} />)}{hours.slice(0, -1).map((hour) => <span key={`half-${hour}`} className="absolute left-0 right-0 border-b border-dashed border-border/50" style={{ top: (hour - 6.5) * hourHeight }} />)}{unavailable.map((slot, index) => block(slot, index, true))}{slots.map((slot, index) => block(slot, index, false))}{Number.isFinite(value?.start) && Number.isFinite(value?.end) && value.end > value.start && selectedHeight > 0 && <div className={`pointer-events-none absolute left-3 right-3 z-30 overflow-hidden border-2 border-primary bg-primary font-semibold text-primary-foreground shadow-sm ${selectedHeight < 42 ? "flex items-center px-2 text-xs" : "p-2 text-xs"}`} style={{ top: selected.top + 2, height: selectedHeight }}><span className="truncate">Selected: {toTime(value.start)}-{toTime(value.end)}</span></div>}</div></div></div></div>;
 }
 
-function VenueBookingTimeSelector({ schedule, value, onChange }) {
+function VenueBookingTimeSelector({ schedule, value, onChange, billingProfiles = [], buyerBillingProfileId, onBuyerBillingProfileChange }) {
   const toMinutes = (time) => { const [hours = 0, minutes = 0] = String(time || "00:00").slice(0, 5).split(":").map(Number); return hours * 60 + minutes; };
   const toTime = (minutes) => `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
   const positive = (...values) => values.map(Number).find((number) => Number.isFinite(number) && number > 0);
@@ -111,8 +111,46 @@ function VenueBookingTimeSelector({ schedule, value, onChange }) {
       <div className="mt-3 flex flex-wrap gap-2">{schedule.slots.map((slot, index) => <button key={`${slot.startTime || slot.start}-${index}`} type="button" onClick={() => selectInterval(slot)} className={`border px-3 py-2 text-sm ${interval === slot ? "border-primary bg-primary text-primary-foreground" : "border-accent/50 bg-accent/10"}`}>{String(slot.startTime || slot.start).slice(0, 5)}–{String(slot.endTime || slot.end).slice(0, 5)}</button>)}</div>
       <SelectedBookingTimeGrid schedule={schedule} value={interval ? { start, end } : null} />
       {interval && <div className="mt-4 grid gap-3 sm:grid-cols-2"><label className="text-sm font-medium">Start<select value={start} onChange={(event) => updateStart(event.target.value)} className="mt-1 min-h-11 w-full border border-border bg-background px-3">{startOptions.map((option) => <option key={option} value={option}>{toTime(option)}</option>)}</select></label><label className="text-sm font-medium">End<select value={end} onChange={(event) => onChange({ ...value, end: Number(event.target.value) })} className="mt-1 min-h-11 w-full border border-border bg-background px-3">{endOptions.map((option) => <option key={option} value={option}>{toTime(option)}</option>)}</select></label></div>}
+      {interval && <label className="mt-4 block text-sm font-medium">Billing profile <span className="font-normal text-muted-foreground">(required only when the venue charges)</span><select value={buyerBillingProfileId || ""} onChange={(event) => onBuyerBillingProfileChange(event.target.value)} className="mt-1 min-h-11 w-full border border-border bg-background px-3"><option value="">Choose a billing profile</option>{billingProfiles.map((profile) => <option key={profile.id} value={profile.id}>{profile.legalName}{profile.isDefault ? " (default)" : ""}</option>)}</select>{!billingProfiles.length && <span className="mt-2 block text-xs font-normal text-muted-foreground">Add a profile under Account → Billing profiles before requesting a paid venue.</span>}</label>}
     </> : <p className="mt-2 text-sm text-muted-foreground">No bookable time is available on this date.</p>}
   </div>;
+}
+
+function PaidEventPaymentSetup({ eventId, token, currency, billingProfiles }) {
+  const [settings, setSettings] = useState({ sellerBillingProfileId: "", paymentAccountId: "", paymentsEnabled: false, ticketSalesEnabled: false });
+  const [accounts, setAccounts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  useEffect(() => {
+    let cancelled = false;
+    apiFetch(`/api/events/${eventId}/payment-settings`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Unable to load payment setup.");
+        if (!cancelled) setSettings({ ...data, sellerBillingProfileId: data.sellerBillingProfileId || "", paymentAccountId: data.paymentAccountId || "" });
+      })
+      .catch((requestError) => !cancelled && setError(requestError.message))
+      .finally(() => !cancelled && setLoading(false));
+    return () => { cancelled = true; };
+  }, [eventId, token]);
+  useEffect(() => {
+    if (!settings.sellerBillingProfileId) { setAccounts([]); return; }
+    apiFetch(`/api/me/billing-profiles/${settings.sellerBillingProfileId}/payment-accounts`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(async (response) => response.ok ? response.json() : [])
+      .then((data) => setAccounts(Array.isArray(data) ? data : data.accounts || []))
+      .catch(() => setAccounts([]));
+  }, [settings.sellerBillingProfileId, token]);
+  const save = async () => {
+    setSaving(true); setError("");
+    try {
+      const response = await apiFetch(`/api/events/${eventId}/payment-settings`, { method: "PUT", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify({ ...settings, currency }) });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Unable to save payment setup.");
+      setSettings({ ...data, sellerBillingProfileId: data.sellerBillingProfileId || "", paymentAccountId: data.paymentAccountId || "" });
+    } catch (requestError) { setError(requestError.message); } finally { setSaving(false); }
+  };
+  return <section className="mt-5 max-w-2xl border border-border p-5"><h2 className="font-display text-2xl font-semibold">Ticket payment setup</h2><p className="mt-2 text-sm text-muted-foreground">Select the legal seller for paid tickets. Ticket sales remain disabled until its payment account is ready.</p>{loading ? <p className="mt-3 text-sm text-muted-foreground">Loading payment setup…</p> : <><label className="mt-4 block text-sm font-medium">Seller billing profile<select value={settings.sellerBillingProfileId} onChange={(event) => setSettings((current) => ({ ...current, sellerBillingProfileId: event.target.value, paymentAccountId: "", paymentsEnabled: false, ticketSalesEnabled: false }))} className="mt-2 min-h-11 w-full border border-border bg-background px-3"><option value="">Choose billing profile</option>{billingProfiles.map((profile) => <option key={profile.id} value={profile.id}>{profile.legalName}</option>)}</select></label>{!billingProfiles.length && <p className="mt-2 text-sm text-muted-foreground">Create a <Link to="/account/billing-profiles" className="text-primary underline">billing profile</Link> first.</p>}<label className="mt-4 block text-sm font-medium">Payment account<select value={settings.paymentAccountId} onChange={(event) => setSettings((current) => ({ ...current, paymentAccountId: event.target.value }))} disabled={!settings.sellerBillingProfileId} className="mt-2 min-h-11 w-full border border-border bg-background px-3 disabled:opacity-60"><option value="">Choose payment account</option>{accounts.map((account) => <option key={account.id} value={account.id}>{account.provider} · {account.onboardingStatus}{account.chargesEnabled ? " (ready)" : ""}</option>)}</select></label>{settings.sellerBillingProfileId && !accounts.length && <p className="mt-2 text-xs text-muted-foreground">No payment accounts are connected to this billing profile yet.</p>}<label className="mt-4 flex items-center gap-2 text-sm"><input type="checkbox" checked={Boolean(settings.paymentsEnabled)} onChange={(event) => setSettings((current) => ({ ...current, paymentsEnabled: event.target.checked }))} />Enable payments</label><label className="mt-2 flex items-center gap-2 text-sm"><input type="checkbox" checked={Boolean(settings.ticketSalesEnabled)} onChange={(event) => setSettings((current) => ({ ...current, ticketSalesEnabled: event.target.checked }))} />Open ticket sales</label><button type="button" disabled={saving} onClick={save} className="mt-4 bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-60">{saving ? "Saving…" : "Save payment setup"}</button></>}{error && <p role="alert" className="mt-3 text-sm text-destructive">{error}</p>}</section>;
 }
 
 const eventCover = eventMediaUrl;
@@ -244,11 +282,14 @@ export default function EventDetailPage() {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [confirmationMessage, setConfirmationMessage] = useState("");
   const [venues, setVenues] = useState([]);
+  const [billingProfiles, setBillingProfiles] = useState([]);
+  const [buyerBillingProfileId, setBuyerBillingProfileId] = useState("");
   const [selectedVenueId, setSelectedVenueId] = useState("");
   const [bookingSchedule, setBookingSchedule] = useState({ loading: false, error: "", slots: [], timezone: "" });
   const [bookingTime, setBookingTime] = useState(null);
   const [bookingAvailabilityVersion, setBookingAvailabilityVersion] = useState(0);
   const [bookingSaving, setBookingSaving] = useState(false);
+  useEffect(() => { if (!canManageEvents || !token) return; apiFetch("/api/me/billing-profiles", { headers: { Authorization: `Bearer ${token}` } }).then(async (response) => response.ok ? response.json() : []).then((data) => setBillingProfiles(Array.isArray(data) ? data : data.profiles || [])).catch(() => setBillingProfiles([])); }, [canManageEvents, token]);
   useEffect(() => {
     if (!error) return undefined;
     const timer = window.setTimeout(() => setError(""), 5000);
@@ -474,7 +515,7 @@ export default function EventDetailPage() {
       .catch((requestError) => !cancelled && setBookingSchedule({ loading: false, error: requestError.message, slots: [], timezone: "" }));
     return () => { cancelled = true; };
   }, [bookingAvailabilityVersion, bookingDate, canManageEvents, scheduleVenueId, token]);
-  const requestVenueBooking = async () => { if (!selectedVenueId) return setError("Choose a venue first."); if (!bookingTime) return setError("Choose an available start and end time first."); setBookingSaving(true); try { const toTime = (minutes) => `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`; const startsAtUtc = localDateTimeToUtc(`${bookingDate}T${toTime(bookingTime.start)}`, bookingTimezone); const endsAtUtc = localDateTimeToUtc(`${bookingDate}T${toTime(bookingTime.end)}`, bookingTimezone, "end"); if (!startsAtUtc || !endsAtUtc) throw new Error("This local time does not exist due to daylight saving time. Choose another time."); const eventResponse = await apiFetch(`/api/events/${id}/schedule`, { method: "PATCH", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify({ startsAtUtc, endsAtUtc, venueId: Number(selectedVenueId) }) }); const eventData = await eventResponse.json(); if (!eventResponse.ok) throw new Error(eventData.error || eventData.message || "Unable to set the event time."); const response = await apiFetch(`/api/events/${id}/venue-booking`, { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify({ venueId: Number(selectedVenueId) }) }); const data = await response.json(); if (!response.ok) { if (response.status === 409) { setBookingTime(null); setBookingAvailabilityVersion((version) => version + 1); } throw new Error(data.error || data.message || "That time is no longer available. Please choose another time."); } setEvent((current) => ({ ...current, ...(eventData.event || eventData), venueBooking: data.booking || data })); } catch (requestError) { setError(requestError.message); } finally { setBookingSaving(false); } };
+  const requestVenueBooking = async () => { if (!selectedVenueId) return setError("Choose a venue first."); if (!bookingTime) return setError("Choose an available start and end time first."); setBookingSaving(true); try { const toTime = (minutes) => `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`; const startsAtUtc = localDateTimeToUtc(`${bookingDate}T${toTime(bookingTime.start)}`, bookingTimezone); const endsAtUtc = localDateTimeToUtc(`${bookingDate}T${toTime(bookingTime.end)}`, bookingTimezone, "end"); if (!startsAtUtc || !endsAtUtc) throw new Error("This local time does not exist due to daylight saving time. Choose another time."); const eventResponse = await apiFetch(`/api/events/${id}/schedule`, { method: "PATCH", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify({ startsAtUtc, endsAtUtc, venueId: Number(selectedVenueId) }) }); const eventData = await eventResponse.json(); if (!eventResponse.ok) throw new Error(eventData.error || eventData.message || "Unable to set the event time."); const response = await apiFetch(`/api/events/${id}/venue-booking`, { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify({ venueId: Number(selectedVenueId), buyerBillingProfileId: buyerBillingProfileId || null }) }); const data = await response.json(); if (!response.ok) { if (response.status === 409) { setBookingTime(null); setBookingAvailabilityVersion((version) => version + 1); } throw new Error(data.error || data.message || "That time is no longer available. Please choose another time."); } setEvent((current) => ({ ...current, ...(eventData.event || eventData), venueBooking: data.booking || data })); } catch (requestError) { setError(requestError.message); } finally { setBookingSaving(false); } };
   const cancelVenueBooking = async () => { setBookingSaving(true); try { const response = await apiFetch(`/api/events/${id}/venue-booking/cancel`, { method: "POST", headers: { Authorization: `Bearer ${token}` } }); const data = await response.json(); if (!response.ok) throw new Error(data.error || data.message || "Unable to cancel venue booking."); setEvent((current) => ({ ...current, venueBooking: data.booking || { ...venueBooking, status: "cancelled" } })); } catch (requestError) { setError(requestError.message); } finally { setBookingSaving(false); } };
   useEffect(
     () => setImageLoaded(false),
@@ -1084,7 +1125,25 @@ export default function EventDetailPage() {
             </p>
             {venueBooking?.status === "confirmed" && <p className="mt-2 text-sm text-muted-foreground">Confirmed venue: {venueBooking.venue?.name || venueBooking.venueName}{(venueBooking.venue?.location || venueBooking.venueLocation) && ` — ${venueBooking.venue?.location || venueBooking.venueLocation}`}</p>}
             {bookingTimeLabel(venueBooking) && <p className="mt-2 text-sm text-muted-foreground">Requested time: {bookingTimeLabel(venueBooking)}</p>}
-            {canManageEvents && <section className="mt-8 max-w-2xl border border-border p-5"><h2 className="font-display text-2xl font-semibold">Venue booking</h2>{venueBooking ? <><p className="mt-2 text-sm">Status: <span className="capitalize text-primary">{venueBooking.status}</span>{venueBooking.ownerNote && ` — ${venueBooking.ownerNote}`}</p>{persistedBookingTime && <><p className="mt-4 text-sm font-medium text-primary">Current booking</p><SelectedBookingTimeGrid schedule={bookingSchedule} value={persistedBookingTime} /></>}{bookingSchedule.loading && <p role="status" className="mt-3 text-sm text-muted-foreground">Loading venue availability…</p>}{bookingSchedule.timezone && <p className="mt-3 text-xs text-muted-foreground">Venue time: {bookingSchedule.timezone}</p>}{["pending", "confirmed"].includes(venueBooking.status) && <button type="button" disabled={bookingSaving} onClick={cancelVenueBooking} className="mt-4 border border-border px-4 py-2 text-sm disabled:opacity-60">Cancel booking request</button>}</> : <><p className="mt-2 text-sm text-muted-foreground">Choose a venue, then select a bookable start and end time. The request remains subject to the backend confirmation check.</p><label className="mt-4 block text-sm font-medium">Venue<select value={selectedVenueId} onChange={(event) => setSelectedVenueId(event.target.value)} className="mt-2 min-h-11 w-full border border-border bg-background px-3"><option value="">Choose a venue</option>{venues.map((venue) => <option key={venue.id} value={venue.id}>{venue.name}{venue.city ? ` — ${venue.city}` : ""}</option>)}</select></label>{selectedVenueId && <VenueBookingTimeSelector schedule={bookingSchedule} value={bookingTime} onChange={setBookingTime} />}{bookingSchedule.timezone && <p className="mt-3 text-xs text-muted-foreground">Venue time: {bookingSchedule.timezone}</p>}<button type="button" disabled={bookingSaving || !bookingTime} onClick={requestVenueBooking} className="mt-4 bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-60">Request booking</button></>}</section>}
+            {canManageEvents && (
+              <section className="mt-8 max-w-2xl border border-border p-5">
+                <h2 className="font-display text-2xl font-semibold">Venue booking</h2>
+                {venueBooking ? <>
+                  <p className="mt-2 text-sm">Status: <span className="capitalize text-primary">{venueBooking.status}</span>{venueBooking.ownerNote && ` — ${venueBooking.ownerNote}`}</p>
+                  {persistedBookingTime && <><p className="mt-4 text-sm font-medium text-primary">Current booking</p><SelectedBookingTimeGrid schedule={bookingSchedule} value={persistedBookingTime} /></>}
+                  {bookingSchedule.loading && <p role="status" className="mt-3 text-sm text-muted-foreground">Loading venue availability…</p>}
+                  {bookingSchedule.timezone && <p className="mt-3 text-xs text-muted-foreground">Venue time: {bookingSchedule.timezone}</p>}
+                  {["pending", "confirmed"].includes(venueBooking.status) && <button type="button" disabled={bookingSaving} onClick={cancelVenueBooking} className="mt-4 border border-border px-4 py-2 text-sm disabled:opacity-60">Cancel booking request</button>}
+                </> : <>
+                  <p className="mt-2 text-sm text-muted-foreground">Choose a venue, then select a bookable start and end time. The request remains subject to the backend confirmation check.</p>
+                  <label className="mt-4 block text-sm font-medium">Venue<select value={selectedVenueId} onChange={(event) => setSelectedVenueId(event.target.value)} className="mt-2 min-h-11 w-full border border-border bg-background px-3"><option value="">Choose a venue</option>{venues.map((venue) => <option key={venue.id} value={venue.id}>{venue.name}{venue.city ? ` — ${venue.city}` : ""}</option>)}</select></label>
+                  {selectedVenueId && <VenueBookingTimeSelector schedule={bookingSchedule} value={bookingTime} onChange={setBookingTime} billingProfiles={billingProfiles} buyerBillingProfileId={buyerBillingProfileId} onBuyerBillingProfileChange={setBuyerBillingProfileId} />}
+                  {bookingSchedule.timezone && <p className="mt-3 text-xs text-muted-foreground">Venue time: {bookingSchedule.timezone}</p>}
+                  <button type="button" disabled={bookingSaving || !bookingTime} onClick={requestVenueBooking} className="mt-4 bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-60">Request booking</button>
+                </>}
+              </section>
+            )}
+            {canManageEvents && Number(event.fee || 0) > 0 && <PaidEventPaymentSetup eventId={event.id} token={token} currency={event.currency || "SEK"} billingProfiles={billingProfiles} />}
             {canManageEvents && venueBooking?.id && <div className="mt-5 max-w-2xl"><VenueBookingConversation bookingId={venueBooking.id} /></div>}
             {event.description && (
               <p className="mt-6 max-w-2xl leading-relaxed">
