@@ -5,6 +5,7 @@ import SiteChrome from '@/components/SiteChrome';
 import ConfirmationDialog from '@/components/ConfirmationDialog';
 import { apiAssetUrl, apiFetch } from '@/lib/api';
 import { backendDate } from '@/lib/utils';
+import { deviceTimezone } from '@/lib/time';
 
 const profilePictureUrl = (value) => {
   if (!value) return '';
@@ -45,6 +46,14 @@ export default function ProfilePage() {
       const response = await apiFetch('/api/auth/profile/marketing-preferences', { method: 'PATCH', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ marketingConsent }) });
       const data = await response.json(); if (!response.ok) throw new Error(data.error || 'Unable to update marketing preferences.');
       setUser((current) => ({ ...current, marketingConsent: data.marketingConsent }));
+    } catch (requestError) { setError(requestError.message); } finally { setSavingPreference(false); }
+  };
+  const updateTimezonePreference = async (timezoneDisplayMode, preferredTimezone = null) => {
+    setSavingPreference(true); setError('');
+    try {
+      const response = await apiFetch('/api/auth/profile/timezone-preference', { method: 'PATCH', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ timezoneDisplayMode, preferredTimezone }) });
+      const data = await response.json(); if (!response.ok) throw new Error(data.error || 'Unable to update timezone preference.');
+      setUser((current) => { const next = { ...current, ...data }; localStorage.setItem('authUser', JSON.stringify(next)); window.dispatchEvent(new Event('auth-change')); return next; });
     } catch (requestError) { setError(requestError.message); } finally { setSavingPreference(false); }
   };
   const uploadPicture = async (event) => {

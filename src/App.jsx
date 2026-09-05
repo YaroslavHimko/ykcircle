@@ -29,6 +29,8 @@ import AppealPage from './pages/AppealPage';
 import AdminReportsPage from './pages/AdminReportsPage';
 import { AdminVenueApplicationsPage, MyVenuesPage, VenueBookingsPage, VenueOwnerApplicationPage } from './pages/VenuesPage';
 import { SavedVenuesPage, VenueCityOrDetailPage, VenueDetailPage, VenueEditorPage, VenuesDiscoveryPage, VenueSearchRoutePage } from './pages/VenueMarketplace';
+import { OrganizerAvailabilityPage, VenueCalendarPage } from './pages/VenueScheduling';
+import { InvoiceDetailPage, InvoicesPage } from './pages/InvoicesPage';
 
 function IframeRouteNavigation() {
     const navigate = useNavigate();
@@ -84,8 +86,13 @@ function App() {
                 <Route path="/profile/venues/new" element={<VenueEditorPage />} />
                 <Route path="/profile/venues/:id/edit" element={<VenueEditorPage />} />
                 <Route path="/profile/venues/:id/bookings" element={<VenueBookingsPage />} />
+                <Route path="/profile/venues/:id/calendar" element={<VenueCalendarPage />} />
+                <Route path="/profile/invoices" element={<InvoicesPage seller />} />
+                <Route path="/account/invoices" element={<InvoicesPage />} />
+                <Route path="/invoices/:invoiceId" element={<InvoiceDetailPage />} />
                 <Route path="/venues" element={<VenuesDiscoveryPage />} />
                 <Route path="/venues/slug/:slug" element={<VenueDetailPage />} />
+                <Route path="/venues/:id/availability" element={<OrganizerAvailabilityPage />} />
                 <Route path="/venues/:city/:venueType" element={<VenueSearchRoutePage />} />
                 <Route path="/venues/:city" element={<VenueCityOrDetailPage />} />
                 <Route path="/account-deleted" element={<AccountDeletedPage />} />

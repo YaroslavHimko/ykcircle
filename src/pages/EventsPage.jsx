@@ -5,6 +5,7 @@ import SiteChrome from "@/components/SiteChrome";
 import { apiFetch } from "@/lib/api";
 import { eventImageRenderDebug, eventMediaUrl } from "@/lib/media";
 import GoogleLocationPicker from "@/components/GoogleLocationPicker";
+import { deviceTimezone, localDateTimeForZone, localDateTimeToUtc } from "@/lib/time";
 
 const initialForm = {
   title: "",
@@ -36,7 +37,7 @@ const initialForm = {
   recurrenceFrequency: "none",
   recurrenceInterval: "1",
   recurrenceCount: "2",
-  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
+  timezone: deviceTimezone(),
   capacity: "",
   minimumAttendees: "",
   registrationDeadline: "",
@@ -50,6 +51,56 @@ const initialForm = {
   registrationType: "yaroko",
   visibility: "Public",
 };
+
+function BookingDayTimeline({ available, unavailable = [], selectedInterval, selectedStart, selectedEnd, onSelect, asMinutes, asTime }) {
+  const hours = Array.from({ length: 15 }, (_, index) => index + 7);
+  const hourHeight = 64;
+  const height = hours.length * hourHeight;
+  const selectedTop = ((selectedStart / 60) - 7) * hourHeight;
+  const selectedHeight = ((selectedEnd - selectedStart) / 60) * hourHeight;
+  return <div className="mt-5 overflow-auto border border-border bg-background" style={{ maxHeight: "34rem" }}><div className="min-w-[20rem]"><div className="grid grid-cols-[4.5rem_1fr] border-b border-border bg-secondary/30"><div className="border-r border-border" /><div className="px-3 py-3 text-sm font-medium">Bookable venue time <span className="ml-2 text-xs font-normal text-muted-foreground">30-minute slots</span></div></div><div className="grid grid-cols-[4.5rem_1fr]"><div className="relative border-r border-border" style={{ height }}>{hours.map((hour) => <span key={hour} className="absolute right-2 -translate-y-2 text-xs text-muted-foreground" style={{ top: (hour - 7) * hourHeight }}>{asTime(hour * 60)}</span>)}</div><div className="relative" style={{ height }}>{hours.map((hour) => <span key={hour} className="pointer-events-none absolute left-0 right-0 border-b border-border/80" style={{ top: (hour - 7) * hourHeight }} />)}{hours.slice(0, -1).map((hour) => <span key={`half-${hour}`} className="pointer-events-none absolute left-0 right-0 border-b border-dashed border-border/50" style={{ top: (hour - 6.5) * hourHeight }} />)}{unavailable.map((slot, index) => { const start = asMinutes(slot.startTime || slot.start); const end = asMinutes(slot.endTime || slot.end); const top = Math.max(0, ((start / 60) - 7) * hourHeight); const bottom = Math.min(height, ((end / 60) - 7) * hourHeight); if (bottom <= top) return null; return <div key={`unavailable-${slot.startTime || slot.start}-${index}`} className="pointer-events-none absolute left-2 right-2 z-10 border border-slate-500/50 bg-slate-500/20 p-3 text-left text-sm text-muted-foreground" style={{ top: top + 3, height: Math.max(34, bottom - top - 6) }}><strong className="block">Unavailable</strong><span className="mt-1 block text-xs">{asTime(start)}–{asTime(end)}</span></div>; })}{available.map((slot, index) => { const start = asMinutes(slot.startTime || slot.start); const end = asMinutes(slot.endTime || slot.end); const top = Math.max(0, ((start / 60) - 7) * hourHeight); const bottom = Math.min(height, ((end / 60) - 7) * hourHeight); if (bottom <= top) return null; return <button key={`${slot.startTime || slot.start}-${index}`} type="button" aria-pressed={selectedInterval === slot} onClick={(event) => { const minutesFromTop = ((event.clientY - event.currentTarget.getBoundingClientRect().top) / event.currentTarget.getBoundingClientRect().height) * (end - start); const clickedStart = start + Math.max(0, Math.min(end - start - 30, Math.floor(minutesFromTop / 30) * 30)); onSelect(slot, clickedStart); }} className="absolute left-2 right-2 z-10 border border-accent/50 bg-accent/10 p-3 text-left text-sm shadow-sm hover:bg-accent/20" style={{ top: top + 3, height: Math.max(34, bottom - top - 6) }}><strong className="block">{asTime(start)}–{asTime(end)}</strong><span className="mt-1 block text-xs opacity-80">Click a 30-minute position to start there</span></button>; })}{selectedInterval && selectedEnd > selectedStart && selectedTop >= 0 && selectedTop < height && <div className="pointer-events-none absolute left-3 right-3 z-20 border-2 border-primary bg-primary/25 p-2 text-xs font-semibold text-primary shadow-sm" style={{ top: selectedTop + 3, height: Math.max(28, Math.min(height - selectedTop - 3, selectedHeight - 6)) }}>Selected: {asTime(selectedStart)}–{asTime(selectedEnd)}</div>}</div></div></div></div>;
+}
+
+function VenueBookingPicker({ venues, venueId, onVenueChange, selectedDate, onDateChange, schedule, selectedSlot, onSelectSlot, onConfirmSlot, selectedEventTime }) {
+  const asMinutes = (value) => {
+    if (typeof value === "number") return value;
+    const [hours = 0, minutes = 0] = String(value || "00:00").slice(0, 5).split(":").map(Number);
+    return hours * 60 + minutes;
+  };
+  const asTime = (value) => `${String(Math.floor(value / 60)).padStart(2, "0")}:${String(value % 60).padStart(2, "0")}`;
+  const positive = (...values) => values.map(Number).find((value) => Number.isFinite(value) && value > 0);
+  const increment = positive(schedule.slotIncrementMinutes, schedule.slotIncrement) || 30;
+  const minimumDuration = positive(schedule.minimumDurationMinutes, schedule.minDurationMinutes, schedule.minimumDuration, schedule.minimumBookingMinutes, Number(schedule.minimumBookingHours) * 60) || increment;
+  const maximumDuration = positive(schedule.maximumDurationMinutes, schedule.maxDurationMinutes, schedule.maximumDuration, schedule.maximumBookingMinutes, Number(schedule.maximumBookingHours) * 60) || Infinity;
+  const selectedInterval = selectedSlot?.interval || selectedSlot;
+  const intervalStart = asMinutes(selectedInterval?.startTime || selectedInterval?.start);
+  const intervalEnd = asMinutes(selectedInterval?.endTime || selectedInterval?.end);
+  const selectedStart = asMinutes(selectedSlot?.selectedStart ?? selectedSlot?.startTime ?? selectedSlot?.start);
+  const selectedEnd = asMinutes(selectedSlot?.selectedEnd ?? selectedSlot?.endTime ?? selectedSlot?.end);
+  const timeApplied = Boolean(selectedInterval && selectedEventTime?.start === asTime(selectedStart) && selectedEventTime?.end === asTime(selectedEnd));
+  const startOptions = selectedInterval ? Array.from({ length: Math.max(0, Math.floor((intervalEnd - intervalStart - minimumDuration) / increment) + 1) }, (_, index) => intervalStart + index * increment) : [];
+  const endOptions = selectedInterval ? Array.from({ length: Math.max(0, Math.floor((Math.min(intervalEnd, selectedStart + maximumDuration) - selectedStart - minimumDuration) / increment) + 1) }, (_, index) => selectedStart + minimumDuration + index * increment) : [];
+  const selectInterval = (interval, requestedStart) => {
+    const intervalStart = asMinutes(interval.startTime || interval.start);
+    const end = asMinutes(interval.endTime || interval.end);
+    const start = Math.max(intervalStart, Math.min(Number(requestedStart) || intervalStart, end - minimumDuration));
+    onSelectSlot({ interval, selectedStart: start, selectedEnd: start + minimumDuration });
+  };
+  const updateStart = (value) => {
+    const nextStart = Number(value);
+    const validEnd = selectedEnd > nextStart && selectedEnd - nextStart >= minimumDuration && selectedEnd - nextStart <= maximumDuration && selectedEnd <= intervalEnd && (selectedEnd - nextStart - minimumDuration) % increment === 0;
+    onSelectSlot({ ...selectedSlot, selectedStart: nextStart, selectedEnd: validEnd ? selectedEnd : nextStart + minimumDuration });
+  };
+  const available = schedule.slots || [];
+  return <div className="sm:col-span-2 border border-border bg-secondary/10 p-4 sm:p-5">
+    <div className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-xs uppercase tracking-[0.2em] text-primary">Venue scheduling</p><h3 className="mt-1 font-display text-2xl font-semibold">Choose a booking time</h3><p className="mt-1 text-sm text-muted-foreground">The venue’s current availability and duration rules determine which times can be selected.</p></div>{schedule.timezone && <p className="text-sm text-muted-foreground">Venue time: {schedule.timezone}</p>}</div>
+    <div className="mt-5 grid gap-4 sm:grid-cols-2"><label className="text-sm font-medium">Venue<select required value={venueId} onChange={(event) => onVenueChange(event.target.value)} className="mt-2 min-h-11 w-full border border-border bg-background px-3"><option value="">Choose a venue</option>{venues.map((venue) => <option key={venue.id} value={venue.id}>{venue.name}{venue.location?.locality || venue.city ? ` — ${venue.location?.locality || venue.city}` : ""}</option>)}</select></label><label className="text-sm font-medium">Date<input type="date" required value={selectedDate} onChange={(event) => onDateChange(event.target.value)} className="mt-2 min-h-11 w-full border border-border bg-background px-3" /></label></div>
+    {selectedEventTime?.start && selectedEventTime?.end && <p className="mt-4 border border-primary/40 bg-primary/5 p-3 text-sm">Event time: <strong>{selectedEventTime.start}–{selectedEventTime.end}</strong>{timeApplied && <span className="ml-2 text-primary">Applied to this event</span>}</p>}
+    {schedule.nextAvailable?.date && <button type="button" onClick={() => onDateChange(schedule.nextAvailable.date)} className="mt-4 border border-accent/50 bg-accent/10 px-4 py-3 text-left text-sm hover:bg-accent/20"><strong>Next available: {schedule.nextAvailable.date}</strong><span className="ml-2">{schedule.nextAvailable.startTime}–{schedule.nextAvailable.endTime}</span><span className="mt-1 block text-xs">Choose this date</span></button>}
+    {!venueId ? <p className="mt-5 text-sm text-muted-foreground">Choose a venue to see its free times.</p> : !selectedDate ? <p className="mt-5 text-sm text-muted-foreground">Choose a date to see available times.</p> : schedule.loading ? <p role="status" className="mt-5 text-sm text-muted-foreground">Loading availability…</p> : schedule.error ? <p role="alert" className="mt-5 text-sm text-destructive">{schedule.error}</p> : <>{(available.length || schedule.unavailableSlots?.length || schedule.unavailableIntervals?.length) ? <BookingDayTimeline available={available} unavailable={schedule.unavailableSlots || schedule.unavailableIntervals || []} selectedInterval={selectedInterval} selectedStart={selectedStart} selectedEnd={selectedEnd} onSelect={selectInterval} asMinutes={asMinutes} asTime={asTime} /> : <p className="mt-5 text-sm text-muted-foreground">No scheduled hours are available on this date.</p>}{selectedInterval && <div className="mt-5 border border-primary/40 bg-background p-4"><p className="text-sm font-medium">Choose the booking time</p><p className="mt-1 text-xs text-muted-foreground">Start and end are limited to the selected free interval and this venue’s booking rules.</p><div className="mt-4 grid gap-3 sm:grid-cols-2"><label className="text-sm font-medium">Start<select value={selectedStart} onChange={(event) => updateStart(event.target.value)} className="mt-2 min-h-11 w-full border border-border bg-background px-3">{startOptions.map((value) => <option key={value} value={value}>{asTime(value)}</option>)}</select></label><label className="text-sm font-medium">End<select value={selectedEnd} onChange={(event) => onSelectSlot({ ...selectedSlot, selectedEnd: Number(event.target.value) })} className="mt-2 min-h-11 w-full border border-border bg-background px-3">{endOptions.map((value) => <option key={value} value={value}>{asTime(value)}</option>)}</select></label></div><div className="mt-4 flex flex-wrap items-center justify-between gap-4"><p className="text-sm">Selected: <strong>{asTime(selectedStart)}–{asTime(selectedEnd)}</strong></p><div className="flex gap-2"><button type="button" onClick={onConfirmSlot} className="bg-primary px-4 py-2 text-sm text-primary-foreground">{timeApplied ? "Time applied" : "Apply this time"}</button><button type="button" onClick={() => onSelectSlot(null)} className="border border-border px-4 py-2 text-sm">Clear</button></div></div>{timeApplied && <p role="status" className="mt-3 text-sm text-primary">Time applied to the event. Save the event to keep this selection.</p>}</div>}</>}
+  </div>;
+}
+
 const testEventPresets = [
   ["Sunrise walk at Djurgården", "Start the day with a relaxed waterside walk and coffee.", "Join a friendly sunrise walk through Djurgården. We will keep an easy pace, stop for photos and finish with coffee together.", "Rosendal Garden", "Rosendalsvägen 38, 115 21 Stockholm", "2030-06-08T08:00", "2030-06-08T10:00", "2030-06-07T18:00", "Bring comfortable shoes and a reusable cup.", "Meet by the Rosendal Garden entrance, ten minutes before we start.", "free", "0", "physical", "public", "20", "4", "16", "en", "none"],
   ["Beginner bouldering social", "Learn the basics and meet other climbers.", "A welcoming indoor bouldering session for complete beginners. An instructor will cover safety and basic techniques before open social climbing.", "Klättercentret Telefonplan", "Tellusgången 22, 126 26 Hägersten", "2030-06-12T18:30", "2030-06-12T21:00", "2030-06-11T20:00", "Wear comfortable sports clothes; climbing shoes can be rented.", "Ask for the YKCircle host at reception.", "paid", "180", "physical", "public", "16", "3", "18", "en", "none"],
@@ -62,8 +113,19 @@ const testEventPresets = [
   ["Evening run by the water", "A social 5 km at a conversational pace.", "Run a relaxed route around Kungsholmen, with a no-drop pace and an optional cool-down drink afterwards.", "Rålambshovsparken", "Smedsuddsvägen, 112 35 Stockholm", "2030-07-05T18:30", "2030-07-05T19:45", "2030-07-04T16:00", "Running shoes and a light layer for after the run.", "Meet at the park entrance closest to Rålambshovsled.", "free", "0", "physical", "public", "24", "4", "16", "en", "none"],
   ["Ceramics introduction workshop", "Make a small piece from clay and unwind.", "Learn simple hand-building techniques in a calm studio session. Your finished piece will be glazed and fired by the studio.", "Stockholm Ceramic Studio", "Sankt Eriksgatan 39, 112 34 Stockholm", "2030-07-09T18:00", "2030-07-09T20:30", "2030-07-07T18:00", "Wear clothes that can get a little clay on them.", "Meet the host inside the studio courtyard entrance.", "paid", "420", "physical", "public", "12", "4", "18", "en", "none"],
 ];
-const toInputDate = (value) =>
-  value ? new Date(value).toISOString().slice(0, 16) : "";
+const toInputDate = (value, timezone = deviceTimezone()) => localDateTimeForZone(value, timezone);
+const todayAtPresetTime = (value) => {
+  const today = new Date();
+  const pad = (number) => String(number).padStart(2, "0");
+  const time = String(value || "09:00").slice(11, 16) || "09:00";
+  return `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}T${time}`;
+};
+const eventDateTimeLabel = (event) => {
+  if (!event?.startsAt) return "Date to be announced";
+  const formatter = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" });
+  const start = formatter.format(new Date(event.startsAt));
+  return event.endsAt ? `${start} – ${formatter.format(new Date(event.endsAt))}` : start;
+};
 const eventCover = eventMediaUrl;
 const EventCoverImage = ({ event, className, alt = "", component }) => {
   const src = eventCover(event);
@@ -235,17 +297,17 @@ export default function EventsPage({
     let cancelled = false;
     setPendingVenueSlot(null);
     if (!canManage || !token || form.locationType !== "venue" || !form.venueId || !/^\d{4}-\d{2}-\d{2}$/.test(selectedVenueDate)) {
-      setVenueSchedule({ loading: false, error: "", date: "", timezone: "", slots: [] });
+      setVenueSchedule({ loading: false, error: "", date: "", timezone: "", slots: [], nextAvailable: null });
       return undefined;
     }
-    setVenueSchedule({ loading: true, error: "", date: selectedVenueDate, timezone: "", slots: [] });
+    setVenueSchedule({ loading: true, error: "", date: selectedVenueDate, timezone: "", slots: [], nextAvailable: null });
     apiFetch(`/api/venues/${form.venueId}/availability?date=${encodeURIComponent(selectedVenueDate)}`, { headers: { Authorization: `Bearer ${token}` } })
       .then(async (response) => {
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || "Unable to load venue availability.");
-        if (!cancelled) setVenueSchedule({ loading: false, error: "", date: data.date, timezone: data.timezone || "", slots: data.slots || [] });
+        if (!cancelled) setVenueSchedule({ ...data, loading: false, error: "", date: data.date || selectedVenueDate, timezone: data.timezone || "", slots: data.slots || [], nextAvailable: data.nextAvailable || null });
       })
-      .catch((requestError) => !cancelled && setVenueSchedule({ loading: false, error: requestError.message, date: selectedVenueDate, timezone: "", slots: [] }));
+      .catch((requestError) => !cancelled && setVenueSchedule({ loading: false, error: requestError.message, date: selectedVenueDate, timezone: "", slots: [], nextAvailable: null }));
     return () => { cancelled = true; };
   }, [canManage, token, form.locationType, form.venueId, selectedVenueDate]);
   const update = (event) =>
@@ -264,15 +326,15 @@ export default function EventsPage({
     ] = testEventPresets[presetIndex];
     setForm((current) => ({
       ...current,
-      title, shortDescription, description, location, address, startsAt, endsAt,
-      registrationDeadline, whatToBring, meetingInstructions, pricingType, fee,
+      title, shortDescription, description, location, address, startsAt: todayAtPresetTime(startsAt), endsAt: todayAtPresetTime(endsAt),
+      registrationDeadline: todayAtPresetTime(registrationDeadline), whatToBring, meetingInstructions, pricingType, fee,
       locationType: locationType === "physical" ? "custom" : locationType, locationVisibility, capacity, minimumAttendees, minimumAge,
       languageCode, recurrenceFrequency,
       recurrenceInterval: "1",
       recurrenceCount: recurrenceFrequency === "none" ? "2" : "4",
       country: "Sweden",
       city: "Stockholm",
-      timezone: timezones.includes("Europe/Stockholm") ? "Europe/Stockholm" : current.timezone,
+      timezone: current.timezone || deviceTimezone(),
       currency: "SEK",
       registrationType: "yaroko",
       visibility: "Public",
@@ -291,12 +353,12 @@ export default function EventsPage({
       shortDescription: eventValue(event, "shortDescription", "short_description"),
       description: eventValue(event, "description", "longDescription", "long_description"),
       coverImage: eventCover(event),
-      startsAt: toInputDate(eventValue(event, "startsAt", "startsAtUtc", "starts_at", "starts_at_utc")),
-      endsAt: toInputDate(eventValue(event, "endsAt", "endsAtUtc", "ends_at", "ends_at_utc")),
+      startsAt: toInputDate(eventValue(event, "startsAt", "startsAtUtc", "starts_at", "starts_at_utc"), eventValue(event, "timezone", "timeZone") || current.timezone),
+      endsAt: toInputDate(eventValue(event, "endsAt", "endsAtUtc", "ends_at", "ends_at_utc"), eventValue(event, "timezone", "timeZone") || current.timezone),
       recurrenceFrequency: eventValue(event, "recurrenceFrequency") || "none",
       recurrenceInterval: String(eventValue(event, "recurrenceInterval") || 1),
       recurrenceCount: String(eventValue(event, "recurrenceCount") || 2),
-      registrationDeadline: toInputDate(eventValue(event, "registrationDeadline", "registration_deadline")),
+      registrationDeadline: toInputDate(eventValue(event, "registrationDeadline", "registration_deadline"), eventValue(event, "timezone", "timeZone") || current.timezone),
       categoryId: eventValue(event, "categoryId", "category_id") || event.category?.id || "",
       typeId: eventValue(event, "typeId", "type_id") || event.type?.id || "",
       country: eventValue(event, "country") || event.location?.country || current.country,
@@ -377,13 +439,13 @@ export default function EventsPage({
         categoryId: form.categoryId ? Number(form.categoryId) : undefined,
         typeId: form.typeId ? Number(form.typeId) : undefined,
         startsAtUtc: form.startsAt
-          ? new Date(form.startsAt).toISOString()
+          ? localDateTimeToUtc(form.startsAt, form.timezone)
           : undefined,
         endsAtUtc: form.endsAt
-          ? new Date(form.endsAt).toISOString()
+          ? localDateTimeToUtc(form.endsAt, form.timezone, "end")
           : undefined,
         registrationDeadline: form.registrationDeadline
-          ? new Date(form.registrationDeadline).toISOString()
+          ? localDateTimeToUtc(form.registrationDeadline, form.timezone)
           : undefined,
         capacity: form.capacity ? Number(form.capacity) : undefined,
         minimumAttendees: form.minimumAttendees
@@ -912,12 +974,12 @@ export default function EventsPage({
                 <label className="flex items-center gap-2 text-sm"><input type="radio" name="locationType" value="venue" checked={form.locationType === "venue"} onChange={update} />At a YKCircle venue</label>
                 <label className="flex items-center gap-2 text-sm"><input type="radio" name="locationType" value="custom" checked={form.locationType === "custom"} onChange={() => setForm((current) => ({ ...current, locationType: "custom" }))} />At another location</label>
                 <label className="flex items-center gap-2 text-sm"><input type="radio" name="locationType" value="online" checked={form.locationType === "online"} onChange={() => setForm((current) => ({ ...current, locationType: "online" }))} />Online</label>
-                {form.locationType === "venue" && <div className="sm:col-span-2"><label className="block text-sm">Choose a venue<select required name="venueId" value={form.venueId} onChange={update} className="mt-2 min-h-11 w-full border border-border bg-background px-3"><option value="">Search venues…</option>{venues.map((venue) => <option key={venue.id} value={venue.id}>{venue.name}{venue.location?.locality || venue.city ? ` — ${venue.location?.locality || venue.city}` : ""}</option>)}</select></label>{!selectedVenueDate ? <p className="mt-2 text-xs text-muted-foreground">Choose the event start date below to view this venue’s available times.</p> : venueSchedule.loading ? <p className="mt-2 text-sm text-muted-foreground">Loading availability…</p> : venueSchedule.error ? <p className="mt-2 text-sm text-destructive">{venueSchedule.error}</p> : venueSchedule.date ? <div className="mt-3 border border-border bg-secondary/20 p-3"><p className="text-sm font-medium">Available on {venueSchedule.date}{venueSchedule.timezone ? ` (${venueSchedule.timezone})` : ""}</p>{venueSchedule.slots.length ? <div className="mt-2 flex flex-wrap gap-2">{venueSchedule.slots.map((slot) => <button key={`${slot.startTime}-${slot.endTime}`} type="button" onClick={() => setPendingVenueSlot(slot)} className="border border-primary bg-background px-3 py-2 text-sm text-primary hover:bg-primary hover:text-primary-foreground">{slot.startTime}–{slot.endTime}</button>)}</div> : <p className="mt-2 text-sm text-muted-foreground">No scheduled hours are available on this date.</p>}{pendingVenueSlot && <div className="mt-3 border border-primary/40 bg-background p-3 text-sm"><p>Use {pendingVenueSlot.startTime}–{pendingVenueSlot.endTime} at this venue on {venueSchedule.date}?</p><div className="mt-3 flex gap-2"><button type="button" onClick={() => { setForm((current) => ({ ...current, startsAt: `${venueSchedule.date}T${pendingVenueSlot.startTime}`, endsAt: `${venueSchedule.date}T${pendingVenueSlot.endTime}`, timezone: venueSchedule.timezone || current.timezone })); setPendingVenueSlot(null); }} className="bg-primary px-3 py-2 text-primary-foreground">Confirm timeslot</button><button type="button" onClick={() => setPendingVenueSlot(null)} className="border border-border px-3 py-2">Cancel</button></div></div>}<p className="mt-2 text-xs text-muted-foreground">Selecting a time asks for confirmation before filling the event start and end times.</p></div> : null}</div>}
+                {form.locationType === "venue" && <VenueBookingPicker venues={venues} venueId={form.venueId} onVenueChange={(venueId) => { const venue = venues.find((item) => String(item.id) === String(venueId)); setForm((current) => ({ ...current, venueId, timezone: venue?.timezone || current.timezone })); setPendingVenueSlot(null); }} selectedDate={selectedVenueDate} onDateChange={(date) => { setForm((current) => ({ ...current, startsAt: `${date}T${current.startsAt?.slice(11, 16) || "09:00"}`, endsAt: current.endsAt ? `${date}T${current.endsAt.slice(11, 16)}` : "" })); setPendingVenueSlot(null); }} schedule={venueSchedule} selectedSlot={pendingVenueSlot} onSelectSlot={setPendingVenueSlot} onConfirmSlot={() => { const clock = (value) => `${String(Math.floor(value / 60)).padStart(2, "0")}:${String(value % 60).padStart(2, "0")}`; setForm((current) => ({ ...current, startsAt: `${venueSchedule.date}T${clock(pendingVenueSlot.selectedStart)}`, endsAt: `${venueSchedule.date}T${clock(pendingVenueSlot.selectedEnd)}`, timezone: venueSchedule.timezone || current.timezone })); }} selectedEventTime={form.startsAt && form.endsAt ? { start: form.startsAt.slice(11, 16), end: form.endsAt.slice(11, 16) } : null} />}
                 {form.locationType === "custom" && <div className="sm:col-span-2"><p className="text-sm font-medium">Search for an address</p><div className="mt-2"><GoogleLocationPicker onSelect={(place) => setForm((current) => ({ ...current, ...place, country: place.country || current.country, city: place.locality || current.city }))} /></div>{form.formattedAddress ? <p className="mt-3 border border-border bg-secondary/20 p-3 text-sm"><span className="text-muted-foreground">Selected location</span><br />{form.formattedAddress}</p> : <p className="mt-2 text-xs text-muted-foreground">Search and choose an address on the map. Google will save its address details and coordinates automatically.</p>}</div>}
                 {form.locationType === "online" && <div className="grid gap-4 sm:col-span-2 sm:grid-cols-2"><p className="sm:col-span-2 text-sm text-muted-foreground">The event is online. Joining links are shown only to the event manager/admin.</p>{input("onlinePlatform", "Platform (for example, Zoom)")}{input("onlineUrl", "Joining URL", "url")}</div>}
               </fieldset>
-              {input("startsAt", "Starts", "datetime-local", true)}
-              {input("endsAt", "Ends", "datetime-local")}
+              {form.locationType !== "venue" && input("startsAt", "Starts", "datetime-local", true)}
+              {form.locationType !== "venue" && input("endsAt", "Ends", "datetime-local")}
               {creationPage && !draftId && (
                 <div className="grid gap-4 border border-border p-4 sm:col-span-2 sm:grid-cols-3">
                   <label className="block text-sm">
@@ -1139,9 +1201,7 @@ export default function EventsPage({
                         "Details coming soon."}
                     </p>
                     <p className="mt-2 text-sm text-muted-foreground">
-                      {event.startsAt
-                        ? new Date(event.startsAt).toLocaleString()
-                        : "Date to be announced"}{" "}
+                      {eventDateTimeLabel(event)}{" "}
                       ·{" "}
                       {event.city ||
                         event.location ||
@@ -1205,7 +1265,7 @@ export default function EventsPage({
                   <div className="relative z-20">
                     <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Archived</p>
                     <h3 className="mt-2 font-display text-2xl text-muted-foreground">{event.title}</h3>
-                    <p className="mt-2 text-sm text-muted-foreground">{event.startsAt ? new Date(event.startsAt).toLocaleString() : "Date to be announced"}</p>
+                    <p className="mt-2 text-sm text-muted-foreground">{eventDateTimeLabel(event)}</p>
                   </div>
                   <div className="relative z-20 mt-5 grid grid-cols-2 gap-2">
                     <button

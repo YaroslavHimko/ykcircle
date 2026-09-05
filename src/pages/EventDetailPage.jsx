@@ -8,6 +8,7 @@ import { apiAssetUrl, apiFetch } from "@/lib/api";
 import { eventImageRenderDebug, eventMediaUrl } from "@/lib/media";
 import MapLocation from "@/components/MapLocation";
 import { locationLines } from "@/lib/maps";
+import { dateForZone, deviceTimezone, localDateTimeToUtc } from "@/lib/time";
 
 const eventLocation = (event) => {
   if (event?.locationType === "venue") return event.venue || {};
@@ -21,6 +22,77 @@ const eventLocationText = (event) => {
   const lines = locationLines(location, { exact: event?.locationVisibility !== "private" });
   return [event?.locationType === "venue" ? event.venue?.name : "", ...lines].filter(Boolean).join(", ") || "To be announced";
 };
+
+const bookingTimeLabel = (booking) => {
+  if (!booking?.startAt || !booking?.endAt) return "";
+  const options = { hour: "2-digit", minute: "2-digit" };
+  const timezone = booking.timezone || booking.venue?.timezone;
+  try {
+    const formatter = new Intl.DateTimeFormat(undefined, timezone ? { ...options, timeZone: timezone } : options);
+    return `${formatter.format(new Date(booking.startAt))}–${formatter.format(new Date(booking.endAt))}`;
+  } catch {
+    return `${new Date(booking.startAt).toLocaleTimeString([], options)}–${new Date(booking.endAt).toLocaleTimeString([], options)}`;
+  }
+};
+const eventDateTimeLabel = (event) => {
+  if (!event?.startsAt) return "To be announced";
+  const options = { dateStyle: "medium", timeStyle: "short" };
+  try {
+    const formatter = new Intl.DateTimeFormat(undefined, options);
+    const start = formatter.format(new Date(event.startsAt));
+    return event.endsAt ? `${start} – ${formatter.format(new Date(event.endsAt))}` : start;
+  } catch {
+    return event.endsAt ? `${new Date(event.startsAt).toLocaleString()} – ${new Date(event.endsAt).toLocaleString()}` : new Date(event.startsAt).toLocaleString();
+  }
+};
+const browserDate = (value, timezone = deviceTimezone()) => dateForZone(value, timezone);
+
+function SelectedBookingTimeGrid({ schedule, value }) {
+  const slots = schedule.slots || [];
+  const unavailable = schedule.unavailableSlots || schedule.unavailableIntervals || [];
+  const toMinutes = (time) => { const [hours = 0, minutes = 0] = String(time || "00:00").slice(0, 5).split(":").map(Number); return hours * 60 + minutes; };
+  const toTime = (minutes) => `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
+  const hours = Array.from({ length: 15 }, (_, index) => index + 7);
+  const hourHeight = 52;
+  const height = hours.length * hourHeight;
+  const start = value?.start;
+  const end = value?.end;
+  return <div className="mt-5 overflow-auto border border-border bg-background" style={{ maxHeight: "30rem" }}><div className="min-w-[19rem]"><div className="grid grid-cols-[4.5rem_1fr] border-b border-border bg-secondary/30"><div className="border-r border-border" /><div className="px-3 py-2 text-sm font-medium">Selected venue time</div></div><div className="grid grid-cols-[4.5rem_1fr]"><div className="relative border-r border-border" style={{ height }}>{hours.map((hour) => <span key={hour} className="absolute right-2 -translate-y-2 text-xs text-muted-foreground" style={{ top: (hour - 7) * hourHeight }}>{toTime(hour * 60)}</span>)}</div><div className="relative" style={{ height }}>{hours.map((hour) => <span key={hour} className="absolute left-0 right-0 border-b border-border/80" style={{ top: (hour - 7) * hourHeight }} />)}{hours.slice(0, -1).map((hour) => <span key={`half-${hour}`} className="absolute left-0 right-0 border-b border-dashed border-border/50" style={{ top: (hour - 6.5) * hourHeight }} />)}{unavailable.map((slot, index) => { const slotStart = toMinutes(slot.startTime || slot.start); const slotEnd = toMinutes(slot.endTime || slot.end); const top = Math.max(0, ((slotStart / 60) - 7) * hourHeight); const bottom = Math.min(height, ((slotEnd / 60) - 7) * hourHeight); return bottom <= top ? null : <div key={`unavailable-${slotStart}-${index}`} className="absolute left-2 right-2 z-[1] border border-slate-500/50 bg-slate-500/20 p-2 text-xs text-muted-foreground" style={{ top: top + 2, height: Math.max(24, bottom - top - 4) }}>Unavailable {toTime(slotStart)}–{toTime(slotEnd)}</div>; })}{slots.map((slot, index) => { const slotStart = toMinutes(slot.startTime || slot.start); const slotEnd = toMinutes(slot.endTime || slot.end); const top = Math.max(0, ((slotStart / 60) - 7) * hourHeight); const bottom = Math.min(height, ((slotEnd / 60) - 7) * hourHeight); return bottom <= top ? null : <div key={`${slotStart}-${index}`} className="absolute left-2 right-2 z-[2] border border-accent/50 bg-accent/10 p-2 text-xs text-muted-foreground" style={{ top: top + 2, height: Math.max(24, bottom - top - 4) }}>Available {toTime(slotStart)}–{toTime(slotEnd)}</div>; })}{Number.isFinite(start) && Number.isFinite(end) && end > start && <div className="pointer-events-none absolute left-3 right-3 z-10 border-2 border-primary bg-primary/25 p-2 text-xs font-semibold text-primary shadow-sm" style={{ top: Math.max(0, ((start / 60) - 7) * hourHeight) + 2, height: Math.max(28, ((end - start) / 60) * hourHeight - 4) }}>Selected: {toTime(start)}–{toTime(end)}</div>}</div></div></div></div>;
+}
+
+function VenueBookingTimeSelector({ schedule, value, onChange }) {
+  const toMinutes = (time) => { const [hours = 0, minutes = 0] = String(time || "00:00").slice(0, 5).split(":").map(Number); return hours * 60 + minutes; };
+  const toTime = (minutes) => `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
+  const positive = (...values) => values.map(Number).find((number) => Number.isFinite(number) && number > 0);
+  const increment = positive(schedule.slotIncrementMinutes, schedule.slotIncrement) || 30;
+  const minimum = positive(schedule.minimumDurationMinutes, schedule.minDurationMinutes, schedule.minimumDuration, schedule.minimumBookingMinutes, Number(schedule.minimumBookingHours) * 60) || increment;
+  const maximum = positive(schedule.maximumDurationMinutes, schedule.maxDurationMinutes, schedule.maximumDuration, schedule.maximumBookingMinutes, Number(schedule.maximumBookingHours) * 60) || Infinity;
+  const interval = value?.interval;
+  const intervalStart = toMinutes(interval?.startTime || interval?.start);
+  const intervalEnd = toMinutes(interval?.endTime || interval?.end);
+  const start = value?.start ?? intervalStart;
+  const end = value?.end ?? intervalEnd;
+  const startOptions = interval ? Array.from({ length: Math.max(0, Math.floor((intervalEnd - intervalStart - minimum) / increment) + 1) }, (_, index) => intervalStart + index * increment) : [];
+  const endOptions = interval ? Array.from({ length: Math.max(0, Math.floor((Math.min(intervalEnd, start + maximum) - start - minimum) / increment) + 1) }, (_, index) => start + minimum + index * increment) : [];
+  const selectInterval = (nextInterval) => {
+    const nextStart = toMinutes(nextInterval.startTime || nextInterval.start);
+    const nextEnd = toMinutes(nextInterval.endTime || nextInterval.end);
+    onChange({ interval: nextInterval, start: nextStart, end: nextStart + minimum });
+  };
+  const updateStart = (nextStart) => {
+    const startValue = Number(nextStart);
+    const validEnd = end > startValue && end - startValue >= minimum && end - startValue <= maximum && end <= intervalEnd && (end - startValue - minimum) % increment === 0;
+    onChange({ ...value, start: startValue, end: validEnd ? end : startValue + minimum });
+  };
+  return <div className="mt-4">
+    <p className="text-sm font-medium">Available intervals</p>
+    {schedule.loading ? <p role="status" className="mt-2 text-sm text-muted-foreground">Loading availability…</p> : schedule.error ? <p role="alert" className="mt-2 text-sm text-destructive">{schedule.error}</p> : (schedule.slots?.length || schedule.unavailableSlots?.length || schedule.unavailableIntervals?.length) ? <>
+      <div className="mt-3 flex flex-wrap gap-2">{schedule.slots.map((slot, index) => <button key={`${slot.startTime || slot.start}-${index}`} type="button" onClick={() => selectInterval(slot)} className={`border px-3 py-2 text-sm ${interval === slot ? "border-primary bg-primary text-primary-foreground" : "border-accent/50 bg-accent/10"}`}>{String(slot.startTime || slot.start).slice(0, 5)}–{String(slot.endTime || slot.end).slice(0, 5)}</button>)}</div>
+      <SelectedBookingTimeGrid schedule={schedule} value={interval ? { start, end } : null} />
+      {interval && <div className="mt-4 grid gap-3 sm:grid-cols-2"><label className="text-sm font-medium">Start<select value={start} onChange={(event) => updateStart(event.target.value)} className="mt-1 min-h-11 w-full border border-border bg-background px-3">{startOptions.map((option) => <option key={option} value={option}>{toTime(option)}</option>)}</select></label><label className="text-sm font-medium">End<select value={end} onChange={(event) => onChange({ ...value, end: Number(event.target.value) })} className="mt-1 min-h-11 w-full border border-border bg-background px-3">{endOptions.map((option) => <option key={option} value={option}>{toTime(option)}</option>)}</select></label></div>}
+    </> : <p className="mt-2 text-sm text-muted-foreground">No bookable time is available on this date.</p>}
+  </div>;
+}
 
 const eventCover = eventMediaUrl;
 const ratingStars = (rating) => {
@@ -152,6 +224,9 @@ export default function EventDetailPage() {
   const [confirmationMessage, setConfirmationMessage] = useState("");
   const [venues, setVenues] = useState([]);
   const [selectedVenueId, setSelectedVenueId] = useState("");
+  const [bookingSchedule, setBookingSchedule] = useState({ loading: false, error: "", slots: [], timezone: "" });
+  const [bookingTime, setBookingTime] = useState(null);
+  const [bookingAvailabilityVersion, setBookingAvailabilityVersion] = useState(0);
   const [bookingSaving, setBookingSaving] = useState(false);
   useEffect(() => {
     if (!error) return undefined;
@@ -346,8 +421,28 @@ export default function EventDetailPage() {
       setVenues((Array.isArray(data) ? data : data.venues || []).filter((venue) => venue.isActive !== false));
     }).catch((requestError) => setError(requestError.message));
   }, [canManageEvents, token]);
+  const selectedVenue = venues.find((venue) => String(venue.id) === String(selectedVenueId));
+  const bookingTimezone = bookingSchedule.timezone || selectedVenue?.timezone || event?.venue?.timezone || event?.timezone || deviceTimezone();
+  const bookingDate = browserDate(event?.startsAt, bookingTimezone);
+  useEffect(() => {
+    let cancelled = false;
+    setBookingTime(null);
+    if (!canManageEvents || !selectedVenueId || !bookingDate) {
+      setBookingSchedule({ loading: false, error: bookingDate ? "" : "Set an event date before requesting a venue.", slots: [], timezone: "" });
+      return undefined;
+    }
+    setBookingSchedule({ loading: true, error: "", slots: [], timezone: "" });
+    apiFetch(`/api/venues/${selectedVenueId}/availability?date=${encodeURIComponent(bookingDate)}`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || data.message || "Unable to load venue availability.");
+        if (!cancelled) setBookingSchedule({ ...data, loading: false, error: "", slots: data.slots || data.availableIntervals || [], timezone: data.timezone || "" });
+      })
+      .catch((requestError) => !cancelled && setBookingSchedule({ loading: false, error: requestError.message, slots: [], timezone: "" }));
+    return () => { cancelled = true; };
+  }, [bookingAvailabilityVersion, bookingDate, canManageEvents, selectedVenueId, token]);
   const venueBooking = event?.venueBooking || event?.venue_booking || event?.booking;
-  const requestVenueBooking = async () => { if (!selectedVenueId) return setError("Choose a venue first."); setBookingSaving(true); try { const response = await apiFetch(`/api/events/${id}/venue-booking`, { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify({ venueId: Number(selectedVenueId) }) }); const data = await response.json(); if (!response.ok) throw new Error(data.error || data.message || "Unable to request this venue."); setEvent((current) => ({ ...current, venueBooking: data.booking || data })); } catch (requestError) { setError(requestError.message); } finally { setBookingSaving(false); } };
+  const requestVenueBooking = async () => { if (!selectedVenueId) return setError("Choose a venue first."); if (!bookingTime) return setError("Choose an available start and end time first."); setBookingSaving(true); try { const toTime = (minutes) => `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`; const startsAtUtc = localDateTimeToUtc(`${bookingDate}T${toTime(bookingTime.start)}`, bookingTimezone); const endsAtUtc = localDateTimeToUtc(`${bookingDate}T${toTime(bookingTime.end)}`, bookingTimezone, "end"); if (!startsAtUtc || !endsAtUtc) throw new Error("This local time does not exist due to daylight saving time. Choose another time."); const eventResponse = await apiFetch(`/api/events/${id}/schedule`, { method: "PATCH", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify({ startsAtUtc, endsAtUtc, venueId: Number(selectedVenueId) }) }); const eventData = await eventResponse.json(); if (!eventResponse.ok) throw new Error(eventData.error || eventData.message || "Unable to set the event time."); const response = await apiFetch(`/api/events/${id}/venue-booking`, { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify({ venueId: Number(selectedVenueId) }) }); const data = await response.json(); if (!response.ok) { if (response.status === 409) { setBookingTime(null); setBookingAvailabilityVersion((version) => version + 1); } throw new Error(data.error || data.message || "That time is no longer available. Please choose another time."); } setEvent((current) => ({ ...current, ...(eventData.event || eventData), venueBooking: data.booking || data })); } catch (requestError) { setError(requestError.message); } finally { setBookingSaving(false); } };
   const cancelVenueBooking = async () => { setBookingSaving(true); try { const response = await apiFetch(`/api/events/${id}/venue-booking/cancel`, { method: "POST", headers: { Authorization: `Bearer ${token}` } }); const data = await response.json(); if (!response.ok) throw new Error(data.error || data.message || "Unable to cancel venue booking."); setEvent((current) => ({ ...current, venueBooking: data.booking || { ...venueBooking, status: "cancelled" } })); } catch (requestError) { setError(requestError.message); } finally { setBookingSaving(false); } };
   useEffect(
     () => setImageLoaded(false),
@@ -952,11 +1047,12 @@ export default function EventDetailPage() {
               </div>
             )}
             <p className="mt-5 text-muted-foreground">
-              {new Date(event.startsAt).toLocaleString()} -{" "}
+              {eventDateTimeLabel(event)} ·{" "}
               {venueBooking?.status === "confirmed" ? (venueBooking.venue?.name || venueBooking.venueName || event.venue?.name || eventLocationText(event)) : eventLocationText(event)}
             </p>
             {venueBooking?.status === "confirmed" && <p className="mt-2 text-sm text-muted-foreground">Confirmed venue: {venueBooking.venue?.name || venueBooking.venueName}{(venueBooking.venue?.location || venueBooking.venueLocation) && ` — ${venueBooking.venue?.location || venueBooking.venueLocation}`}</p>}
-            {canManageEvents && <section className="mt-8 max-w-2xl border border-border p-5"><h2 className="font-display text-2xl font-semibold">Venue booking</h2>{venueBooking ? <><p className="mt-2 text-sm">Status: <span className="capitalize text-primary">{venueBooking.status}</span>{venueBooking.ownerNote && ` — ${venueBooking.ownerNote}`}</p>{["pending", "confirmed"].includes(venueBooking.status) && <button type="button" disabled={bookingSaving} onClick={cancelVenueBooking} className="mt-4 border border-border px-4 py-2 text-sm disabled:opacity-60">Cancel booking request</button>}</> : <><p className="mt-2 text-sm text-muted-foreground">Choose an active venue. The venue owner must confirm before it is shown as confirmed.</p><div className="mt-4 flex flex-wrap gap-3"><select value={selectedVenueId} onChange={(e) => setSelectedVenueId(e.target.value)} className="min-h-11 min-w-64 border border-border bg-background px-3"><option value="">Choose a venue</option>{venues.map((venue) => <option key={venue.id} value={venue.id}>{venue.name}{venue.city ? ` — ${venue.city}` : ""}</option>)}</select><button type="button" disabled={bookingSaving} onClick={requestVenueBooking} className="bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-60">Request booking</button></div></>}</section>}
+            {bookingTimeLabel(venueBooking) && <p className="mt-2 text-sm text-muted-foreground">Requested time: {bookingTimeLabel(venueBooking)}</p>}
+            {canManageEvents && <section className="mt-8 max-w-2xl border border-border p-5"><h2 className="font-display text-2xl font-semibold">Venue booking</h2>{venueBooking ? <><p className="mt-2 text-sm">Status: <span className="capitalize text-primary">{venueBooking.status}</span>{venueBooking.ownerNote && ` — ${venueBooking.ownerNote}`}</p>{["pending", "confirmed"].includes(venueBooking.status) && <button type="button" disabled={bookingSaving} onClick={cancelVenueBooking} className="mt-4 border border-border px-4 py-2 text-sm disabled:opacity-60">Cancel booking request</button>}</> : <><p className="mt-2 text-sm text-muted-foreground">Choose a venue, then select a bookable start and end time. The request remains subject to the backend confirmation check.</p><label className="mt-4 block text-sm font-medium">Venue<select value={selectedVenueId} onChange={(event) => setSelectedVenueId(event.target.value)} className="mt-2 min-h-11 w-full border border-border bg-background px-3"><option value="">Choose a venue</option>{venues.map((venue) => <option key={venue.id} value={venue.id}>{venue.name}{venue.city ? ` — ${venue.city}` : ""}</option>)}</select></label>{selectedVenueId && <VenueBookingTimeSelector schedule={bookingSchedule} value={bookingTime} onChange={setBookingTime} />}{bookingSchedule.timezone && <p className="mt-3 text-xs text-muted-foreground">Venue time: {bookingSchedule.timezone}</p>}<button type="button" disabled={bookingSaving || !bookingTime} onClick={requestVenueBooking} className="mt-4 bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-60">Request booking</button></>}</section>}
             {event.description && (
               <p className="mt-6 max-w-2xl leading-relaxed">
                 {event.description}
@@ -984,9 +1080,7 @@ export default function EventDetailPage() {
               <p>
                 <span className="text-muted-foreground">Date and time</span>
                 <br />
-                {event.startsAt
-                  ? new Date(event.startsAt).toLocaleString()
-                  : "To be announced"}
+                {eventDateTimeLabel(event)}
               </p>
               <p>
                 <span className="text-muted-foreground">Price</span>
