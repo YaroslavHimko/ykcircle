@@ -31,6 +31,7 @@ import { AdminVenueApplicationsPage, MyVenuesPage, VenueBookingsPage, VenueOwner
 import { SavedVenuesPage, VenueCityOrDetailPage, VenueDetailPage, VenueEditorPage, VenuesDiscoveryPage, VenueSearchRoutePage } from './pages/VenueMarketplace';
 import { OrganizerAvailabilityPage, VenueCalendarPage } from './pages/VenueScheduling';
 import { InvoiceDetailPage, InvoicesPage } from './pages/InvoicesPage';
+import { AdminBusinessApplicationsPage, BusinessBillingPage, BusinessDashboardPage, BusinessRegistrationPage } from './pages/BusinessPage';
 
 function IframeRouteNavigation() {
     const navigate = useNavigate();
@@ -80,7 +81,11 @@ function App() {
                 <Route path="/admin/users" element={<UserRolesPage />} />
                 <Route path="/admin/reports" element={<AdminReportsPage />} />
                 <Route path="/admin/venue-owner-applications" element={<AdminVenueApplicationsPage />} />
+                <Route path="/admin/business-applications" element={<AdminBusinessApplicationsPage />} />
                 <Route path="/become-a-venue-owner" element={<VenueOwnerApplicationPage />} />
+                <Route path="/business/register" element={<BusinessRegistrationPage />} />
+                <Route path="/profile/business" element={<BusinessDashboardPage />} />
+                <Route path="/businesses/:id/billing" element={<BusinessBillingPage />} />
                 <Route path="/profile/venues" element={<MyVenuesPage />} />
                 <Route path="/profile/saved-venues" element={<SavedVenuesPage />} />
                 <Route path="/profile/venues/new" element={<VenueEditorPage />} />

@@ -349,14 +349,14 @@ export default function EventsPage({
     const [
       title, shortDescription, description, location, address, startsAt, endsAt,
       registrationDeadline, whatToBring, meetingInstructions, pricingType, fee,
-      locationType, locationVisibility, capacity, minimumAttendees, minimumAge,
+      rawLocationType, locationVisibility, capacity, minimumAttendees, minimumAge,
       languageCode, recurrenceFrequency,
     ] = testEventPresets[presetIndex];
     setForm((current) => ({
       ...current,
       title, shortDescription, description, location, address, startsAt: todayAtPresetTime(startsAt), endsAt: todayAtPresetTime(endsAt),
       registrationDeadline: todayAtPresetTime(registrationDeadline), whatToBring, meetingInstructions, pricingType, fee,
-      locationType: locationType === "physical" ? "custom" : locationType, locationVisibility, capacity, minimumAttendees, minimumAge,
+      locationType: rawLocationType === "physical" ? "custom" : rawLocationType, locationVisibility, capacity, minimumAttendees, minimumAge,
       languageCode, recurrenceFrequency,
       recurrenceInterval: "1",
       recurrenceCount: recurrenceFrequency === "none" ? "2" : "4",
