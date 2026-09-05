@@ -3,6 +3,7 @@ import { Helmet } from "react-helmet";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { Check, X } from "lucide-react";
 import SiteChrome from "@/components/SiteChrome";
+import VenueBookingConversation from "@/components/VenueBookingConversation";
 import ForumDiscussion from "@/components/ForumDiscussion";
 import { apiAssetUrl, apiFetch } from "@/lib/api";
 import { eventImageRenderDebug, eventMediaUrl } from "@/lib/media";
@@ -47,7 +48,7 @@ const eventDateTimeLabel = (event) => {
 };
 const browserDate = (value, timezone = deviceTimezone()) => dateForZone(value, timezone);
 
-function SelectedBookingTimeGrid({ schedule, value }) {
+function LegacySelectedBookingTimeGrid({ schedule, value }) {
   const slots = schedule.slots || [];
   const unavailable = schedule.unavailableSlots || schedule.unavailableIntervals || [];
   const toMinutes = (time) => { const [hours = 0, minutes = 0] = String(time || "00:00").slice(0, 5).split(":").map(Number); return hours * 60 + minutes; };
@@ -58,6 +59,26 @@ function SelectedBookingTimeGrid({ schedule, value }) {
   const start = value?.start;
   const end = value?.end;
   return <div className="mt-5 overflow-auto border border-border bg-background" style={{ maxHeight: "30rem" }}><div className="min-w-[19rem]"><div className="grid grid-cols-[4.5rem_1fr] border-b border-border bg-secondary/30"><div className="border-r border-border" /><div className="px-3 py-2 text-sm font-medium">Selected venue time</div></div><div className="grid grid-cols-[4.5rem_1fr]"><div className="relative border-r border-border" style={{ height }}>{hours.map((hour) => <span key={hour} className="absolute right-2 -translate-y-2 text-xs text-muted-foreground" style={{ top: (hour - 7) * hourHeight }}>{toTime(hour * 60)}</span>)}</div><div className="relative" style={{ height }}>{hours.map((hour) => <span key={hour} className="absolute left-0 right-0 border-b border-border/80" style={{ top: (hour - 7) * hourHeight }} />)}{hours.slice(0, -1).map((hour) => <span key={`half-${hour}`} className="absolute left-0 right-0 border-b border-dashed border-border/50" style={{ top: (hour - 6.5) * hourHeight }} />)}{unavailable.map((slot, index) => { const slotStart = toMinutes(slot.startTime || slot.start); const slotEnd = toMinutes(slot.endTime || slot.end); const top = Math.max(0, ((slotStart / 60) - 7) * hourHeight); const bottom = Math.min(height, ((slotEnd / 60) - 7) * hourHeight); return bottom <= top ? null : <div key={`unavailable-${slotStart}-${index}`} className="absolute left-2 right-2 z-[1] border border-slate-500/50 bg-slate-500/20 p-2 text-xs text-muted-foreground" style={{ top: top + 2, height: Math.max(24, bottom - top - 4) }}>Unavailable {toTime(slotStart)}–{toTime(slotEnd)}</div>; })}{slots.map((slot, index) => { const slotStart = toMinutes(slot.startTime || slot.start); const slotEnd = toMinutes(slot.endTime || slot.end); const top = Math.max(0, ((slotStart / 60) - 7) * hourHeight); const bottom = Math.min(height, ((slotEnd / 60) - 7) * hourHeight); return bottom <= top ? null : <div key={`${slotStart}-${index}`} className="absolute left-2 right-2 z-[2] border border-accent/50 bg-accent/10 p-2 text-xs text-muted-foreground" style={{ top: top + 2, height: Math.max(24, bottom - top - 4) }}>Available {toTime(slotStart)}–{toTime(slotEnd)}</div>; })}{Number.isFinite(start) && Number.isFinite(end) && end > start && <div className="pointer-events-none absolute left-3 right-3 z-10 border-2 border-primary bg-primary/25 p-2 text-xs font-semibold text-primary shadow-sm" style={{ top: Math.max(0, ((start / 60) - 7) * hourHeight) + 2, height: Math.max(28, ((end - start) / 60) * hourHeight - 4) }}>Selected: {toTime(start)}–{toTime(end)}</div>}</div></div></div></div>;
+}
+
+function SelectedBookingTimeGrid({ schedule, value }) {
+  const slots = schedule.slots || [];
+  const unavailable = schedule.unavailableSlots || schedule.unavailableIntervals || [];
+  const toMinutes = (time) => { const [hours = 0, minutes = 0] = String(time || "00:00").slice(0, 5).split(":").map(Number); return hours * 60 + minutes; };
+  const toTime = (minutes) => `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
+  const hours = Array.from({ length: 15 }, (_, index) => index + 7);
+  const hourHeight = 52;
+  const height = hours.length * hourHeight;
+  const position = (start, end) => ({ top: Math.max(0, ((start / 60) - 7) * hourHeight), bottom: Math.min(height, ((end / 60) - 7) * hourHeight) });
+  const selected = position(value?.start, value?.end);
+  const selectedHeight = Math.max(0, selected.bottom - selected.top - 4);
+  const block = (slot, index, isUnavailable) => {
+    const start = toMinutes(slot.startTime || slot.start); const end = toMinutes(slot.endTime || slot.end); const range = position(start, end); const blockHeight = Math.max(0, range.bottom - range.top - 4);
+    if (!blockHeight) return null;
+    const label = `${isUnavailable ? "Unavailable" : "Available"} ${toTime(start)}-${toTime(end)}`;
+    return <div key={`${isUnavailable ? "unavailable" : "available"}-${start}-${index}`} title={label} className={`absolute left-2 right-2 overflow-hidden border p-2 text-xs ${isUnavailable ? "z-20 border-slate-500 bg-slate-500 text-white" : "z-10 border-accent/50 bg-accent/10 text-muted-foreground"}`} style={{ top: range.top + 2, height: blockHeight }}><span className="block truncate">{label}</span></div>;
+  };
+  return <div className="mt-5 overflow-auto border border-border bg-background" style={{ maxHeight: "30rem" }}><div className="min-w-[19rem]"><div className="grid grid-cols-[4.5rem_1fr] border-b border-border bg-secondary/30"><div className="border-r border-border" /><div className="px-3 py-2 text-sm font-medium">Selected venue time</div></div><div className="grid grid-cols-[4.5rem_1fr]"><div className="relative border-r border-border" style={{ height }}>{hours.map((hour) => <span key={hour} className="absolute right-2 -translate-y-2 text-xs text-muted-foreground" style={{ top: (hour - 7) * hourHeight }}>{toTime(hour * 60)}</span>)}</div><div className="relative" style={{ height }}>{hours.map((hour) => <span key={hour} className="absolute left-0 right-0 border-b border-border/80" style={{ top: (hour - 7) * hourHeight }} />)}{hours.slice(0, -1).map((hour) => <span key={`half-${hour}`} className="absolute left-0 right-0 border-b border-dashed border-border/50" style={{ top: (hour - 6.5) * hourHeight }} />)}{unavailable.map((slot, index) => block(slot, index, true))}{slots.map((slot, index) => block(slot, index, false))}{Number.isFinite(value?.start) && Number.isFinite(value?.end) && value.end > value.start && selectedHeight > 0 && <div className={`pointer-events-none absolute left-3 right-3 z-30 overflow-hidden border-2 border-primary bg-primary font-semibold text-primary-foreground shadow-sm ${selectedHeight < 42 ? "flex items-center px-2 text-xs" : "p-2 text-xs"}`} style={{ top: selected.top + 2, height: selectedHeight }}><span className="truncate">Selected: {toTime(value.start)}-{toTime(value.end)}</span></div>}</div></div></div></div>;
 }
 
 function VenueBookingTimeSelector({ schedule, value, onChange }) {
@@ -1064,6 +1085,7 @@ export default function EventDetailPage() {
             {venueBooking?.status === "confirmed" && <p className="mt-2 text-sm text-muted-foreground">Confirmed venue: {venueBooking.venue?.name || venueBooking.venueName}{(venueBooking.venue?.location || venueBooking.venueLocation) && ` — ${venueBooking.venue?.location || venueBooking.venueLocation}`}</p>}
             {bookingTimeLabel(venueBooking) && <p className="mt-2 text-sm text-muted-foreground">Requested time: {bookingTimeLabel(venueBooking)}</p>}
             {canManageEvents && <section className="mt-8 max-w-2xl border border-border p-5"><h2 className="font-display text-2xl font-semibold">Venue booking</h2>{venueBooking ? <><p className="mt-2 text-sm">Status: <span className="capitalize text-primary">{venueBooking.status}</span>{venueBooking.ownerNote && ` — ${venueBooking.ownerNote}`}</p>{persistedBookingTime && <><p className="mt-4 text-sm font-medium text-primary">Current booking</p><SelectedBookingTimeGrid schedule={bookingSchedule} value={persistedBookingTime} /></>}{bookingSchedule.loading && <p role="status" className="mt-3 text-sm text-muted-foreground">Loading venue availability…</p>}{bookingSchedule.timezone && <p className="mt-3 text-xs text-muted-foreground">Venue time: {bookingSchedule.timezone}</p>}{["pending", "confirmed"].includes(venueBooking.status) && <button type="button" disabled={bookingSaving} onClick={cancelVenueBooking} className="mt-4 border border-border px-4 py-2 text-sm disabled:opacity-60">Cancel booking request</button>}</> : <><p className="mt-2 text-sm text-muted-foreground">Choose a venue, then select a bookable start and end time. The request remains subject to the backend confirmation check.</p><label className="mt-4 block text-sm font-medium">Venue<select value={selectedVenueId} onChange={(event) => setSelectedVenueId(event.target.value)} className="mt-2 min-h-11 w-full border border-border bg-background px-3"><option value="">Choose a venue</option>{venues.map((venue) => <option key={venue.id} value={venue.id}>{venue.name}{venue.city ? ` — ${venue.city}` : ""}</option>)}</select></label>{selectedVenueId && <VenueBookingTimeSelector schedule={bookingSchedule} value={bookingTime} onChange={setBookingTime} />}{bookingSchedule.timezone && <p className="mt-3 text-xs text-muted-foreground">Venue time: {bookingSchedule.timezone}</p>}<button type="button" disabled={bookingSaving || !bookingTime} onClick={requestVenueBooking} className="mt-4 bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-60">Request booking</button></>}</section>}
+            {canManageEvents && venueBooking?.id && <div className="mt-5 max-w-2xl"><VenueBookingConversation bookingId={venueBooking.id} /></div>}
             {event.description && (
               <p className="mt-6 max-w-2xl leading-relaxed">
                 {event.description}

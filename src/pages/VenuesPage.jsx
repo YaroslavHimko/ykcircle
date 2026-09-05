@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Helmet } from "react-helmet";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import SiteChrome from "@/components/SiteChrome";
+import VenueBookingConversation from "@/components/VenueBookingConversation";
 import { apiFetch } from "@/lib/api";
 
 const blankVenue = { name: "", businessName: "", description: "", location: "", country: "", city: "", address: "", latitude: "", longitude: "", timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC", isActive: true };
@@ -12,6 +13,7 @@ const locationText = (location) => typeof location === "string" ? location : loc
 const normalizeVenue = (venue) => ({ ...venue, id: venue?.id ?? venue?.venueId ?? venue?.venue_id ?? venue?.venue?.id, location: locationText(venue?.location) });
 const auth = () => ({ Authorization: `Bearer ${localStorage.getItem("authToken")}` });
 const errorText = (data, fallback) => [data?.error || data?.message, data?.fields && Object.entries(data.fields).map(([field, message]) => `${field}: ${message}`).join(" ")].filter(Boolean).join(" ") || fallback;
+const bookingStart = (booking) => booking.event?.startsAt || booking.startsAt || booking.startAt || booking.starts_at || null;
 
 export function VenueOwnerApplicationPage() {
   const navigate = useNavigate(); const [application, setApplication] = useState(null); const [form, setForm] = useState({ businessName: "", message: "" }); const [error, setError] = useState(""); const [saving, setSaving] = useState(false);
@@ -57,6 +59,9 @@ export function VenueBookingsPage() {
   const [inquiries, setInquiries] = useState([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [reviewing, setReviewing] = useState(null);
+  const [ownerNote, setOwnerNote] = useState("");
+  const [notification, setNotification] = useState("");
   const loadVersion = useRef(0);
 
   const load = useCallback(async () => {
@@ -87,9 +92,16 @@ export function VenueBookingsPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  const review = async (booking, status) => {
-    const ownerNote = window.prompt("Optional note to event owner:", booking.ownerNote || "");
-    if (ownerNote === null) return;
+  const openReview = (booking, status) => {
+    setOwnerNote(booking.ownerNote || "");
+    setNotification("");
+    setReviewing({ booking, status });
+  };
+
+  const review = async (event) => {
+    event.preventDefault();
+    if (!reviewing) return;
+    const { booking, status } = reviewing;
     try {
       const response = await apiFetch(`/api/venue-bookings/${booking.id}`, {
         method: "PATCH",
@@ -98,9 +110,10 @@ export function VenueBookingsPage() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(errorText(data, "Unable to update booking."));
+      setReviewing(null);
       load();
     } catch (requestError) {
-      setError(requestError.message);
+      setNotification(requestError.message);
     }
   };
 
@@ -124,23 +137,34 @@ export function VenueBookingsPage() {
           <div>
             <p className="font-semibold">{booking.event?.title || booking.eventTitle || "Event booking"}</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              {booking.event?.startsAt || booking.startsAt
-                ? new Date(booking.event?.startsAt || booking.startsAt).toLocaleString()
+              {bookingStart(booking)
+                ? new Date(bookingStart(booking)).toLocaleString()
                 : "Date not supplied"}
             </p>
+            {booking.organizerEmail && <p className="mt-1 text-sm text-muted-foreground">Organizer: {booking.organizerName || "Event organizer"} · {booking.organizerEmail}</p>}
             {booking.ownerNote && <p className="mt-2 text-sm">Note: {booking.ownerNote}</p>}
           </div>
           <Status status={booking.status} />
         </div>
-        {booking.status === "pending" && <div className="mt-4 flex gap-2">
-          <button onClick={() => review(booking, "confirmed")} className="bg-primary px-4 py-2 text-sm text-primary-foreground">Confirm</button>
-          <button onClick={() => review(booking, "declined")} className="border border-border px-4 py-2 text-sm">Decline</button>
+        {["requested", "pending"].includes(booking.status) && <div className="mt-4 flex gap-2">
+          <button onClick={() => openReview(booking, "confirmed")} className="bg-primary px-4 py-2 text-sm text-primary-foreground">Confirm</button>
+          <button onClick={() => openReview(booking, "declined")} className="border border-border px-4 py-2 text-sm">Decline</button>
         </div>}
+        <VenueBookingConversation bookingId={booking.id} />
       </div>)}
       {!bookings.length && <p className="text-sm text-muted-foreground">No event bookings yet.</p>}
         </div>
       </section>
     </div>}
+    {reviewing && <div role="dialog" aria-modal="true" aria-labelledby="venue-booking-review-title" className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-5">
+      <form onSubmit={review} className="w-full max-w-lg border border-border bg-background p-6 shadow-xl">
+        <h2 id="venue-booking-review-title" className="font-display text-2xl font-semibold">{reviewing.status === "confirmed" ? "Confirm venue booking" : "Decline venue booking"}</h2>
+        <p className="mt-2 text-sm text-muted-foreground">{reviewing.booking.eventTitle || "This event"} will be {reviewing.status === "confirmed" ? "confirmed and invoiced" : "declined"}.</p>
+        <label className="mt-5 block text-sm font-medium">Optional note to event owner<textarea autoFocus value={ownerNote} onChange={(event) => setOwnerNote(event.target.value)} maxLength="5000" className="mt-2 min-h-28 w-full border border-border bg-background p-3" /></label>
+        <div className="mt-6 flex flex-wrap justify-end gap-3"><button type="button" onClick={() => setReviewing(null)} className="border border-border px-4 py-2 text-sm">Cancel</button><button className={reviewing.status === "confirmed" ? "bg-primary px-4 py-2 text-sm text-primary-foreground" : "border border-destructive px-4 py-2 text-sm text-destructive"}>{reviewing.status === "confirmed" ? "Confirm booking" : "Decline booking"}</button></div>
+      </form>
+    </div>}
+    {notification && <p role="alert" className="fixed bottom-6 left-5 z-[60] max-w-md border border-destructive/30 bg-background px-4 py-3 text-sm text-destructive shadow-lg sm:left-auto sm:right-6">{notification}</p>}
   </Shell>;
 }
 
