@@ -246,38 +246,25 @@ export default function EventsPage({
   const load = async (showLoading = true) => {
     if (showLoading) setLoading(true);
     try {
-      const eventPath = !managementOnly && selectedCategory
-        ? `/api/events?category=${encodeURIComponent(selectedCategory)}`
-        : "/api/events";
+      const eventPath = managementOnly
+        ? "/api/my/events"
+        : selectedCategory
+          ? `/api/events?category=${encodeURIComponent(selectedCategory)}`
+          : "/api/events";
       const response = await apiFetch(
         eventPath,
-        canManage && token
+        managementOnly && token
           ? { headers: { Authorization: `Bearer ${token}` } }
           : {},
       );
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Unable to load events.");
-      setEvents(Array.isArray(data) ? data : data.events || []);
-      if (canManage && token) {
-        const own = await apiFetch("/api/my/events", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (own.ok) {
-          const ownData = await own.json();
-          const ownEvents = Array.isArray(ownData) ? ownData : ownData.events || [];
-          const hydratedEvents = await Promise.all(ownEvents.map(async (event) => {
-            if (eventCover(event) || !event.id) return event;
-            try {
-              const detail = await apiFetch(`/api/events/${event.id}`, { headers: { Authorization: `Bearer ${token}` } });
-              if (!detail.ok) return event;
-              const detailData = await detail.json();
-              return { ...event, ...(detailData.event || detailData) };
-            } catch {
-              return event;
-            }
-          }));
-          setMine(hydratedEvents);
-        }
+      const loadedEvents = Array.isArray(data) ? data : data.events || [];
+      if (managementOnly) {
+        setMine(loadedEvents);
+        setEvents([]);
+      } else {
+        setEvents(loadedEvents);
       }
     } finally {
       if (showLoading) setLoading(false);
@@ -853,6 +840,14 @@ export default function EventsPage({
         <p className="mt-5 max-w-2xl text-muted-foreground">
           Explore activities, gatherings and local experiences.
         </p>
+        {organizerView && !creationPage && !editPage && (
+          <Link
+            to="/profile/events/new"
+            className="mt-7 inline-flex min-h-11 items-center bg-primary px-5 text-sm text-primary-foreground"
+          >
+            Create an event
+          </Link>
+        )}
         {!managementOnly && (
           <nav aria-label="Event categories" className="mt-8 flex flex-wrap gap-2">
             <button
@@ -879,7 +874,7 @@ export default function EventsPage({
             {error}
           </p>
         )}
-        {canManage && (
+        {canManage && (creationPage || editPage) && (
           <section className="mt-12 border-y border-border py-8">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
