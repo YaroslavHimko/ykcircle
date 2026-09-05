@@ -78,13 +78,14 @@ function VenueBookingPicker({ venues, venueId, onVenueChange, selectedDate, onDa
   // While editing, the event's persisted range is not an available interval:
   // it is correctly returned as occupied by the API. Use it as the initial
   // visual selection so the manager can still see the event on the grid.
-  const selectedInterval = selectedSlot?.interval || selectedSlot || (eventTimeOnSelectedDate
+  const persistedInterval = eventTimeOnSelectedDate
     ? { startTime: eventTimeOnSelectedDate.start, endTime: eventTimeOnSelectedDate.end }
-    : null);
+    : null;
+  const selectedInterval = selectedSlot?.interval || (selectedSlot && persistedInterval ? persistedInterval : selectedSlot) || persistedInterval;
   const intervalStart = asMinutes(selectedInterval?.startTime || selectedInterval?.start);
   const intervalEnd = asMinutes(selectedInterval?.endTime || selectedInterval?.end);
-  const selectedStart = asMinutes(selectedSlot?.selectedStart ?? selectedSlot?.startTime ?? selectedSlot?.start);
-  const selectedEnd = asMinutes(selectedSlot?.selectedEnd ?? selectedSlot?.endTime ?? selectedSlot?.end);
+  const selectedStart = asMinutes(selectedSlot?.selectedStart ?? selectedInterval?.startTime ?? selectedInterval?.start);
+  const selectedEnd = asMinutes(selectedSlot?.selectedEnd ?? selectedInterval?.endTime ?? selectedInterval?.end);
   const timeApplied = Boolean(eventTimeOnSelectedDate && eventTimeOnSelectedDate.start === asTime(selectedStart) && eventTimeOnSelectedDate.end === asTime(selectedEnd));
   const startOptions = selectedInterval ? Array.from({ length: Math.max(0, Math.floor((intervalEnd - intervalStart - minimumDuration) / increment) + 1) }, (_, index) => intervalStart + index * increment) : [];
   const endOptions = selectedInterval ? Array.from({ length: Math.max(0, Math.floor((Math.min(intervalEnd, selectedStart + maximumDuration) - selectedStart - minimumDuration) / increment) + 1) }, (_, index) => selectedStart + minimumDuration + index * increment) : [];
@@ -97,7 +98,7 @@ function VenueBookingPicker({ venues, venueId, onVenueChange, selectedDate, onDa
   const updateStart = (value) => {
     const nextStart = Number(value);
     const validEnd = selectedEnd > nextStart && selectedEnd - nextStart >= minimumDuration && selectedEnd - nextStart <= maximumDuration && selectedEnd <= intervalEnd && (selectedEnd - nextStart - minimumDuration) % increment === 0;
-    onSelectSlot({ ...selectedSlot, selectedStart: nextStart, selectedEnd: validEnd ? selectedEnd : nextStart + minimumDuration });
+    onSelectSlot({ ...(selectedSlot || { interval: selectedInterval }), selectedStart: nextStart, selectedEnd: validEnd ? selectedEnd : nextStart + minimumDuration });
   };
   const available = schedule.slots || [];
   return <div className="sm:col-span-2 border border-border bg-secondary/10 p-4 sm:p-5">

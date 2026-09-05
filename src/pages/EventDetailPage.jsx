@@ -8,7 +8,7 @@ import { apiAssetUrl, apiFetch } from "@/lib/api";
 import { eventImageRenderDebug, eventMediaUrl } from "@/lib/media";
 import MapLocation from "@/components/MapLocation";
 import { locationLines } from "@/lib/maps";
-import { dateForZone, deviceTimezone, localDateTimeToUtc } from "@/lib/time";
+import { dateForZone, deviceTimezone, localDateTimeForZone, localDateTimeToUtc } from "@/lib/time";
 
 const eventLocation = (event) => {
   if (event?.locationType === "venue") return event.venue || {};
@@ -255,6 +255,10 @@ export default function EventDetailPage() {
     const eventData = await eventResponse.json();
     if (!eventResponse.ok)
       throw new Error(eventData.error || "Unable to load event.");
+    if (canManageEvents) {
+      const bookingResponse = await apiFetch(`/api/events/${id}/venue-booking`, { headers });
+      if (bookingResponse.ok) eventData.venueBooking = await bookingResponse.json();
+    }
     const canRequestManagedParticipants = canManageEvents;
     const managedParticipantsResponse = canRequestManagedParticipants
       ? await apiFetch(`/api/events/${id}/participants`, { headers })
@@ -421,18 +425,26 @@ export default function EventDetailPage() {
       setVenues((Array.isArray(data) ? data : data.venues || []).filter((venue) => venue.isActive !== false));
     }).catch((requestError) => setError(requestError.message));
   }, [canManageEvents, token]);
-  const selectedVenue = venues.find((venue) => String(venue.id) === String(selectedVenueId));
-  const bookingTimezone = bookingSchedule.timezone || selectedVenue?.timezone || event?.venue?.timezone || event?.timezone || deviceTimezone();
-  const bookingDate = browserDate(event?.startsAt, bookingTimezone);
+  const venueBooking = event?.venueBooking || event?.venue_booking || event?.booking;
+  const scheduleVenueId = selectedVenueId || venueBooking?.venueId || event?.venue?.id || event?.venueId || "";
+  const selectedVenue = venues.find((venue) => String(venue.id) === String(scheduleVenueId));
+  const bookingTimezone = bookingSchedule.timezone || venueBooking?.timezone || selectedVenue?.timezone || event?.venue?.timezone || event?.timezone || deviceTimezone();
+  const bookingDate = browserDate(venueBooking?.startAt || event?.startsAt, bookingTimezone);
+  const persistedBookingTime = venueBooking?.startAt && venueBooking?.endAt ? (() => {
+    const toMinutes = (value) => { const [hours, minutes] = value.slice(11, 16).split(":").map(Number); return hours * 60 + minutes; };
+    const start = localDateTimeForZone(venueBooking.startAt, bookingTimezone);
+    const end = localDateTimeForZone(venueBooking.endAt, bookingTimezone);
+    return start && end ? { start: toMinutes(start), end: toMinutes(end) } : null;
+  })() : null;
   useEffect(() => {
     let cancelled = false;
     setBookingTime(null);
-    if (!canManageEvents || !selectedVenueId || !bookingDate) {
+    if (!canManageEvents || !scheduleVenueId || !bookingDate) {
       setBookingSchedule({ loading: false, error: bookingDate ? "" : "Set an event date before requesting a venue.", slots: [], timezone: "" });
       return undefined;
     }
     setBookingSchedule({ loading: true, error: "", slots: [], timezone: "" });
-    apiFetch(`/api/venues/${selectedVenueId}/availability?date=${encodeURIComponent(bookingDate)}`, { headers: { Authorization: `Bearer ${token}` } })
+    apiFetch(`/api/venues/${scheduleVenueId}/availability?date=${encodeURIComponent(bookingDate)}`, { headers: { Authorization: `Bearer ${token}` } })
       .then(async (response) => {
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || data.message || "Unable to load venue availability.");
@@ -440,8 +452,7 @@ export default function EventDetailPage() {
       })
       .catch((requestError) => !cancelled && setBookingSchedule({ loading: false, error: requestError.message, slots: [], timezone: "" }));
     return () => { cancelled = true; };
-  }, [bookingAvailabilityVersion, bookingDate, canManageEvents, selectedVenueId, token]);
-  const venueBooking = event?.venueBooking || event?.venue_booking || event?.booking;
+  }, [bookingAvailabilityVersion, bookingDate, canManageEvents, scheduleVenueId, token]);
   const requestVenueBooking = async () => { if (!selectedVenueId) return setError("Choose a venue first."); if (!bookingTime) return setError("Choose an available start and end time first."); setBookingSaving(true); try { const toTime = (minutes) => `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`; const startsAtUtc = localDateTimeToUtc(`${bookingDate}T${toTime(bookingTime.start)}`, bookingTimezone); const endsAtUtc = localDateTimeToUtc(`${bookingDate}T${toTime(bookingTime.end)}`, bookingTimezone, "end"); if (!startsAtUtc || !endsAtUtc) throw new Error("This local time does not exist due to daylight saving time. Choose another time."); const eventResponse = await apiFetch(`/api/events/${id}/schedule`, { method: "PATCH", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify({ startsAtUtc, endsAtUtc, venueId: Number(selectedVenueId) }) }); const eventData = await eventResponse.json(); if (!eventResponse.ok) throw new Error(eventData.error || eventData.message || "Unable to set the event time."); const response = await apiFetch(`/api/events/${id}/venue-booking`, { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify({ venueId: Number(selectedVenueId) }) }); const data = await response.json(); if (!response.ok) { if (response.status === 409) { setBookingTime(null); setBookingAvailabilityVersion((version) => version + 1); } throw new Error(data.error || data.message || "That time is no longer available. Please choose another time."); } setEvent((current) => ({ ...current, ...(eventData.event || eventData), venueBooking: data.booking || data })); } catch (requestError) { setError(requestError.message); } finally { setBookingSaving(false); } };
   const cancelVenueBooking = async () => { setBookingSaving(true); try { const response = await apiFetch(`/api/events/${id}/venue-booking/cancel`, { method: "POST", headers: { Authorization: `Bearer ${token}` } }); const data = await response.json(); if (!response.ok) throw new Error(data.error || data.message || "Unable to cancel venue booking."); setEvent((current) => ({ ...current, venueBooking: data.booking || { ...venueBooking, status: "cancelled" } })); } catch (requestError) { setError(requestError.message); } finally { setBookingSaving(false); } };
   useEffect(
@@ -1052,7 +1063,7 @@ export default function EventDetailPage() {
             </p>
             {venueBooking?.status === "confirmed" && <p className="mt-2 text-sm text-muted-foreground">Confirmed venue: {venueBooking.venue?.name || venueBooking.venueName}{(venueBooking.venue?.location || venueBooking.venueLocation) && ` — ${venueBooking.venue?.location || venueBooking.venueLocation}`}</p>}
             {bookingTimeLabel(venueBooking) && <p className="mt-2 text-sm text-muted-foreground">Requested time: {bookingTimeLabel(venueBooking)}</p>}
-            {canManageEvents && <section className="mt-8 max-w-2xl border border-border p-5"><h2 className="font-display text-2xl font-semibold">Venue booking</h2>{venueBooking ? <><p className="mt-2 text-sm">Status: <span className="capitalize text-primary">{venueBooking.status}</span>{venueBooking.ownerNote && ` — ${venueBooking.ownerNote}`}</p>{["pending", "confirmed"].includes(venueBooking.status) && <button type="button" disabled={bookingSaving} onClick={cancelVenueBooking} className="mt-4 border border-border px-4 py-2 text-sm disabled:opacity-60">Cancel booking request</button>}</> : <><p className="mt-2 text-sm text-muted-foreground">Choose a venue, then select a bookable start and end time. The request remains subject to the backend confirmation check.</p><label className="mt-4 block text-sm font-medium">Venue<select value={selectedVenueId} onChange={(event) => setSelectedVenueId(event.target.value)} className="mt-2 min-h-11 w-full border border-border bg-background px-3"><option value="">Choose a venue</option>{venues.map((venue) => <option key={venue.id} value={venue.id}>{venue.name}{venue.city ? ` — ${venue.city}` : ""}</option>)}</select></label>{selectedVenueId && <VenueBookingTimeSelector schedule={bookingSchedule} value={bookingTime} onChange={setBookingTime} />}{bookingSchedule.timezone && <p className="mt-3 text-xs text-muted-foreground">Venue time: {bookingSchedule.timezone}</p>}<button type="button" disabled={bookingSaving || !bookingTime} onClick={requestVenueBooking} className="mt-4 bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-60">Request booking</button></>}</section>}
+            {canManageEvents && <section className="mt-8 max-w-2xl border border-border p-5"><h2 className="font-display text-2xl font-semibold">Venue booking</h2>{venueBooking ? <><p className="mt-2 text-sm">Status: <span className="capitalize text-primary">{venueBooking.status}</span>{venueBooking.ownerNote && ` — ${venueBooking.ownerNote}`}</p>{persistedBookingTime && <><p className="mt-4 text-sm font-medium text-primary">Current booking</p><SelectedBookingTimeGrid schedule={bookingSchedule} value={persistedBookingTime} /></>}{bookingSchedule.loading && <p role="status" className="mt-3 text-sm text-muted-foreground">Loading venue availability…</p>}{bookingSchedule.timezone && <p className="mt-3 text-xs text-muted-foreground">Venue time: {bookingSchedule.timezone}</p>}{["pending", "confirmed"].includes(venueBooking.status) && <button type="button" disabled={bookingSaving} onClick={cancelVenueBooking} className="mt-4 border border-border px-4 py-2 text-sm disabled:opacity-60">Cancel booking request</button>}</> : <><p className="mt-2 text-sm text-muted-foreground">Choose a venue, then select a bookable start and end time. The request remains subject to the backend confirmation check.</p><label className="mt-4 block text-sm font-medium">Venue<select value={selectedVenueId} onChange={(event) => setSelectedVenueId(event.target.value)} className="mt-2 min-h-11 w-full border border-border bg-background px-3"><option value="">Choose a venue</option>{venues.map((venue) => <option key={venue.id} value={venue.id}>{venue.name}{venue.city ? ` — ${venue.city}` : ""}</option>)}</select></label>{selectedVenueId && <VenueBookingTimeSelector schedule={bookingSchedule} value={bookingTime} onChange={setBookingTime} />}{bookingSchedule.timezone && <p className="mt-3 text-xs text-muted-foreground">Venue time: {bookingSchedule.timezone}</p>}<button type="button" disabled={bookingSaving || !bookingTime} onClick={requestVenueBooking} className="mt-4 bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-60">Request booking</button></>}</section>}
             {event.description && (
               <p className="mt-6 max-w-2xl leading-relaxed">
                 {event.description}
