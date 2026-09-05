@@ -20,6 +20,7 @@ export function Header() {
     const overlay = pathname === '/';
     const canManage = Boolean(user && ['admin', 'manager'].includes(user.role));
     const isAdmin = user?.role === 'admin';
+    const isBusinessUser = Boolean(user && ['business_owner', 'manager', 'admin'].includes(user.role));
 
     React.useEffect(() => {
         const refreshUser = () => setUser(JSON.parse(localStorage.getItem('authUser') || 'null'));
@@ -96,13 +97,14 @@ export function Header() {
                             <Link to="/profile/events" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Events</Link>
                             <Link to="/profile/groups" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Groups</Link>
                             <Link to="/profile/venues" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Venues</Link>
-                            <Link to="/profile/business" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Business</Link>
+                            {isBusinessUser && <Link to="/profile/business" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Business</Link>}
                             <Link to="/profile/invoices" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Venue invoices</Link>
                             {canManage && <>
                                 <p className="mt-2 border-t border-border px-3 pt-4 text-[0.65rem] font-medium uppercase tracking-[0.2em] text-muted-foreground">Administration</p>
                                 <Link to="/admin/applications" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Applications</Link>
                                 <Link to="/admin/users" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">User roles</Link>
                                 <Link to="/profile/articles" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Articles</Link>
+                                <Link to="/admin/business-owner-applications" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Business-owner enquiries</Link>
                                 {isAdmin && <Link to="/admin/reports" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Content reports</Link>}
                                 {isAdmin && <Link to="/admin/business-applications" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Business applications</Link>}
                             </>}
@@ -154,13 +156,14 @@ export function Header() {
                             <Link to="/profile/events" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">Events</Link>
                             <Link to="/profile/groups" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">Groups</Link>
                             <Link to="/profile/venues" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">Venues</Link>
-                            <Link to="/profile/business" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">Business</Link>
+                            {isBusinessUser && <Link to="/profile/business" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">Business</Link>}
                             <Link to="/profile/invoices" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">Venue invoices</Link>
                             {canManage && <>
                                 <p className="pt-5 text-[0.65rem] font-medium uppercase tracking-[0.2em] text-muted-foreground">Administration</p>
                                 <Link to="/admin/applications" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">Applications</Link>
                                 <Link to="/admin/users" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">User roles</Link>
                                 <Link to="/profile/articles" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">Articles</Link>
+                                <Link to="/admin/business-owner-applications" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">Business-owner enquiries</Link>
                                 {isAdmin && <Link to="/admin/reports" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">Content reports</Link>}
                                 {isAdmin && <Link to="/admin/business-applications" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">Business applications</Link>}
                             </>}
