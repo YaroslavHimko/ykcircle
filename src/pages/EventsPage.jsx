@@ -354,7 +354,7 @@ export default function EventsPage({
     ] = testEventPresets[presetIndex];
     setForm((current) => ({
       ...current,
-      title, shortDescription, description, location, address, startsAt: todayAtPresetTime(startsAt), endsAt: todayAtPresetTime(endsAt),
+      title, shortDescription, description, location, address, addressLine1: address, formattedAddress: address, latitude: "59.3293", longitude: "18.0686", startsAt: todayAtPresetTime(startsAt), endsAt: todayAtPresetTime(endsAt),
       registrationDeadline: todayAtPresetTime(registrationDeadline), whatToBring, meetingInstructions, pricingType, fee,
       locationType: rawLocationType === "physical" ? "custom" : rawLocationType, locationVisibility, capacity, minimumAttendees, minimumAge,
       languageCode, recurrenceFrequency,
@@ -456,11 +456,18 @@ export default function EventsPage({
       Object.entries({
         ...eventForm,
         venueId: form.locationType === "venue" ? Number(venueId) || undefined : undefined,
-        location: form.locationType === "custom" ? {
-          addressLine1, addressLine2, postalCode, locality, municipality, region, country,
-          countryCode, latitude: latitude === "" ? undefined : Number(latitude), longitude: longitude === "" ? undefined : Number(longitude),
-          googlePlaceId, formattedAddress,
-        } : undefined,
+        customAddressLine1: form.locationType === "custom" ? addressLine1 : undefined,
+        customAddressLine2: form.locationType === "custom" ? addressLine2 : undefined,
+        customPostalCode: form.locationType === "custom" ? postalCode : undefined,
+        customLocality: form.locationType === "custom" ? locality : undefined,
+        customMunicipality: form.locationType === "custom" ? municipality : undefined,
+        customRegion: form.locationType === "custom" ? region : undefined,
+        customCountry: form.locationType === "custom" ? country : undefined,
+        customCountryCode: form.locationType === "custom" ? countryCode : undefined,
+        customLatitude: form.locationType === "custom" && latitude !== "" ? Number(latitude) : undefined,
+        customLongitude: form.locationType === "custom" && longitude !== "" ? Number(longitude) : undefined,
+        customGooglePlaceId: form.locationType === "custom" ? googlePlaceId : undefined,
+        customFormattedAddress: form.locationType === "custom" ? formattedAddress : undefined,
         onlineUrl: form.locationType === "online" ? onlineUrl : undefined,
         onlinePlatform: form.locationType === "online" ? onlinePlatform : undefined,
         recurrence,
