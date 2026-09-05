@@ -72,12 +72,20 @@ function VenueBookingPicker({ venues, venueId, onVenueChange, selectedDate, onDa
   const increment = positive(schedule.slotIncrementMinutes, schedule.slotIncrement) || 30;
   const minimumDuration = positive(schedule.minimumDurationMinutes, schedule.minDurationMinutes, schedule.minimumDuration, schedule.minimumBookingMinutes, Number(schedule.minimumBookingHours) * 60) || increment;
   const maximumDuration = positive(schedule.maximumDurationMinutes, schedule.maxDurationMinutes, schedule.maximumDuration, schedule.maximumBookingMinutes, Number(schedule.maximumBookingHours) * 60) || Infinity;
-  const selectedInterval = selectedSlot?.interval || selectedSlot;
+  const eventTimeOnSelectedDate = selectedEventTime?.date === selectedDate
+    ? selectedEventTime
+    : null;
+  // While editing, the event's persisted range is not an available interval:
+  // it is correctly returned as occupied by the API. Use it as the initial
+  // visual selection so the manager can still see the event on the grid.
+  const selectedInterval = selectedSlot?.interval || selectedSlot || (eventTimeOnSelectedDate
+    ? { startTime: eventTimeOnSelectedDate.start, endTime: eventTimeOnSelectedDate.end }
+    : null);
   const intervalStart = asMinutes(selectedInterval?.startTime || selectedInterval?.start);
   const intervalEnd = asMinutes(selectedInterval?.endTime || selectedInterval?.end);
   const selectedStart = asMinutes(selectedSlot?.selectedStart ?? selectedSlot?.startTime ?? selectedSlot?.start);
   const selectedEnd = asMinutes(selectedSlot?.selectedEnd ?? selectedSlot?.endTime ?? selectedSlot?.end);
-  const timeApplied = Boolean(selectedInterval && selectedEventTime?.start === asTime(selectedStart) && selectedEventTime?.end === asTime(selectedEnd));
+  const timeApplied = Boolean(eventTimeOnSelectedDate && eventTimeOnSelectedDate.start === asTime(selectedStart) && eventTimeOnSelectedDate.end === asTime(selectedEnd));
   const startOptions = selectedInterval ? Array.from({ length: Math.max(0, Math.floor((intervalEnd - intervalStart - minimumDuration) / increment) + 1) }, (_, index) => intervalStart + index * increment) : [];
   const endOptions = selectedInterval ? Array.from({ length: Math.max(0, Math.floor((Math.min(intervalEnd, selectedStart + maximumDuration) - selectedStart - minimumDuration) / increment) + 1) }, (_, index) => selectedStart + minimumDuration + index * increment) : [];
   const selectInterval = (interval, requestedStart) => {
@@ -95,7 +103,7 @@ function VenueBookingPicker({ venues, venueId, onVenueChange, selectedDate, onDa
   return <div className="sm:col-span-2 border border-border bg-secondary/10 p-4 sm:p-5">
     <div className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-xs uppercase tracking-[0.2em] text-primary">Venue scheduling</p><h3 className="mt-1 font-display text-2xl font-semibold">Choose a booking time</h3><p className="mt-1 text-sm text-muted-foreground">The venue’s current availability and duration rules determine which times can be selected.</p></div>{schedule.timezone && <p className="text-sm text-muted-foreground">Venue time: {schedule.timezone}</p>}</div>
     <div className="mt-5 grid gap-4 sm:grid-cols-2"><label className="text-sm font-medium">Venue<select required value={venueId} onChange={(event) => onVenueChange(event.target.value)} className="mt-2 min-h-11 w-full border border-border bg-background px-3"><option value="">Choose a venue</option>{venues.map((venue) => <option key={venue.id} value={venue.id}>{venue.name}{venue.location?.locality || venue.city ? ` — ${venue.location?.locality || venue.city}` : ""}</option>)}</select></label><label className="text-sm font-medium">Date<input type="date" required value={selectedDate} onChange={(event) => onDateChange(event.target.value)} className="mt-2 min-h-11 w-full border border-border bg-background px-3" /></label></div>
-    {selectedEventTime?.start && selectedEventTime?.end && <p className="mt-4 border border-primary/40 bg-primary/5 p-3 text-sm">Event time: <strong>{selectedEventTime.start}–{selectedEventTime.end}</strong>{timeApplied && <span className="ml-2 text-primary">Applied to this event</span>}</p>}
+    {eventTimeOnSelectedDate?.start && eventTimeOnSelectedDate?.end && <p className="mt-4 border border-primary/40 bg-primary/5 p-3 text-sm">Event time: <strong>{eventTimeOnSelectedDate.start}–{eventTimeOnSelectedDate.end}</strong><span className="ml-2 text-primary">Current booking</span></p>}
     {schedule.nextAvailable?.date && <button type="button" onClick={() => onDateChange(schedule.nextAvailable.date)} className="mt-4 border border-accent/50 bg-accent/10 px-4 py-3 text-left text-sm hover:bg-accent/20"><strong>Next available: {schedule.nextAvailable.date}</strong><span className="ml-2">{schedule.nextAvailable.startTime}–{schedule.nextAvailable.endTime}</span><span className="mt-1 block text-xs">Choose this date</span></button>}
     {!venueId ? <p className="mt-5 text-sm text-muted-foreground">Choose a venue to see its free times.</p> : !selectedDate ? <p className="mt-5 text-sm text-muted-foreground">Choose a date to see available times.</p> : schedule.loading ? <p role="status" className="mt-5 text-sm text-muted-foreground">Loading availability…</p> : schedule.error ? <p role="alert" className="mt-5 text-sm text-destructive">{schedule.error}</p> : <>{(available.length || schedule.unavailableSlots?.length || schedule.unavailableIntervals?.length) ? <BookingDayTimeline available={available} unavailable={schedule.unavailableSlots || schedule.unavailableIntervals || []} selectedInterval={selectedInterval} selectedStart={selectedStart} selectedEnd={selectedEnd} onSelect={selectInterval} asMinutes={asMinutes} asTime={asTime} /> : <p className="mt-5 text-sm text-muted-foreground">No scheduled hours are available on this date.</p>}{selectedInterval && <div className="mt-5 border border-primary/40 bg-background p-4"><p className="text-sm font-medium">Choose the booking time</p><p className="mt-1 text-xs text-muted-foreground">Start and end are limited to the selected free interval and this venue’s booking rules.</p><div className="mt-4 grid gap-3 sm:grid-cols-2"><label className="text-sm font-medium">Start<select value={selectedStart} onChange={(event) => updateStart(event.target.value)} className="mt-2 min-h-11 w-full border border-border bg-background px-3">{startOptions.map((value) => <option key={value} value={value}>{asTime(value)}</option>)}</select></label><label className="text-sm font-medium">End<select value={selectedEnd} onChange={(event) => onSelectSlot({ ...selectedSlot, selectedEnd: Number(event.target.value) })} className="mt-2 min-h-11 w-full border border-border bg-background px-3">{endOptions.map((value) => <option key={value} value={value}>{asTime(value)}</option>)}</select></label></div><div className="mt-4 flex flex-wrap items-center justify-between gap-4"><p className="text-sm">Selected: <strong>{asTime(selectedStart)}–{asTime(selectedEnd)}</strong></p><div className="flex gap-2"><button type="button" onClick={onConfirmSlot} className="bg-primary px-4 py-2 text-sm text-primary-foreground">{timeApplied ? "Time applied" : "Apply this time"}</button><button type="button" onClick={() => onSelectSlot(null)} className="border border-border px-4 py-2 text-sm">Clear</button></div></div>{timeApplied && <p role="status" className="mt-3 text-sm text-primary">Time applied to the event. Save the event to keep this selection.</p>}</div>}</>}
   </div>;
@@ -135,21 +143,6 @@ const EventCoverImage = ({ event, className, alt = "", component }) => {
 };
 const eventValue = (event, ...keys) =>
   keys.map((key) => event?.[key]).find((value) => value !== undefined && value !== null) ?? "";
-const timezoneLabel = (zone) => {
-  try {
-    const parts = new Intl.DateTimeFormat("en", {
-      timeZone: zone,
-      timeZoneName: "longOffset",
-    }).formatToParts(new Date());
-    const offset = parts
-      .find((part) => part.type === "timeZoneName")
-      ?.value?.replace("GMT", "UTC");
-    return offset && offset !== "UTC" ? `${zone} (${offset})` : `${zone} (UTC)`;
-  } catch {
-    return zone;
-  }
-};
-
 export default function EventsPage({
   managementOnly = false,
   creationPage = false,
@@ -175,7 +168,6 @@ export default function EventsPage({
   const [archivedEvents, setArchivedEvents] = useState([]);
   const [categories, setCategories] = useState([]);
   const [types, setTypes] = useState([]);
-  const [timezones, setTimezones] = useState([]);
   const [managedGroups, setManagedGroups] = useState([]);
   const [venues, setVenues] = useState([]);
   const [venueSchedule, setVenueSchedule] = useState({ loading: false, error: "", date: "", timezone: "", slots: [] });
@@ -259,9 +251,7 @@ export default function EventsPage({
   }, [canManage, token, location.pathname, managementOnly, selectedCategory]);
   useEffect(() => {
     Promise.all(
-      ["/api/event-categories", "/api/event-types", "/api/timezones"].map(
-        (path) => apiFetch(path),
-      ),
+      ["/api/event-categories", "/api/event-types"].map((path) => apiFetch(path)),
     )
       .then(async (responses) => {
         const values = await Promise.all(
@@ -269,7 +259,6 @@ export default function EventsPage({
         );
         if (responses[0].ok) setCategories(values[0]);
         if (responses[1].ok) setTypes(values[1]);
-        if (responses[2].ok) setTimezones(values[2]);
       })
       .catch(() => {});
   }, []);
@@ -972,9 +961,9 @@ export default function EventsPage({
               <fieldset className="grid gap-4 border border-border p-4 sm:col-span-2 sm:grid-cols-2">
                 <legend className="px-1 text-sm font-medium">Where is your event?</legend>
                 <label className="flex items-center gap-2 text-sm"><input type="radio" name="locationType" value="venue" checked={form.locationType === "venue"} onChange={update} />At a YKCircle venue</label>
-                <label className="flex items-center gap-2 text-sm"><input type="radio" name="locationType" value="custom" checked={form.locationType === "custom"} onChange={() => setForm((current) => ({ ...current, locationType: "custom" }))} />At another location</label>
-                <label className="flex items-center gap-2 text-sm"><input type="radio" name="locationType" value="online" checked={form.locationType === "online"} onChange={() => setForm((current) => ({ ...current, locationType: "online" }))} />Online</label>
-                {form.locationType === "venue" && <VenueBookingPicker venues={venues} venueId={form.venueId} onVenueChange={(venueId) => { const venue = venues.find((item) => String(item.id) === String(venueId)); setForm((current) => ({ ...current, venueId, timezone: venue?.timezone || current.timezone })); setPendingVenueSlot(null); }} selectedDate={selectedVenueDate} onDateChange={(date) => { setForm((current) => ({ ...current, startsAt: `${date}T${current.startsAt?.slice(11, 16) || "09:00"}`, endsAt: current.endsAt ? `${date}T${current.endsAt.slice(11, 16)}` : "" })); setPendingVenueSlot(null); }} schedule={venueSchedule} selectedSlot={pendingVenueSlot} onSelectSlot={setPendingVenueSlot} onConfirmSlot={() => { const clock = (value) => `${String(Math.floor(value / 60)).padStart(2, "0")}:${String(value % 60).padStart(2, "0")}`; setForm((current) => ({ ...current, startsAt: `${venueSchedule.date}T${clock(pendingVenueSlot.selectedStart)}`, endsAt: `${venueSchedule.date}T${clock(pendingVenueSlot.selectedEnd)}`, timezone: venueSchedule.timezone || current.timezone })); }} selectedEventTime={form.startsAt && form.endsAt ? { start: form.startsAt.slice(11, 16), end: form.endsAt.slice(11, 16) } : null} />}
+                <label className="flex items-center gap-2 text-sm"><input type="radio" name="locationType" value="custom" checked={form.locationType === "custom"} onChange={() => setForm((current) => ({ ...current, locationType: "custom", timezone: deviceTimezone() }))} />At another location</label>
+                <label className="flex items-center gap-2 text-sm"><input type="radio" name="locationType" value="online" checked={form.locationType === "online"} onChange={() => setForm((current) => ({ ...current, locationType: "online", timezone: deviceTimezone() }))} />Online</label>
+                {form.locationType === "venue" && <VenueBookingPicker venues={venues} venueId={form.venueId} onVenueChange={(venueId) => { const venue = venues.find((item) => String(item.id) === String(venueId)); setForm((current) => ({ ...current, venueId, timezone: venue?.timezone || deviceTimezone() })); setPendingVenueSlot(null); }} selectedDate={selectedVenueDate} onDateChange={(date) => { setForm((current) => ({ ...current, startsAt: `${date}T${current.startsAt?.slice(11, 16) || "09:00"}`, endsAt: current.endsAt ? `${date}T${current.endsAt.slice(11, 16)}` : "" })); setPendingVenueSlot(null); }} schedule={venueSchedule} selectedSlot={pendingVenueSlot} onSelectSlot={setPendingVenueSlot} onConfirmSlot={() => { const clock = (value) => `${String(Math.floor(value / 60)).padStart(2, "0")}:${String(value % 60).padStart(2, "0")}`; setForm((current) => ({ ...current, startsAt: `${venueSchedule.date}T${clock(pendingVenueSlot.selectedStart)}`, endsAt: `${venueSchedule.date}T${clock(pendingVenueSlot.selectedEnd)}`, timezone: venueSchedule.timezone || deviceTimezone() })); }} selectedEventTime={form.startsAt && form.endsAt ? { date: form.startsAt.slice(0, 10), start: form.startsAt.slice(11, 16), end: form.endsAt.slice(11, 16) } : null} />}
                 {form.locationType === "custom" && <div className="sm:col-span-2"><p className="text-sm font-medium">Search for an address</p><div className="mt-2"><GoogleLocationPicker onSelect={(place) => setForm((current) => ({ ...current, ...place, country: place.country || current.country, city: place.locality || current.city }))} /></div>{form.formattedAddress ? <p className="mt-3 border border-border bg-secondary/20 p-3 text-sm"><span className="text-muted-foreground">Selected location</span><br />{form.formattedAddress}</p> : <p className="mt-2 text-xs text-muted-foreground">Search and choose an address on the map. Google will save its address details and coordinates automatically.</p>}</div>}
                 {form.locationType === "online" && <div className="grid gap-4 sm:col-span-2 sm:grid-cols-2"><p className="sm:col-span-2 text-sm text-muted-foreground">The event is online. Joining links are shown only to the event manager/admin.</p>{input("onlinePlatform", "Platform (for example, Zoom)")}{input("onlineUrl", "Joining URL", "url")}</div>}
               </fieldset>
@@ -1011,30 +1000,6 @@ export default function EventsPage({
                   {errors.recurrence && <p className="text-sm text-destructive sm:col-span-3">{errors.recurrence}</p>}
                 </div>
               )}
-              {
-                <label className="block text-sm">
-                  Timezone
-                  <select
-                    required
-                    name="timezone"
-                    value={form.timezone}
-                    onChange={update}
-                    className="mt-2 min-h-11 w-full border border-border bg-background px-3"
-                  >
-                    <option value="">Select timezone</option>
-                    {timezones.map((zone) => (
-                      <option key={zone} value={zone}>
-                        {timezoneLabel(zone)}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.timezone && (
-                    <span className="mt-1 block text-xs text-destructive">
-                      {errors.timezone}
-                    </span>
-                  )}
-                </label>
-              }
               {input("capacity", "Capacity", "number")}
               {input("minimumAttendees", "Minimum attendees", "number")}
               {input("languageCode", "Language")}
