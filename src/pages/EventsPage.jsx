@@ -246,9 +246,7 @@ export default function EventsPage({
   const load = async (showLoading = true) => {
     if (showLoading) setLoading(true);
     try {
-      const eventPath = managementOnly
-        ? "/api/my/events"
-        : selectedCategory
+      const eventPath = selectedCategory
           ? `/api/events?category=${encodeURIComponent(selectedCategory)}`
           : "/api/events";
       const response = await apiFetch(
