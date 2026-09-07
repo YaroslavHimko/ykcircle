@@ -25,6 +25,7 @@ import GroupSlugRedirect from './pages/GroupSlugRedirect';
 import ArticlesPage from './pages/ArticlesPage';
 import ReportPage from './pages/ReportPage';
 import LegalDocumentsPage from './pages/LegalDocumentsPage';
+import { CompanyInformationPage, SubprocessorsPage } from './pages/CompanyInformationPage';
 import AppealPage from './pages/AppealPage';
 import AdminReportsPage from './pages/AdminReportsPage';
 import { AdminVenueApplicationsPage, MyVenuesPage, VenueBookingsPage, VenueOwnerApplicationPage } from './pages/VenuesPage';
@@ -70,6 +71,14 @@ function App() {
                 <Route path="/terms" element={<LegalDocumentsPage documentSlug="terms" />} />
                 <Route path="/privacy" element={<LegalDocumentsPage documentSlug="privacy" />} />
                 <Route path="/cookies" element={<LegalDocumentsPage documentSlug="cookies" />} />
+                <Route path="/community-guidelines" element={<LegalDocumentsPage documentSlug="community-guidelines" />} />
+                <Route path="/organizer-terms" element={<LegalDocumentsPage documentSlug="organizer-terms" />} />
+                <Route path="/venue-terms" element={<LegalDocumentsPage documentSlug="venue-terms" />} />
+                <Route path="/tickets-refunds" element={<LegalDocumentsPage documentSlug="tickets-refunds" />} />
+                <Route path="/paid-services" element={<LegalDocumentsPage documentSlug="paid-services" />} />
+                <Route path="/marketplace-transparency" element={<LegalDocumentsPage documentSlug="marketplace-transparency" />} />
+                <Route path="/company" element={<CompanyInformationPage />} />
+                <Route path="/subprocessors" element={<SubprocessorsPage />} />
                 <Route path="/login" element={<AuthPage mode="login" />} />
                 <Route path="/register" element={<AuthPage mode="register" />} />
                 <Route path="/check-email" element={<CheckEmailPage />} />

@@ -181,12 +181,11 @@ export function Footer() {
         { slug: 'terms', title: 'Terms' },
         { slug: 'privacy', title: 'Privacy' },
         { slug: 'cookies', title: 'Cookies' },
+        { slug: 'paid-services', title: 'Paid Services' },
     ];
     const additionalLegalDocuments = legalDocuments.filter((document) =>
         document?.slug &&
-        !defaultLegalDocuments.some((defaultDocument) => defaultDocument.slug === document.slug) &&
-        !document.slug.toLowerCase().includes('community') &&
-        !String(document.title || '').toLowerCase().includes('community'),
+        !defaultLegalDocuments.some((defaultDocument) => defaultDocument.slug === document.slug),
     );
 
     useEffect(() => {
@@ -245,8 +244,10 @@ export function Footer() {
                         <p className="mb-3 text-[0.7rem] uppercase tracking-[0.25em] text-[hsl(40_20%_60%)]">Legal</p>
                         <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-[hsl(40_20%_78%)]">
                             {defaultLegalDocuments.map((document) => <Link key={document.slug} className="hover:text-primary" to={`/${document.slug}`}>{document.title}</Link>)}
-                            {additionalLegalDocuments.map((document) => <Link key={document.slug} className="hover:text-primary" to={`/legal/${document.slug}`}>{document.title}</Link>)}
+                            {additionalLegalDocuments.map((document) => <Link key={document.slug} className="hover:text-primary" to={`/${document.slug}`}>{document.title}</Link>)}
                             <Link className="hover:text-primary" to="/legal">All documents</Link>
+                            <Link className="hover:text-primary" to="/company">Company information</Link>
+                            <Link className="hover:text-primary" to="/subprocessors">Subprocessors</Link>
                             <button type="button" onClick={openCookieSettings} className="hover:text-primary">Cookie settings</button>
                         </div>
                     </div>
