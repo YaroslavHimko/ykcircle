@@ -34,6 +34,32 @@ import { OrganizerAvailabilityPage, VenueCalendarPage } from './pages/VenueSched
 import { InvoiceDetailPage, InvoicesPage } from './pages/InvoicesPage';
 import BillingProfilesPage from './pages/BillingProfilesPage';
 import { PaymentAccountReturnPage, PlatformAdminPage, PlatformBillingPage, TicketCheckoutPage, TicketOrderPage, TicketsPage } from './pages/FinancialPages';
+import { apiFetch } from './lib/api';
+
+function AuthSessionSync() {
+    React.useEffect(() => {
+        const token = localStorage.getItem('authToken');
+        if (!token) return undefined;
+        let active = true;
+        apiFetch('/api/auth/profile', { headers: { Authorization: `Bearer ${token}` } })
+            .then(async (response) => {
+                const data = await response.json().catch(() => null);
+                if (!active) return;
+                if (response.ok && data?.user) {
+                    localStorage.setItem('authUser', JSON.stringify(data.user));
+                    window.dispatchEvent(new Event('auth-change'));
+                } else if (response.status === 401) {
+                    localStorage.removeItem('authToken');
+                    localStorage.removeItem('authUser');
+                    window.dispatchEvent(new Event('auth-change'));
+                }
+            })
+            .catch(() => { /* Keep the existing session during temporary network failures. */ });
+        return () => { active = false; };
+    }, []);
+
+    return null;
+}
 
 function IframeRouteNavigation() {
     const navigate = useNavigate();
@@ -57,6 +83,7 @@ function IframeRouteNavigation() {
 function App() {
     return (
         <Router>
+            <AuthSessionSync />
             <IframeRouteNavigation />
             <ScrollToTop />
             <Routes>
