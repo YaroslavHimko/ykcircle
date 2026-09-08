@@ -23,6 +23,9 @@ const formatDate = (value) =>
       }).format(new Date(value))
     : "Date to be announced";
 
+const eventLocationLabel = (event) =>
+  event.location || event.venue?.name || event.venueName || event.city || "Location to be announced";
+
 function EventCard({ event }) {
   const image = eventMediaUrl(event);
   if (image) eventImageRenderDebug({ component: "HomeEventCard", event });
@@ -68,7 +71,7 @@ function EventCard({ event }) {
         </p>
         <p className="flex gap-2">
           <MapPin className="h-4 w-4 text-primary" />
-          {event.location || event.city || "Location to be announced"}
+          {eventLocationLabel(event)}
         </p>
         <p className="flex gap-2">
           <Users className="h-4 w-4 text-primary" />
