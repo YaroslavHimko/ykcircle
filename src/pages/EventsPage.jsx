@@ -7,6 +7,8 @@ import { eventImageRenderDebug, eventMediaUrl } from "@/lib/media";
 import GoogleLocationPicker from "@/components/GoogleLocationPicker";
 import { deviceTimezone, localDateTimeForZone, localDateTimeToUtc } from "@/lib/time";
 
+const isBookableVenue = (venue) => venue?.moderationStatus === "approved" && (venue.isActive === true || venue.isActive === 1 || venue.isActive === "1" || venue.isActive === "true");
+
 const initialForm = {
   title: "",
   shortDescription: "",
@@ -302,7 +304,7 @@ export default function EventsPage({
     if (!canManage) return;
     apiFetch("/api/venues", token ? { headers: { Authorization: `Bearer ${token}` } } : {})
       .then(async (response) => response.ok ? response.json() : [])
-      .then((data) => setVenues(Array.isArray(data) ? data : data.venues || []))
+      .then((data) => setVenues((Array.isArray(data) ? data : data.venues || []).filter(isBookableVenue)))
       .catch(() => setVenues([]));
   }, [canManage, token]);
   const selectedVenueDate = form.startsAt?.slice(0, 10) || "";
