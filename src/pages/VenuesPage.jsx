@@ -62,6 +62,7 @@ export function VenueBookingsPage() {
   const [loading, setLoading] = useState(true);
   const [reviewing, setReviewing] = useState(null);
   const [ownerNote, setOwnerNote] = useState("");
+  const [billingSetupBlocked, setBillingSetupBlocked] = useState(false);
   const [notification, setNotification] = useState("");
   const loadVersion = useRef(0);
 
@@ -95,6 +96,7 @@ export function VenueBookingsPage() {
 
   const openReview = (booking, status) => {
     setOwnerNote(booking.ownerNote || "");
+    setBillingSetupBlocked(false);
     setNotification("");
     setReviewing({ booking, status });
   };
@@ -110,6 +112,13 @@ export function VenueBookingsPage() {
         body: JSON.stringify({ status, ownerNote }),
       });
       const data = await response.json();
+      if (!response.ok && data?.code === "FINANCIAL_SETUP_INCOMPLETE") {
+        setReviewing(null);
+        setBillingSetupBlocked(true);
+        const missing = Array.isArray(data.missing) && data.missing.length ? ` Missing: ${data.missing.join(", ")}.` : "";
+        setNotification(`${data.error || "Complete the Venue booking and billing setup before approving this paid booking."}${missing}`);
+        return;
+      }
       if (!response.ok) throw new Error(errorText(data, "Unable to update booking."));
       setReviewing(null);
       if (data.warning) setNotification("Booking approved, but invoice document generation failed. Open the invoice to retry the protected PDF.");
@@ -171,7 +180,7 @@ export function VenueBookingsPage() {
         <div className="mt-6 flex flex-wrap justify-end gap-3"><button type="button" onClick={() => setReviewing(null)} className="border border-border px-4 py-2 text-sm">Cancel</button><button className={reviewing.status === "confirmed" ? "bg-primary px-4 py-2 text-sm text-primary-foreground" : "border border-destructive px-4 py-2 text-sm text-destructive"}>{reviewing.status === "confirmed" ? "Confirm booking" : "Decline booking"}</button></div>
       </form>
     </div>}
-    {notification && <p role="alert" className="fixed bottom-6 left-5 z-[60] max-w-md border border-destructive/30 bg-background px-4 py-3 text-sm text-destructive shadow-lg sm:left-auto sm:right-6">{notification}</p>}
+    {notification && <p role="alert" className="fixed bottom-6 left-5 z-[60] max-w-md border border-destructive/30 bg-background px-4 py-3 text-sm text-destructive shadow-lg sm:left-auto sm:right-6">{notification}{billingSetupBlocked && <> <Link to={`/profile/venues/${id}/billing`} className="font-medium underline">Complete billing setup</Link></>}</p>}
   </Shell>;
 }
 
