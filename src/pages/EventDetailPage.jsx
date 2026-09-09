@@ -1142,6 +1142,8 @@ export default function EventDetailPage() {
                 <h2 className="font-display text-2xl font-semibold">Venue booking</h2>
                 {venueBooking ? <>
                   <p className="mt-2 text-sm">Status: <span className="capitalize text-primary">{venueBooking.status}</span>{venueBooking.ownerNote && ` — ${venueBooking.ownerNote}`}</p>
+                  {venueBooking.invoiceId && <p className="mt-3 text-sm">Invoice: <Link to={`/invoices/${venueBooking.invoiceId}`} className="text-primary underline">{venueBooking.invoiceNumber || `#${venueBooking.invoiceId}`}</Link> · {venueBooking.invoiceStatus || venueBooking.paymentStatus}</p>}
+                  {venueBooking.externalInvoiceId && <p className="mt-3 text-sm">The Venue manages this invoice externally. Status: {venueBooking.externalInvoiceStatus || venueBooking.paymentStatus}.{venueBooking.externalInvoiceUrl && <> <a href={venueBooking.externalInvoiceUrl} target="_blank" rel="noreferrer" className="text-primary underline">Open invoice</a></>}</p>}
                   {persistedBookingTime && <><p className="mt-4 text-sm font-medium text-primary">Current booking</p><SelectedBookingTimeGrid schedule={bookingSchedule} value={persistedBookingTime} /></>}
                   {bookingSchedule.loading && <p role="status" className="mt-3 text-sm text-muted-foreground">Loading venue availability…</p>}
                   {bookingSchedule.timezone && <p className="mt-3 text-xs text-muted-foreground">Venue time: {bookingSchedule.timezone}</p>}

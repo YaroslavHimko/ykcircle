@@ -32,6 +32,7 @@ import { AdminVenueApplicationsPage, MyVenuesPage, VenueBookingsPage, VenueOwner
 import { SavedVenuesPage, VenueCityOrDetailPage, VenueDetailPage, VenueEditorPage, VenuesDiscoveryPage, VenueSearchRoutePage } from './pages/VenueMarketplace';
 import { OrganizerAvailabilityPage, VenueCalendarPage } from './pages/VenueScheduling';
 import { InvoiceDetailPage, InvoicesPage } from './pages/InvoicesPage';
+import VenueBillingPage from './pages/VenueBillingPage';
 import BillingProfilesPage from './pages/BillingProfilesPage';
 import { PaymentAccountReturnPage, PlatformAdminPage, PlatformBillingPage, TicketCheckoutPage, TicketOrderPage, TicketsPage } from './pages/FinancialPages';
 import { apiFetch } from './lib/api';
@@ -132,6 +133,7 @@ function App() {
                 <Route path="/profile/venues/new" element={<VenueEditorPage />} />
                 <Route path="/profile/venues/:id/edit" element={<VenueEditorPage />} />
                 <Route path="/profile/venues/:id/bookings" element={<VenueBookingsPage />} />
+                <Route path="/profile/venues/:id/billing" element={<VenueBillingPage />} />
                 <Route path="/profile/venues/:id/calendar" element={<VenueCalendarPage />} />
                 <Route path="/profile/invoices" element={<InvoicesPage seller />} />
                 <Route path="/account/invoices" element={<InvoicesPage />} />

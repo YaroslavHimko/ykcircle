@@ -112,6 +112,7 @@ export function VenueBookingsPage() {
       const data = await response.json();
       if (!response.ok) throw new Error(errorText(data, "Unable to update booking."));
       setReviewing(null);
+      if (data.warning) setNotification("Booking approved, but invoice document generation failed. Open the invoice to retry the protected PDF.");
       load();
     } catch (requestError) {
       setNotification(requestError.message);
@@ -120,6 +121,7 @@ export function VenueBookingsPage() {
 
   return <Shell title="Venue requests">
     <Link to="/profile/venues" className="text-sm text-primary underline">Back to my venues</Link>
+    <Link to={`/profile/venues/${id}/billing`} className="ml-4 text-sm text-primary underline">Booking & billing settings</Link>
     <h1 className="mt-5 font-display text-4xl font-bold">Venue requests</h1>
     <p className="mt-3 max-w-2xl text-muted-foreground">Direct venue inquiries and event bookings are separate request types. Both are shown below.</p>
     {error && <Error text={error} />}
@@ -144,6 +146,8 @@ export function VenueBookingsPage() {
             </p>
             {booking.organizerEmail && <p className="mt-1 text-sm text-muted-foreground">Organizer: {booking.organizerName || "Event organizer"} · {booking.organizerEmail}</p>}
             {booking.ownerNote && <p className="mt-2 text-sm">Note: {booking.ownerNote}</p>}
+            <p className="mt-2 text-sm">Calculated price: <strong>{Number(booking.totalAmount || 0).toLocaleString("sv-SE")} {booking.currency || "SEK"}</strong></p>
+            <p className="mt-1 text-sm text-muted-foreground">Buyer: {booking.buyerLegalName || "Not selected"} · Payment: {booking.invoiceStatus || booking.externalInvoiceStatus || booking.paymentStatus || "not required"}</p>
           </div>
           <Status status={booking.status} />
         </div>
@@ -151,6 +155,8 @@ export function VenueBookingsPage() {
           <button onClick={() => openReview(booking, "confirmed")} className="bg-primary px-4 py-2 text-sm text-primary-foreground">Confirm</button>
           <button onClick={() => openReview(booking, "declined")} className="border border-border px-4 py-2 text-sm">Decline</button>
         </div>}
+        {booking.invoiceId && <Link to={`/invoices/${booking.invoiceId}`} className="mt-4 inline-block text-sm text-primary underline">View invoice {booking.invoiceNumber}</Link>}
+        {booking.invoiceMode === "external" && booking.status === "confirmed" && <ExternalInvoiceEditor booking={booking} onSaved={load} onError={setNotification} />}
         <VenueBookingConversation bookingId={booking.id} />
       </div>)}
       {!bookings.length && <p className="text-sm text-muted-foreground">No event bookings yet.</p>}
@@ -160,13 +166,20 @@ export function VenueBookingsPage() {
     {reviewing && <div role="dialog" aria-modal="true" aria-labelledby="venue-booking-review-title" className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-5">
       <form onSubmit={review} className="w-full max-w-lg border border-border bg-background p-6 shadow-xl">
         <h2 id="venue-booking-review-title" className="font-display text-2xl font-semibold">{reviewing.status === "confirmed" ? "Confirm venue booking" : "Decline venue booking"}</h2>
-        <p className="mt-2 text-sm text-muted-foreground">{reviewing.booking.eventTitle || "This event"} will be {reviewing.status === "confirmed" ? "confirmed and invoiced" : "declined"}.</p>
+        <p className="mt-2 text-sm text-muted-foreground">{reviewing.booking.eventTitle || "This event"} will be {reviewing.status === "confirmed" ? (reviewing.booking.invoiceMode === "external" ? "approved; you will issue the invoice separately" : "approved and invoiced in your organization’s name") : "declined"}.</p>
         <label className="mt-5 block text-sm font-medium">Optional note to event owner<textarea autoFocus value={ownerNote} onChange={(event) => setOwnerNote(event.target.value)} maxLength="5000" className="mt-2 min-h-28 w-full border border-border bg-background p-3" /></label>
         <div className="mt-6 flex flex-wrap justify-end gap-3"><button type="button" onClick={() => setReviewing(null)} className="border border-border px-4 py-2 text-sm">Cancel</button><button className={reviewing.status === "confirmed" ? "bg-primary px-4 py-2 text-sm text-primary-foreground" : "border border-destructive px-4 py-2 text-sm text-destructive"}>{reviewing.status === "confirmed" ? "Confirm booking" : "Decline booking"}</button></div>
       </form>
     </div>}
     {notification && <p role="alert" className="fixed bottom-6 left-5 z-[60] max-w-md border border-destructive/30 bg-background px-4 py-3 text-sm text-destructive shadow-lg sm:left-auto sm:right-6">{notification}</p>}
   </Shell>;
+}
+
+function ExternalInvoiceEditor({ booking, onSaved, onError }) {
+  const [form, setForm] = useState({ externalInvoiceNumber: "", externalInvoiceDate: "", amount: booking.totalAmount || "", currency: booking.currency || "SEK", dueDate: "", externalInvoiceUrl: "" });
+  const save = async (event) => { event.preventDefault(); try { const response = await apiFetch(`/api/venue-bookings/${booking.id}/external-invoice`, { method: "PUT", headers: { ...auth(), "Content-Type": "application/json" }, body: JSON.stringify(form) }); const data = await response.json(); if (!response.ok) throw new Error(errorText(data, "Unable to save external invoice.")); onSaved(); } catch (error) { onError(error.message); } };
+  const paid = async () => { if (!window.confirm("Confirm that the Venue has actually received this payment.")) return; try { const response = await apiFetch(`/api/venue-bookings/${booking.id}/external-invoice/mark-paid`, { method: "POST", headers: { ...auth(), "Content-Type": "application/json" }, body: JSON.stringify({ confirmReceived: true }) }); const data = await response.json(); if (!response.ok) throw new Error(errorText(data, "Unable to mark payment received.")); onSaved(); } catch (error) { onError(error.message); } };
+  return <details className="mt-4 border-t border-border pt-4"><summary className="cursor-pointer text-sm font-medium">External invoice details</summary><form onSubmit={save} className="mt-4 grid gap-3 sm:grid-cols-2"><Field label="Invoice number" value={form.externalInvoiceNumber} onChange={(value) => setForm({ ...form, externalInvoiceNumber: value })} /><Field label="Invoice date" value={form.externalInvoiceDate} onChange={(value) => setForm({ ...form, externalInvoiceDate: value })} /><Field label="Amount" value={form.amount} onChange={(value) => setForm({ ...form, amount: value })} /><Field label="Currency" value={form.currency} onChange={(value) => setForm({ ...form, currency: value })} /><Field label="Due date" value={form.dueDate} onChange={(value) => setForm({ ...form, dueDate: value })} /><Field label="Secure invoice URL" value={form.externalInvoiceUrl} onChange={(value) => setForm({ ...form, externalInvoiceUrl: value })} /><div className="sm:col-span-2 flex gap-2"><button className="border border-border px-4 py-2 text-sm">Save external invoice</button>{booking.externalInvoiceId && booking.externalInvoiceStatus !== "paid" && <button type="button" onClick={paid} className="bg-primary px-4 py-2 text-sm text-primary-foreground">Mark payment received</button>}</div></form></details>;
 }
 
 function Shell({title,children}){return <SiteChrome><Helmet><title>{title} | YKCircle</title></Helmet><section className="mx-auto max-w-[72rem] px-5 pb-24 pt-32 sm:px-8 sm:pt-40">{children}</section></SiteChrome>}; function Loading({label="Loading…"}){return <p role="status" className="mt-8 text-muted-foreground">{label}</p>}; function Field({label,required,value,onChange}){return <label className="block text-sm font-medium">{label}{required&&" *"}<input required={required} value={value} onChange={e=>onChange(e.target.value)} className="mt-2 min-h-11 w-full border border-border bg-background px-3"/></label>}; function Error({text}){return <p role="alert" className="mt-5 border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">{text}</p>}; function Status({status}){return <span className="whitespace-nowrap text-sm capitalize text-primary">{status||"pending"}</span>};
