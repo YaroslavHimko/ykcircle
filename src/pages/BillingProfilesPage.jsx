@@ -7,13 +7,23 @@ const auth = () => ({ Authorization: `Bearer ${localStorage.getItem("authToken")
 const empty = { profileType: "individual", ownerOrganizationId: "", legalName: "", organizationNumber: "", vatNumber: "", addressLine1: "", addressLine2: "", postalCode: "", city: "", country: "Sweden", billingEmail: "", phone: "", defaultCurrency: "SEK", invoicePrefix: "INV", invoiceDueDays: "30", paymentInstructions: "", isDefault: false };
 const asList = (data, key) => Array.isArray(data) ? data : data?.[key] || [];
 const message = (data, fallback) => data?.error || data?.message || fallback;
+const openStripeOnboarding = (value) => {
+  try {
+    const url = new URL(value);
+    const stripeHost = url.hostname === "stripe.com" || url.hostname.endsWith(".stripe.com");
+    if (url.protocol !== "https:" || !stripeHost) throw new Error("invalid Stripe URL");
+    window.location.assign(url.toString());
+  } catch {
+    throw new Error("Stripe returned an invalid onboarding link. Please try again.");
+  }
+};
 
 function PaymentAccounts({ profile, onError }) {
   const [accounts, setAccounts] = useState([]); const [working, setWorking] = useState(false);
   const load = async () => { try { const response = await apiFetch(`/api/me/billing-profiles/${profile.id}/payment-accounts`, { headers: auth() }); const data = await response.json(); if (!response.ok) throw new Error(message(data, "Unable to load payment accounts.")); setAccounts(asList(data, "accounts")); } catch (error) { onError(error.message); } };
   useEffect(() => { load(); }, [profile.id]);
-  const onboarding = async (account) => { setWorking(true); try { const response = await apiFetch(`/api/payment-accounts/${account.id}/onboarding-link`, { method: "POST", headers: auth() }); const data = await response.json(); if (!response.ok) throw new Error(message(data, "Unable to continue onboarding.")); window.location.assign(data.onboardingUrl); } catch (error) { onError(error.message); setWorking(false); } };
-  const connect = async () => { setWorking(true); try { const response = await apiFetch(`/api/me/billing-profiles/${profile.id}/payment-accounts`, { method: "POST", headers: auth() }); const data = await response.json(); if (!response.ok) throw new Error(message(data, "Unable to start connected payments.")); window.location.assign(data.onboardingUrl); } catch (error) { onError(error.message); setWorking(false); } };
+  const onboarding = async (account) => { setWorking(true); try { const response = await apiFetch(`/api/payment-accounts/${account.id}/onboarding-link`, { method: "POST", headers: auth() }); const data = await response.json(); if (!response.ok) throw new Error(message(data, "Unable to continue onboarding.")); openStripeOnboarding(data.onboardingUrl); } catch (error) { onError(error.message); setWorking(false); } };
+  const connect = async () => { setWorking(true); try { const response = await apiFetch(`/api/me/billing-profiles/${profile.id}/payment-accounts`, { method: "POST", headers: auth() }); const data = await response.json(); if (!response.ok) throw new Error(message(data, "Unable to start connected payments.")); openStripeOnboarding(data.onboardingUrl); } catch (error) { onError(error.message); setWorking(false); } };
   const existingAccount = accounts[0];
   return <div className="mt-5 border-t border-border pt-4"><div className="flex flex-wrap items-center justify-between gap-3"><div><h3 className="font-medium">Connected payment accounts</h3><p className="mt-1 text-xs text-muted-foreground">Only required when this profile is the seller for paid event tickets.</p></div>{!existingAccount && <button type="button" disabled={working} onClick={connect} className="border border-border px-3 py-2 text-sm disabled:opacity-60">Onboard to collect payments</button>}</div>{accounts.length > 0 && <ul className="mt-3 space-y-2 text-sm">{accounts.map((account) => <li key={account.id} className="flex flex-wrap items-center justify-between gap-2 bg-secondary/30 px-3 py-2"><span>Stripe{account.testMode ? " test mode" : ""} · {account.onboardingStatus}{account.chargesEnabled ? " · ready for charges" : ""}</span>{!account.chargesEnabled && <button type="button" disabled={working} onClick={() => onboarding(account)} className="text-primary underline disabled:opacity-60">Continue setup</button>}</li>)}</ul>}</div>;
 }
