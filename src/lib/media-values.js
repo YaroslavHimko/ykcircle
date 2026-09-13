@@ -2,6 +2,7 @@ const signedTokenPattern = /[?&]token=[^&]+/;
 const pathTokenPattern = /\/api\/media\/(?:event|venue)\/[^/?#]+\/[^/?#]+(?:[?#]|$)/i;
 const apiMediaPattern = /^\/?api\/media\//i;
 const legacyProtectedUploadPattern = /(?:^|\/)uploads\/(?:event-covers|venue-images|venue-covers)(?:\/|$)/i;
+const publicVenueUploadPattern = /(?:^|\/)uploads\/(?:venue-images|venue-covers)(?:\/|$)/i;
 
 export const hasMediaToken = (value) =>
   typeof value === "string" &&
@@ -16,6 +17,9 @@ export const isExplicitMediaUrl = (value) =>
 
 export const isLegacyMediaUploadUrl = (value) =>
   typeof value === "string" && legacyProtectedUploadPattern.test(value);
+
+export const isPublicVenueImageUrl = (value) =>
+  typeof value === "string" && publicVenueUploadPattern.test(value);
 
 export const isPublicEvent = (event) =>
   String(event?.status || "").toLowerCase() === "published" &&
@@ -44,21 +48,44 @@ export const eventMediaValue = (event) => {
     : "";
 };
 
-export const venueMediaValue = (venue) => selectMediaUrl(
-  venue?.coverImageUrl,
-  venue?.cover_image_url,
-  venue?.coverUrl,
-  venue?.cover_url,
-  venue?.imageUrl,
-  venue?.image_url,
-  venue?.mediaUrl,
-  venue?.media_url,
-  venue?.coverImage,
-  venue?.cover_image,
-  venue?.cover,
-  venue?.image,
-  venue?.images?.find((image) => image?.isCover)?.url,
-  venue?.images?.find((image) => image?.isCover)?.imageUrl,
-  venue?.images?.[0]?.url,
-  venue?.images?.[0]?.imageUrl,
-);
+export const venueMediaValue = (venue) => {
+  const cover = venue?.images?.find((image) => image?.isCover);
+  const values = [
+    venue?.coverImageUrl,
+    venue?.cover_image_url,
+    venue?.coverUrl,
+    venue?.cover_url,
+    venue?.imageUrl,
+    venue?.image_url,
+    venue?.mediaUrl,
+    venue?.media_url,
+    venue?.coverImage,
+    venue?.cover_image,
+    venue?.cover,
+    venue?.image,
+    cover?.url,
+    cover?.imageUrl,
+    venue?.images?.[0]?.url,
+    venue?.images?.[0]?.imageUrl,
+  ];
+  const resolved = selectMediaUrl(...values);
+  if (resolved) return resolved;
+
+  // The public venue endpoint returns this route for approved active venues.
+  // Only inspect URL fields here: a bare coverImage filename must never be
+  // turned into a request for a protected upload.
+  return [
+    venue?.coverImageUrl,
+    venue?.cover_image_url,
+    venue?.coverUrl,
+    venue?.cover_url,
+    venue?.imageUrl,
+    venue?.image_url,
+    venue?.mediaUrl,
+    venue?.media_url,
+    cover?.url,
+    cover?.imageUrl,
+    venue?.images?.[0]?.url,
+    venue?.images?.[0]?.imageUrl,
+  ].map(asUrl).find(isPublicVenueImageUrl) || "";
+};

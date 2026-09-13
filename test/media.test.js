@@ -92,6 +92,19 @@ test("private venue gallery cover also preserves its signed URL", () => {
   assert.equal(hasMediaToken(src), true);
 });
 
+test("a public venue cover uses the API-provided public venue upload URL", () => {
+  const publicCoverUrl = "/uploads/venue-images/public-venue.png";
+
+  assert.equal(venueMediaValue({
+    coverImage: "public-venue.png",
+    coverImageUrl: publicCoverUrl,
+  }), publicCoverUrl);
+});
+
+test("a venue filename alone never becomes a public image URL", () => {
+  assert.equal(venueMediaValue({ coverImage: "private-venue.png" }), "");
+});
+
 test("a protected-media fallback cannot generate an unsigned request from a filename", () => {
   assert.equal(isExplicitMediaUrl("private-event.png"), false);
   assert.equal(eventMediaValue({ coverImage: "private-event.png" }), "");

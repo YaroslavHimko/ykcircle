@@ -4,6 +4,7 @@ import {
   hasMediaToken,
   isExplicitMediaUrl,
   isLegacyMediaUploadUrl,
+  isPublicVenueImageUrl,
   isPublicEvent,
   selectMediaUrl,
   venueMediaValue,
@@ -18,11 +19,14 @@ const redactMediaUrl = (value) => asUrl(value)
 
 // Deliberately accept only a URL/path the API supplied. In particular, do not
 // turn a filename such as "cover.png" into a protected media URL.
-export const resolveMediaUrl = (value, { allowPublicUpload = false } = {}) => {
+export const resolveMediaUrl = (value, { allowPublicUpload = false, allowPublicVenueUpload = false } = {}) => {
   const url = asUrl(value);
   if (!url) return "";
   if (/^(?:https?:)?\/\//i.test(url) || url.startsWith("/images/")) return url;
   if (allowPublicUpload && isLegacyMediaUploadUrl(url)) {
+    return apiAssetUrl(url.startsWith("/") ? url : `/${url}`);
+  }
+  if (allowPublicVenueUpload && isPublicVenueImageUrl(url)) {
     return apiAssetUrl(url.startsWith("/") ? url : `/${url}`);
   }
   if (isExplicitMediaUrl(url)) {
@@ -34,7 +38,7 @@ export const resolveMediaUrl = (value, { allowPublicUpload = false } = {}) => {
 export const eventMediaUrl = (event) =>
   resolveMediaUrl(eventMediaValue(event), { allowPublicUpload: isPublicEvent(event) });
 
-export const venueMediaUrl = (venue) => resolveMediaUrl(venueMediaValue(venue));
+export const venueMediaUrl = (venue) => resolveMediaUrl(venueMediaValue(venue), { allowPublicVenueUpload: true });
 
 export const mediaRenderDebug = ({ component, eventId, venueId, rawUrl }) => {
   // Never print signed query or path parameters. The redacted URL still
