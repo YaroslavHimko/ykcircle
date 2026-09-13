@@ -87,6 +87,158 @@ body {
   z-index: -1;
 }
 
+.ticket-print-root {
+  display: none;
+}
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 12mm;
+  }
+
+  html, body, #root {
+    overflow: visible !important;
+    background: #fff !important;
+  }
+
+  body * {
+    visibility: hidden !important;
+  }
+
+  .ticket-print-root,
+  .ticket-print-root * {
+    visibility: visible !important;
+  }
+
+  .ticket-print-root {
+    position: absolute;
+    inset: 0;
+    display: block !important;
+    width: 100%;
+    color: #201a17;
+    font-family: 'Inter', Arial, sans-serif;
+  }
+
+  .ticket-print-card {
+    box-sizing: border-box;
+    min-height: 125mm;
+    overflow: hidden;
+    border: 1.5px solid #201a17;
+    background: #fff;
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .ticket-print-card:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  .ticket-print-header,
+  .ticket-print-body,
+  .ticket-print-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10mm;
+  }
+
+  .ticket-print-header {
+    border-bottom: 1px solid #d8cec8;
+    padding: 7mm 9mm;
+  }
+
+  .ticket-print-brand {
+    color: #bc451f;
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 22pt;
+    font-weight: 900;
+    line-height: 1;
+  }
+
+  .ticket-print-kicker,
+  .ticket-print-type,
+  .ticket-print-footer p {
+    margin-top: 2mm;
+    font-size: 8pt;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .ticket-print-test {
+    border: 1px solid #bc451f;
+    padding: 2mm 3mm;
+    color: #bc451f;
+    font-size: 8pt;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .ticket-print-body {
+    align-items: flex-start;
+    padding: 10mm 9mm;
+  }
+
+  .ticket-print-details {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .ticket-print-details h1 {
+    margin-top: 2mm;
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 25pt;
+    font-weight: 600;
+    line-height: 1.08;
+  }
+
+  .ticket-print-details dl {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 5mm 8mm;
+    margin-top: 8mm;
+  }
+
+  .ticket-print-details dt {
+    color: #74665f;
+    font-size: 7.5pt;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .ticket-print-details dd {
+    margin-top: 1mm;
+    font-size: 10pt;
+  }
+
+  .ticket-print-body svg {
+    width: 42mm;
+    height: 42mm;
+  }
+
+  .ticket-print-footer {
+    align-items: flex-end;
+    border-top: 1px dashed #9e8e85;
+    padding: 6mm 9mm;
+  }
+
+  .ticket-print-footer strong {
+    display: block;
+    margin-top: 1mm;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 10pt;
+    letter-spacing: 0.04em;
+  }
+
+  .ticket-print-footer > p {
+    color: #276c64;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .marquee-track { animation: none; }
   *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }

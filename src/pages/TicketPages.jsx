@@ -1,7 +1,9 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
+import { QRCodeSVG } from "qrcode.react";
 import SiteChrome from "@/components/SiteChrome";
 import { apiFetch } from "@/lib/api";
+import { ticketVerificationUrl } from "@/lib/ticket-values";
 
 const auth = () => ({ Authorization: "Bearer " + localStorage.getItem("authToken") });
 const money = (amount, currency = "SEK") => new Intl.NumberFormat("sv-SE", { style: "currency", currency }).format(Number(amount || 0));
@@ -24,6 +26,43 @@ function Shell({ title, children }) {
 function ErrorNotice({ message }) { return message ? <p role="alert" className="mt-5 border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">{message}</p> : null; }
 function TestNotice({ checkout = false }) {
   return <aside className="mt-5 border border-amber-500/40 bg-amber-500/10 p-4 text-sm"><strong>Stripe test mode — no real money is charged.</strong>{checkout && <p className="mt-2">At Stripe checkout, use card <code>4242 4242 4242 4242</code>, any future expiry date, and any three-digit CVC. Your ticket email will still be sent to your account email.</p>}</aside>;
+}
+
+function TicketQr({ ticket, size = 128 }) {
+  const value = ticketVerificationUrl(ticket.code, window.location.origin);
+  return <div className="shrink-0 bg-white p-2 text-center text-black">
+    <QRCodeSVG value={value} size={size} level="M" marginSize={4} title={`Ticket ${ticket.code}`} className="mx-auto h-auto max-w-full" />
+    <p className="mt-1 text-[0.65rem] font-medium uppercase tracking-[0.14em]">Ticket QR</p>
+  </div>;
+}
+
+function PrintableTickets({ order }) {
+  return <section className="ticket-print-root" aria-label="Printable tickets">
+    {order.tickets?.map((ticket) => <article key={ticket.id} className="ticket-print-card">
+      <header className="ticket-print-header">
+        <div><p className="ticket-print-brand">YKCircle</p><p className="ticket-print-kicker">Event admission</p></div>
+        {order.testMode && <span className="ticket-print-test">Test ticket</span>}
+      </header>
+      <div className="ticket-print-body">
+        <div className="ticket-print-details">
+          <p className="ticket-print-type">{ticket.name}</p>
+          <h1>{order.eventTitle}</h1>
+          <dl>
+            <div><dt>Date and time</dt><dd>{when(order.event?.startsAt, order.event?.timezone)}</dd></div>
+            {order.event?.location && <div><dt>Location</dt><dd>{order.event.location}</dd></div>}
+            <div><dt>Attendee</dt><dd>{order.attendeeEmail}</dd></div>
+            <div><dt>Order</dt><dd>{order.orderNumber}</dd></div>
+            {order.seller?.legalName && <div><dt>Seller</dt><dd>{order.seller.legalName}</dd></div>}
+          </dl>
+        </div>
+        <TicketQr ticket={ticket} size={184} />
+      </div>
+      <footer className="ticket-print-footer">
+        <div><p>Ticket code</p><strong>{ticket.code}</strong></div>
+        <p>{ticket.valid ? "Valid for one admission" : "Not valid for admission"}</p>
+      </footer>
+    </article>)}
+  </section>;
 }
 
 export function TicketCheckoutPage() {
@@ -167,12 +206,13 @@ export function TicketOrderPage() {
         <p className="mt-2">{when(order.event?.startsAt, order.event?.timezone)}</p><p>{order.event?.location}</p>
         <p className="mt-3 text-sm">Order {order.orderNumber} · {money(order.totalAmount, order.currency)} · <span className="capitalize">{order.paymentStatus}</span></p>
         {paid ? <p role="status" className="mt-5 text-primary">Payment confirmed. {order.emailStatus === "sent" ? "Tickets were sent to " : "Tickets are queued for delivery to "}{order.attendeeEmail}.</p> : order.paymentStatus === "pending" ? <p role="status" className="mt-5">{location.search.includes("cancelled") ? "Checkout was not completed. Resume payment or cancel this order to release your tickets." : "Waiting for Stripe to confirm payment. Tickets are issued only after confirmation."}</p> : <p className="mt-5">This order is {order.paymentStatus.replaceAll("_", " ")}. Its tickets are not valid for admission.</p>}
-        <div className="mt-5 space-y-3">{order.tickets?.map((ticket) => <div key={ticket.id} className="border border-dashed border-border p-4"><h3 className="font-semibold">{ticket.name}</h3><p className="mt-2 break-all font-mono text-sm">{ticket.code}</p><p className="mt-2 text-xs">{ticket.valid ? "One admission — show this code at the event." : "Not valid for admission."}</p></div>)}</div>
+        <div className="mt-5 space-y-3">{order.tickets?.map((ticket) => <div key={ticket.id} className="grid gap-4 border border-dashed border-border p-4 sm:grid-cols-[1fr_auto] sm:items-center"><div><h3 className="font-semibold">{ticket.name}</h3><p className="mt-2 break-all font-mono text-sm">{ticket.code}</p><p className="mt-2 text-xs">{ticket.valid ? "One admission — show this ticket at the event." : "Not valid for admission."}</p></div><TicketQr ticket={ticket} /></div>)}</div>
         {!order.tickets?.length && order.items?.map((item) => <p key={item.id} className="mt-3">{item.ticketType?.name} × {item.quantity}</p>)}
         {buyer && <div className="mt-6 flex flex-wrap gap-3 print:hidden">{paid ? <><button onClick={() => window.print()} className="border border-border px-4 py-2 text-sm">Print tickets</button><button disabled={working} onClick={() => action("resend")} className="border border-border px-4 py-2 text-sm disabled:opacity-60">Resend email</button></> : order.paymentStatus === "pending" && <><button disabled={working} onClick={() => action("confirm")} className="border border-border px-4 py-2 text-sm">Refresh payment status</button><button disabled={working} onClick={() => action("checkout")} className="bg-primary px-4 py-2 text-sm text-primary-foreground">Resume payment</button><button disabled={working} onClick={() => action("cancel")} className="border border-border px-4 py-2 text-sm">Cancel unpaid order</button></>}</div>}
         <p className="mt-5 text-sm text-muted-foreground">Seller: {order.seller?.legalName}</p>
         {order.refundPolicy?.text && <p className="mt-2 text-sm text-muted-foreground">Refund policy: {order.refundPolicy.text}</p>}
       </article>
+      {paid && order.tickets?.length > 0 && <PrintableTickets order={order} />}
       <Link to={"/events/" + order.eventId} className="mt-5 inline-block text-sm text-primary underline">Back to event</Link>
     </>}
   </Shell>;
