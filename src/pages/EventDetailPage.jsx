@@ -1160,7 +1160,7 @@ export default function EventDetailPage() {
                 </>}
               </section>
             )}
-            {canManageEvents && Number(event.fee || 0) > 0 && <PaidEventFinancialConsole eventId={event.id} token={token} currency={event.currency || "SEK"} billingProfiles={billingProfiles} />}
+            {canManageEvents && (event.pricingType === "paid" || Number(event.fee || 0) > 0) && <PaidEventFinancialConsole eventId={event.id} token={token} currency={event.currency || "SEK"} billingProfiles={billingProfiles} />}
             {canManageEvents && venueBooking?.id && <div className="mt-5 max-w-2xl"><VenueBookingConversation bookingId={venueBooking.id} /></div>}
             {event.description && (
               <p className="mt-6 max-w-2xl leading-relaxed">
@@ -1404,7 +1404,7 @@ export default function EventDetailPage() {
             }
             {!canManageEvents && (
               <div className="mt-8 flex flex-wrap gap-3">
-                {!currentUserParticipates && (Number(event.fee || 0) > 0 ? <Link to={`/events/${event.id}/tickets`} className="inline-flex min-h-12 items-center bg-primary px-7 text-sm uppercase tracking-widest text-primary-foreground">Buy tickets</Link> : <button onClick={register} className="min-h-12 bg-primary px-7 text-sm uppercase tracking-widest text-primary-foreground">Register</button>)}
+                {!currentUserParticipates && (event.pricingType === "paid" || Number(event.fee || 0) > 0 ? <Link to={`/events/${event.id}/tickets`} className="inline-flex min-h-12 items-center bg-primary px-7 text-sm uppercase tracking-widest text-primary-foreground">Buy tickets</Link> : <button onClick={register} className="min-h-12 bg-primary px-7 text-sm uppercase tracking-widest text-primary-foreground">Register</button>)}
               </div>
             )}
             <div className="mt-5">
