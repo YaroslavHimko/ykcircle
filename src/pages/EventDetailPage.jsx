@@ -5,6 +5,7 @@ import { Check, X } from "lucide-react";
 import SiteChrome from "@/components/SiteChrome";
 import VenueBookingConversation from "@/components/VenueBookingConversation";
 import ForumDiscussion from "@/components/ForumDiscussion";
+import TicketScanner from "@/components/TicketScanner";
 import { apiAssetUrl, apiFetch } from "@/lib/api";
 import { eventImageRenderDebug, eventMediaUrl } from "@/lib/media";
 import MapLocation from "@/components/MapLocation";
@@ -1278,9 +1279,15 @@ export default function EventDetailPage() {
             )}
             {
               <section className="mt-12">
-                <h2 className="font-display text-3xl font-semibold">
-                  Participants
-                </h2>
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <h2 className="font-display text-3xl font-semibold">Participants</h2>
+                  {canManageEvents && <TicketScanner eventId={event.id} eventTitle={event.title} token={token} onCheckIn={({ participant }) => {
+                    if (!participant) return;
+                    setAttendance((current) => ({ ...current, [participant.id]: participant.status }));
+                    setEvent((current) => ({ ...current, participants: [...(current.participants || []).filter((item) => String(item.id) !== String(participant.id)), participant] }));
+                    setRegistrations((current) => current.filter((item) => String(item.userId ?? item.user_id) !== String(participant.userId)));
+                  }} />}
+                </div>
                 {event.participants?.length ? (
                   <div className="mt-5 grid gap-3 sm:grid-cols-2">
                     {event.participants.map((participant) => {

@@ -59,7 +59,7 @@ function PrintableTickets({ order }) {
       </div>
       <footer className="ticket-print-footer">
         <div><p>Ticket code</p><strong>{ticket.code}</strong></div>
-        <p>{ticket.valid ? "Valid for one admission" : "Not valid for admission"}</p>
+        <p>{ticket.checkedInAt ? "Already checked in" : ticket.valid ? "Valid for one admission" : "Not valid for admission"}</p>
       </footer>
     </article>)}
   </section>;
@@ -206,7 +206,7 @@ export function TicketOrderPage() {
         <p className="mt-2">{when(order.event?.startsAt, order.event?.timezone)}</p><p>{order.event?.location}</p>
         <p className="mt-3 text-sm">Order {order.orderNumber} · {money(order.totalAmount, order.currency)} · <span className="capitalize">{order.paymentStatus}</span></p>
         {paid ? <p role="status" className="mt-5 text-primary">Payment confirmed. {order.emailStatus === "sent" ? "Tickets were sent to " : "Tickets are queued for delivery to "}{order.attendeeEmail}.</p> : order.paymentStatus === "pending" ? <p role="status" className="mt-5">{location.search.includes("cancelled") ? "Checkout was not completed. Resume payment or cancel this order to release your tickets." : "Waiting for Stripe to confirm payment. Tickets are issued only after confirmation."}</p> : <p className="mt-5">This order is {order.paymentStatus.replaceAll("_", " ")}. Its tickets are not valid for admission.</p>}
-        <div className="mt-5 space-y-3">{order.tickets?.map((ticket) => <div key={ticket.id} className="grid gap-4 border border-dashed border-border p-4 sm:grid-cols-[1fr_auto] sm:items-center"><div><h3 className="font-semibold">{ticket.name}</h3><p className="mt-2 break-all font-mono text-sm">{ticket.code}</p><p className="mt-2 text-xs">{ticket.valid ? "One admission — show this ticket at the event." : "Not valid for admission."}</p></div><TicketQr ticket={ticket} /></div>)}</div>
+        <div className="mt-5 space-y-3">{order.tickets?.map((ticket) => <div key={ticket.id} className="grid gap-4 border border-dashed border-border p-4 sm:grid-cols-[1fr_auto] sm:items-center"><div><h3 className="font-semibold">{ticket.name}</h3><p className="mt-2 break-all font-mono text-sm">{ticket.code}</p><p className="mt-2 text-xs">{ticket.checkedInAt ? "Already checked in." : ticket.valid ? "One admission — show this ticket at the event." : "Not valid for admission."}</p></div><TicketQr ticket={ticket} /></div>)}</div>
         {!order.tickets?.length && order.items?.map((item) => <p key={item.id} className="mt-3">{item.ticketType?.name} × {item.quantity}</p>)}
         {buyer && <div className="mt-6 flex flex-wrap gap-3 print:hidden">{paid ? <><button onClick={() => window.print()} className="border border-border px-4 py-2 text-sm">Print tickets</button><button disabled={working} onClick={() => action("resend")} className="border border-border px-4 py-2 text-sm disabled:opacity-60">Resend email</button></> : order.paymentStatus === "pending" && <><button disabled={working} onClick={() => action("confirm")} className="border border-border px-4 py-2 text-sm">Refresh payment status</button><button disabled={working} onClick={() => action("checkout")} className="bg-primary px-4 py-2 text-sm text-primary-foreground">Resume payment</button><button disabled={working} onClick={() => action("cancel")} className="border border-border px-4 py-2 text-sm">Cancel unpaid order</button></>}</div>}
         <p className="mt-5 text-sm text-muted-foreground">Seller: {order.seller?.legalName}</p>
