@@ -6,6 +6,7 @@ import SiteChrome from "@/components/SiteChrome";
 import VenueBookingConversation from "@/components/VenueBookingConversation";
 import ForumDiscussion from "@/components/ForumDiscussion";
 import TicketScanner from "@/components/TicketScanner";
+import EventRepresentatives from "@/components/EventRepresentatives";
 import { apiAssetUrl, apiFetch } from "@/lib/api";
 import { eventImageRenderDebug, eventMediaUrl } from "@/lib/media";
 import MapLocation from "@/components/MapLocation";
@@ -1161,6 +1162,7 @@ export default function EventDetailPage() {
                 </>}
               </section>
             )}
+            {canManageEvents && <EventRepresentatives key={event.id} eventId={event.id} token={token} />}
             {canManageEvents && (event.pricingType === "paid" || Number(event.fee || 0) > 0) && <PaidEventFinancialConsole eventId={event.id} token={token} currency={event.currency || "SEK"} billingProfiles={billingProfiles} />}
             {canManageEvents && venueBooking?.id && <div className="mt-5 max-w-2xl"><VenueBookingConversation bookingId={venueBooking.id} /></div>}
             {event.description && (

@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Helmet } from "react-helmet";
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import SiteChrome from "@/components/SiteChrome";
+import { RepresentativeEvents } from "@/components/EventRepresentatives";
 import { apiFetch } from "@/lib/api";
 import { eventImageRenderDebug, eventMediaUrl } from "@/lib/media";
 import GoogleLocationPicker from "@/components/GoogleLocationPicker";
@@ -853,6 +854,7 @@ export default function EventsPage({
             Create an event
           </Link>
         )}
+        {organizerView && !creationPage && !editPage && <RepresentativeEvents token={token} />}
         {!managementOnly && (
           <nav aria-label="Event categories" className="mt-8 flex flex-wrap gap-2">
             <button

@@ -36,6 +36,7 @@ import VenueBillingPage from './pages/VenueBillingPage';
 import BillingPage, { LegacyBillingRedirect } from './pages/BillingPage';
 import { PaymentAccountReturnPage, PlatformAdminPage, TicketCheckoutPage, TicketOrderPage, TicketsPage } from './pages/FinancialPages';
 import { apiFetch } from './lib/api';
+import EventCheckInPage from './pages/EventCheckInPage';
 
 function AuthSessionSync() {
     React.useEffect(() => {
@@ -151,6 +152,7 @@ function App() {
                 <Route path="/profile/events/new" element={<EventsPage key="new-event" managementOnly creationPage />} />
                 <Route path="/profile/events/:id/edit" element={<EventsPage key="edit-event" managementOnly editPage />} />
                 <Route path="/events/:id" element={<EventDetailPage />} />
+                <Route path="/events/:id/check-in" element={<EventCheckInPage />} />
                 <Route path="/events/:id/tickets" element={<TicketCheckoutPage />} />
                 <Route path="/groups" element={<GroupsPage />} />
                 <Route path="/groups/:id" element={<GroupsPage detailPage />} />

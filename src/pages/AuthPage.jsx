@@ -11,7 +11,8 @@ export default function AuthPage({ mode }) {
   const isRegister = mode === 'register';
   const navigate = useNavigate();
   const location = useLocation();
-  const registrationRedirect = !isRegister && (location.state?.from?.startsWith('/events/') || new URLSearchParams(location.search).get('from')?.startsWith('/events/'));
+  const eventReturnPath = location.state?.from || new URLSearchParams(location.search).get('from') || '';
+  const registrationRedirect = !isRegister && eventReturnPath.startsWith('/events/') && !eventReturnPath.endsWith('/check-in');
   const hostIntent = isRegister && new URLSearchParams(location.search).get('intent') === 'host';
   const [form, setForm] = useState(initialForm);
   const [terms, setTerms] = useState(null);
