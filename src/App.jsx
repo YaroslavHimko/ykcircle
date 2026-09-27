@@ -33,8 +33,8 @@ import { SavedVenuesPage, VenueCityOrDetailPage, VenueDetailPage, VenueEditorPag
 import { OrganizerAvailabilityPage, VenueCalendarPage } from './pages/VenueScheduling';
 import { InvoiceDetailPage, InvoicesPage } from './pages/InvoicesPage';
 import VenueBillingPage from './pages/VenueBillingPage';
-import BillingProfilesPage from './pages/BillingProfilesPage';
-import { PaymentAccountReturnPage, PlatformAdminPage, PlatformBillingPage, TicketCheckoutPage, TicketOrderPage, TicketsPage } from './pages/FinancialPages';
+import BillingPage, { LegacyBillingRedirect } from './pages/BillingPage';
+import { PaymentAccountReturnPage, PlatformAdminPage, TicketCheckoutPage, TicketOrderPage, TicketsPage } from './pages/FinancialPages';
 import { apiFetch } from './lib/api';
 
 function AuthSessionSync() {
@@ -121,10 +121,11 @@ function App() {
                 <Route path="/admin/platform-billing" element={<PlatformAdminPage />} />
                 <Route path="/admin/venue-owner-applications" element={<AdminVenueApplicationsPage />} />
                 <Route path="/become-a-venue-owner" element={<VenueOwnerApplicationPage />} />
-                <Route path="/account/billing-profiles" element={<BillingProfilesPage />} />
+                <Route path="/account/billing" element={<BillingPage />} />
+                <Route path="/account/billing-profiles" element={<LegacyBillingRedirect />} />
                 <Route path="/billing/payment-account/refresh" element={<PaymentAccountReturnPage refresh />} />
                 <Route path="/billing/payment-account/complete" element={<PaymentAccountReturnPage />} />
-                <Route path="/account/platform-billing" element={<PlatformBillingPage />} />
+                <Route path="/account/platform-billing" element={<LegacyBillingRedirect section="platform" />} />
                 <Route path="/account/tickets" element={<TicketsPage />} />
                 <Route path="/tickets/success" element={<TicketsPage success />} />
                 <Route path="/tickets/:id" element={<TicketOrderPage />} />
