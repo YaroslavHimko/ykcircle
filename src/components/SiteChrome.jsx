@@ -91,14 +91,12 @@ export function Header() {
                             <p className="px-3 pt-4 text-[0.65rem] font-medium uppercase tracking-[0.2em] text-muted-foreground">Your account</p>
                             <Link to="/profile" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">View profile</Link>
                             <Link to="/profile/saved-venues" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Saved venues</Link>
-                            <Link to="/account/invoices" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">My invoices</Link>
                             <Link to="/account/tickets" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">My tickets</Link>
                             <Link to="/account/billing" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Billing & organizations</Link>
                             <p className="mt-2 border-t border-border px-3 pt-4 text-[0.65rem] font-medium uppercase tracking-[0.2em] text-muted-foreground">Manage</p>
                             <Link to="/profile/events" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Events</Link>
                             <Link to="/profile/groups" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Groups</Link>
                             <Link to="/profile/venues" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Venues</Link>
-                            <Link to="/profile/invoices" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Venue invoices</Link>
                             {canManage && <>
                                 <p className="mt-2 border-t border-border px-3 pt-4 text-[0.65rem] font-medium uppercase tracking-[0.2em] text-muted-foreground">Administration</p>
                                 <Link to="/admin/applications" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Applications</Link>
@@ -149,14 +147,12 @@ export function Header() {
                             <p className="pt-4 text-[0.65rem] font-medium uppercase tracking-[0.2em] text-muted-foreground">Your account</p>
                             <Link to="/profile" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">View profile</Link>
                             <Link to="/profile/saved-venues" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">Saved venues</Link>
-                            <Link to="/account/invoices" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">My invoices</Link>
                             <Link to="/account/tickets" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">My tickets</Link>
                             <Link to="/account/billing" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">Billing & organizations</Link>
                             <p className="pt-5 text-[0.65rem] font-medium uppercase tracking-[0.2em] text-muted-foreground">Manage</p>
                             <Link to="/profile/events" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">Events</Link>
                             <Link to="/profile/groups" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">Groups</Link>
                             <Link to="/profile/venues" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">Venues</Link>
-                            <Link to="/profile/invoices" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">Venue invoices</Link>
                             {canManage && <>
                                 <p className="pt-5 text-[0.65rem] font-medium uppercase tracking-[0.2em] text-muted-foreground">Administration</p>
                                 <Link to="/admin/applications" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">Applications</Link>

@@ -31,7 +31,7 @@ import AdminReportsPage from './pages/AdminReportsPage';
 import { AdminVenueApplicationsPage, MyVenuesPage, VenueBookingsPage, VenueOwnerApplicationPage } from './pages/VenuesPage';
 import { SavedVenuesPage, VenueCityOrDetailPage, VenueDetailPage, VenueEditorPage, VenuesDiscoveryPage, VenueSearchRoutePage } from './pages/VenueMarketplace';
 import { OrganizerAvailabilityPage, VenueCalendarPage } from './pages/VenueScheduling';
-import { InvoiceDetailPage, InvoicesPage } from './pages/InvoicesPage';
+import { InvoiceDetailPage } from './pages/InvoicesPage';
 import VenueBillingPage from './pages/VenueBillingPage';
 import BillingPage, { LegacyBillingRedirect } from './pages/BillingPage';
 import { PaymentAccountReturnPage, PlatformAdminPage, TicketCheckoutPage, TicketOrderPage, TicketsPage } from './pages/FinancialPages';
@@ -136,8 +136,8 @@ function App() {
                 <Route path="/profile/venues/:id/bookings" element={<VenueBookingsPage />} />
                 <Route path="/profile/venues/:id/billing" element={<VenueBillingPage />} />
                 <Route path="/profile/venues/:id/calendar" element={<VenueCalendarPage />} />
-                <Route path="/profile/invoices" element={<InvoicesPage seller />} />
-                <Route path="/account/invoices" element={<InvoicesPage />} />
+                <Route path="/profile/invoices" element={<LegacyBillingRedirect section="invoices" />} />
+                <Route path="/account/invoices" element={<LegacyBillingRedirect section="invoices" />} />
                 <Route path="/invoices/:invoiceId" element={<InvoiceDetailPage />} />
                 <Route path="/venues" element={<VenuesDiscoveryPage />} />
                 <Route path="/venues/slug/:slug" element={<VenueDetailPage />} />
