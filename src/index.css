@@ -42,9 +42,26 @@ html, body, #root {
 }
 
 body {
+  overflow-wrap: anywhere;
   font-family: 'Inter', system-ui, sans-serif;
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
+}
+
+/* Let content shrink inside the viewport instead of imposing its intrinsic width. */
+:where(main, section, article, form, fieldset),
+.grid > *, .flex > * {
+  min-width: 0;
+}
+
+input, select, textarea {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Prevent mobile browsers from zooming the page when focusing a form field. */
+@media (max-width: 639px) {
+  input, select, textarea { font-size: 16px; }
 }
 
 .font-display {
@@ -150,11 +167,25 @@ body {
   }
 
   .ticket-print-brand {
-    color: #bc451f;
+    color: #201a17;
     font-family: 'Fraunces', Georgia, serif;
     font-size: 22pt;
     font-weight: 900;
     line-height: 1;
+  }
+
+  .ticket-brand-logo {
+    width: auto;
+    height: auto;
+    max-width: 60mm;
+    max-height: 20mm;
+    object-fit: contain;
+  }
+
+  .ticket-platform-credit {
+    padding: 0 9mm 5mm;
+    color: #74665f;
+    font-size: 7pt;
   }
 
   .ticket-print-kicker,

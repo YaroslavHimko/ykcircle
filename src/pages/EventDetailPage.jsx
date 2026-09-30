@@ -1204,36 +1204,10 @@ export default function EventDetailPage() {
                   : "Free"}
               </p>
               <p>
-                <span className="text-muted-foreground">Capacity</span>
-                <br />
-                {event.capacity || "No limit specified"}
-              </p>
-              <p>
-                <span className="text-muted-foreground">Language</span>
-                <br />
-                {event.languageCode || "Not specified"}
-              </p>
-              <p>
                 <span className="text-muted-foreground">Location</span>
                 <br />
                 {eventLocationText(event)}
               </p>
-              <p>
-                <span className="text-muted-foreground">
-                  Registration deadline
-                </span>
-                <br />
-                {event.registrationDeadline
-                  ? new Date(event.registrationDeadline).toLocaleString()
-                  : "No deadline specified"}
-              </p>
-              {event.minimumAge && (
-                <p>
-                  <span className="text-muted-foreground">Minimum age</span>
-                  <br />
-                  {event.minimumAge}+
-                </p>
-              )}
             </div>
             <section className="mt-8 max-w-2xl border-t border-border pt-7">
               <h2 className="font-display text-2xl font-semibold">Location</h2>
@@ -1244,24 +1218,6 @@ export default function EventDetailPage() {
                 {event.locationType === "venue" && event.venue?.id && <Link className="mt-4 inline-block text-sm text-primary underline" to={event.venue.slug ? `/venues/slug/${event.venue.slug}` : `/venues/${event.venue.id}`}>View venue</Link>}
               </>}
             </section>
-            {event.whatToBring && (
-              <section className="mt-8">
-                <h2 className="font-display text-3xl font-semibold">
-                  What to bring
-                </h2>
-                <p className="mt-4 leading-relaxed">{event.whatToBring}</p>
-              </section>
-            )}
-            {event.meetingInstructions && (
-              <section className="mt-8">
-                <h2 className="font-display text-3xl font-semibold">
-                  Meeting instructions
-                </h2>
-                <p className="mt-4 leading-relaxed">
-                  {event.meetingInstructions}
-                </p>
-              </section>
-            )}
             {token && Number(event.myRating) > 0 && !canRate && (
               <section className="mt-8 border border-border p-5">
                 <h2 className="font-display text-2xl font-semibold">Your rating</h2>

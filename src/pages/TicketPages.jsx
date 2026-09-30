@@ -36,11 +36,17 @@ function TicketQr({ ticket, size = 128 }) {
   </div>;
 }
 
+function TicketBrand({ order }) {
+  const name = order.seller?.brandName || order.seller?.legalName || order.eventTitle;
+  const logo = order.seller?.logoImage;
+  return <div className="min-w-0">{logo && <img src={logo} alt={name + " logo"} className="ticket-brand-logo mb-3 max-h-20 max-w-[15rem] object-contain" />}<p className="ticket-print-brand font-display text-2xl font-semibold">{name}</p><p className="ticket-print-kicker mt-1 text-xs text-muted-foreground">Event admission</p></div>;
+}
+
 function PrintableTickets({ order }) {
   return <section className="ticket-print-root" aria-label="Printable tickets">
     {order.tickets?.map((ticket) => <article key={ticket.id} className="ticket-print-card">
       <header className="ticket-print-header">
-        <div><p className="ticket-print-brand">YKCircle</p><p className="ticket-print-kicker">Event admission</p></div>
+        <TicketBrand order={order} />
         {order.testMode && <span className="ticket-print-test">Test ticket</span>}
       </header>
       <div className="ticket-print-body">
@@ -61,6 +67,7 @@ function PrintableTickets({ order }) {
         <div><p>Ticket code</p><strong>{ticket.code}</strong></div>
         <p>{ticket.checkedInAt ? "Already checked in" : ticket.valid ? "Valid for one admission" : "Not valid for admission"}</p>
       </footer>
+      <p className="ticket-platform-credit">Ticketing via YKCircle</p>
     </article>)}
   </section>;
 }
@@ -201,7 +208,7 @@ export function TicketOrderPage() {
     {!order && !error && <p className="mt-8">Loading order…</p>}
     {order && <>
       {order.testMode && <TestNotice />}
-      <article className="mt-6 border border-border p-5">
+      <article className="mt-6 border border-border p-5"><div className="mb-6 border-b border-border pb-5"><TicketBrand order={order} /></div>
         <h2 className="font-display text-2xl font-semibold">{order.eventTitle}</h2>
         <p className="mt-2">{when(order.event?.startsAt, order.event?.timezone)}</p><p>{order.event?.location}</p>
         <p className="mt-3 text-sm">Order {order.orderNumber} · {money(order.totalAmount, order.currency)} · <span className="capitalize">{order.paymentStatus}</span></p>
@@ -209,6 +216,7 @@ export function TicketOrderPage() {
         <div className="mt-5 space-y-3">{order.tickets?.map((ticket) => <div key={ticket.id} className="grid gap-4 border border-dashed border-border p-4 sm:grid-cols-[1fr_auto] sm:items-center"><div><h3 className="font-semibold">{ticket.name}</h3><p className="mt-2 break-all font-mono text-sm">{ticket.code}</p><p className="mt-2 text-xs">{ticket.checkedInAt ? "Already checked in." : ticket.valid ? "One admission — show this ticket at the event." : "Not valid for admission."}</p></div><TicketQr ticket={ticket} /></div>)}</div>
         {!order.tickets?.length && order.items?.map((item) => <p key={item.id} className="mt-3">{item.ticketType?.name} × {item.quantity}</p>)}
         {buyer && <div className="mt-6 flex flex-wrap gap-3 print:hidden">{paid ? <><button onClick={() => window.print()} className="border border-border px-4 py-2 text-sm">Print tickets</button><button disabled={working} onClick={() => action("resend")} className="border border-border px-4 py-2 text-sm disabled:opacity-60">Resend email</button></> : order.paymentStatus === "pending" && <><button disabled={working} onClick={() => action("confirm")} className="border border-border px-4 py-2 text-sm">Refresh payment status</button><button disabled={working} onClick={() => action("checkout")} className="bg-primary px-4 py-2 text-sm text-primary-foreground">Resume payment</button><button disabled={working} onClick={() => action("cancel")} className="border border-border px-4 py-2 text-sm">Cancel unpaid order</button></>}</div>}
+        <p className="mt-5 text-xs text-muted-foreground">Ticketing via YKCircle</p>
         <p className="mt-5 text-sm text-muted-foreground">Seller: {order.seller?.legalName}</p>
         {order.refundPolicy?.text && <p className="mt-2 text-sm text-muted-foreground">Refund policy: {order.refundPolicy.text}</p>}
       </article>

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
-import { Menu, X, Instagram, Send, Youtube, UserRound, LogOut, Users } from 'lucide-react';
+import { Menu, X, Instagram, Send, Youtube, UserRound, LogOut } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
 import CookieSettings, { openCookieSettings } from '@/components/CookieSettings';
 
@@ -50,21 +50,21 @@ export function Header() {
 
     return (
         <header className={`${overlay ? 'absolute' : 'relative'} inset-x-0 top-0 z-50 w-full max-w-full`}>
-            <div className="mx-auto flex max-w-[90rem] items-center justify-between px-5 py-5 sm:px-8">
+            <div className="mx-auto flex max-w-[90rem] items-center justify-between gap-2 px-4 py-5 sm:px-8">
                 <Link
                     to="/"
-                    className={`group flex items-center gap-2 rounded-lg border px-2 py-1 shadow-sm md:border-0 md:bg-transparent md:p-0 md:shadow-none ${overlay ? 'border-[hsl(40_30%_88%)]/70 bg-[hsl(25_22%_12%)]' : 'border-primary/30 bg-background'}`}
+                    className={`group mr-auto flex min-w-0 items-center gap-2 rounded-lg border px-2 py-1 shadow-sm md:border-0 md:bg-transparent md:p-0 md:shadow-none ${overlay ? 'border-[hsl(40_30%_88%)]/70 bg-[hsl(25_22%_12%)]' : 'border-primary/30 bg-background'}`}
                 >
-                    <img src="/logo.png" alt="YKCircle" className="h-11 w-11 rounded-full object-cover" />
-                    <span className={`font-display text-2xl font-black tracking-tight ${overlay ? 'text-[hsl(40_30%_94%)]' : 'text-primary'}`}>
+                    <img src="/logo.png" alt="YKCircle" className="h-11 w-11 shrink-0 rounded-full object-cover" />
+                    <span className={`font-display text-xl font-black sm:text-2xl tracking-tight ${overlay ? 'text-[hsl(40_30%_94%)]' : 'text-primary'}`}>
                         YKCircle
                     </span>
-                    <span className={`hidden text-[0.65rem] uppercase tracking-[0.3em] sm:block ${overlay ? 'text-[hsl(40_30%_94%)]' : 'text-muted-foreground'}`}>
+                    <span className={`hidden text-[0.65rem] uppercase tracking-[0.3em] xl:block ${overlay ? 'text-[hsl(40_30%_94%)]' : 'text-muted-foreground'}`}>
                         real people, real plans
                     </span>
                 </Link>
 
-                <nav className="hidden items-center gap-8 md:flex">
+                <nav className="ml-6 hidden items-center gap-6 lg:flex">
                     {baseNav.map((n) => (
                         <NavLink
                             key={n.to}
@@ -76,16 +76,13 @@ export function Header() {
                             {n.label}
                         </NavLink>
                     ))}
-                    <Link to="/groups" className="inline-flex min-h-[44px] items-center gap-2 bg-primary px-5 text-sm font-medium text-primary-foreground transition-transform active:scale-[0.98]">
-                        <Users className="h-4 w-4" strokeWidth={1.75} /> Find your circle
-                    </Link>
                 </nav>
 
-                <div ref={profileMenuRef} className="relative ml-4 hidden md:block">
-                    <button type="button" aria-label="Open profile menu" aria-expanded={profileOpen} onClick={() => setProfileOpen((value) => !value)} className={`inline-flex h-11 w-11 items-center justify-center rounded-full border ${overlay ? 'border-white/40 text-[hsl(40_30%_94%)]' : 'border-border text-foreground'} transition-colors hover:border-primary hover:text-primary`}>
+                <div ref={profileMenuRef} className="relative ml-2 shrink-0">
+                    <button type="button" aria-label="Open profile menu" aria-expanded={profileOpen} onClick={() => { setOpen(false); setProfileOpen((value) => !value); }} className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
                         <UserRound className="h-5 w-5" strokeWidth={1.75} />
                     </button>
-                    {profileOpen && <div className="absolute right-0 top-14 z-50 w-60 border border-border bg-background p-2 shadow-xl">
+                    {profileOpen && <div className="absolute right-0 top-14 z-50 max-h-[calc(100dvh-7rem)] w-60 overflow-y-auto border border-border bg-background p-2 shadow-xl">
                         {user ? <>
                             <p className="border-b border-border px-3 py-2 text-xs text-muted-foreground">{user.name}</p>
                             <p className="px-3 pt-4 text-[0.65rem] font-medium uppercase tracking-[0.2em] text-muted-foreground">Your account</p>
@@ -109,20 +106,12 @@ export function Header() {
                     </div>}
                 </div>
 
-                <div className="flex items-center gap-1 md:hidden">
-                    <Link
-                        to="/groups"
-                        aria-label="Find your circle"
-                        title="Find your circle"
-                        className="inline-flex h-11 w-11 items-center justify-center bg-primary text-primary-foreground transition-transform active:scale-[0.98]"
-                    >
-                        <Users className="h-5 w-5" strokeWidth={1.75} />
-                    </Link>
+                <div className="flex shrink-0 items-center lg:hidden">
                     <button
                         type="button"
                         aria-label="Toggle menu"
                         aria-expanded={open}
-                        onClick={() => setOpen((v) => !v)}
+                        onClick={() => { setProfileOpen(false); setOpen((v) => !v); }}
                         className={`inline-flex h-11 w-11 items-center justify-center ${overlay ? 'text-[hsl(40_30%_94%)]' : 'text-foreground'}`}
                     >
                         {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -131,7 +120,7 @@ export function Header() {
             </div>
 
             {open && (
-                <div className="border-y border-border bg-background md:hidden">
+                <div className="border-y border-border bg-background lg:hidden">
                     <div className="flex flex-col px-5 py-3">
                         {baseNav.map((n) => (
                             <Link
@@ -258,7 +247,7 @@ export default function SiteChrome({ children }) {
     return (
         <div className="grain flex min-h-screen w-full max-w-full flex-col overflow-x-hidden">
             <Header />
-            <main className="flex-1">{children}</main>
+            <main className="min-w-0 flex-1">{children}</main>
             <Footer />
             <CookieSettings />
         </div>

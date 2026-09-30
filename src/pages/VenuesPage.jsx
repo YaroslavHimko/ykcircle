@@ -38,12 +38,12 @@ export function MyVenuesPage() {
   const publish=async venue=>{try{setError("");if(venue?.id==null)throw new Error("This venue is missing its ID and cannot be published.");const r=await apiFetch(`/api/admin/venues/${venue.id}/moderation`,{method:"PATCH",headers:{...auth(),"Content-Type":"application/json"},body:JSON.stringify({moderationStatus:"approved"})});const d=r.status===204?null:await r.json().catch(()=>({}));if(!r.ok)throw new Error(errorText(d,"Unable to publish venue."));const updated=normalizeVenue(d.venue||d);setVenues(current=>current.map(item=>item.id===venue.id?{...item,...updated,isActive:isVenueActive(updated.isActive)}:item));}catch(e){setError(e.message);}};
   const submitForReview=async venue=>{try{setError("");if(venue?.id==null)throw new Error("This venue is missing its ID and cannot be submitted for review.");const r=await apiFetch(`/api/venues/${venue.id}/submit-for-review`,{method:"POST",headers:auth()});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(errorText(d,"Unable to submit venue for review."));const updated=normalizeVenue(d.venue||d);setVenues(current=>current.map(item=>item.id===venue.id?{...item,...updated,isActive:isVenueActive(updated.isActive)}:item));}catch(e){setError(e.message);}};
   return <Shell title={dashboardTitle}>
-    <div className="flex flex-wrap justify-between gap-4">
+    <div className="flex flex-wrap items-center justify-between gap-4">
       <div>
         <h1 className="font-display text-4xl font-bold">{dashboardTitle}</h1>
         <p className="mt-2 text-muted-foreground">{isAdmin || isManager ? "Review all active and inactive venues." : "Create spaces and respond to event booking requests."}</p>
       </div>
-      <Link to="/profile/venues/new" className="bg-primary px-5 py-3 text-sm text-primary-foreground">Add venue</Link>
+      <Link to="/profile/venues/new" className="inline-flex min-h-11 shrink-0 items-center justify-center self-center bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">Add venue</Link>
     </div>
     {error && <Error text={error}/>}
     {loading ? <Loading label="Loading venues…"/> : <>

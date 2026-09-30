@@ -1,3 +1,4 @@
+import LogoUpload from "@/components/LogoUpload";
 import React, { useEffect, useRef, useState } from "react";
 import { Helmet } from "react-helmet";
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
@@ -15,6 +16,8 @@ const initialForm = {
   shortDescription: "",
   description: "",
   coverImage: "",
+  brandName: "",
+  logoImage: "",
   categoryId: "",
   typeId: "",
   country: "",
@@ -41,13 +44,6 @@ const initialForm = {
   recurrenceInterval: "1",
   recurrenceCount: "2",
   timezone: deviceTimezone(),
-  capacity: "",
-  minimumAttendees: "",
-  registrationDeadline: "",
-  minimumAge: "",
-  languageCode: "en",
-  whatToBring: "",
-  meetingInstructions: "",
   pricingType: "free",
   fee: "0",
   currency: "SEK",
@@ -157,16 +153,16 @@ function VenueBookingPicker({ venues, venueId, onVenueChange, selectedDate, onDa
 }
 
 const testEventPresets = [
-  ["Sunrise walk at Djurgården", "Start the day with a relaxed waterside walk and coffee.", "Join a friendly sunrise walk through Djurgården. We will keep an easy pace, stop for photos and finish with coffee together.", "Rosendal Garden", "Rosendalsvägen 38, 115 21 Stockholm", "2030-06-08T08:00", "2030-06-08T10:00", "2030-06-07T18:00", "Bring comfortable shoes and a reusable cup.", "Meet by the Rosendal Garden entrance, ten minutes before we start.", "free", "0", "physical", "public", "20", "4", "16", "en", "none"],
-  ["Beginner bouldering social", "Learn the basics and meet other climbers.", "A welcoming indoor bouldering session for complete beginners. An instructor will cover safety and basic techniques before open social climbing.", "Klättercentret Telefonplan", "Tellusgången 22, 126 26 Hägersten", "2030-06-12T18:30", "2030-06-12T21:00", "2030-06-11T20:00", "Wear comfortable sports clothes; climbing shoes can be rented.", "Ask for the YKCircle host at reception.", "paid", "180", "physical", "public", "16", "3", "18", "en", "none"],
-  ["Midsummer picnic planning", "Make new plans over snacks in the park.", "Bring a small picnic item to share and help build a friendly Midsummer plan with new people in Stockholm.", "Tantolunden", "Tantolunden, 118 42 Stockholm", "2030-06-15T14:00", "2030-06-15T17:00", "2030-06-14T18:00", "A picnic blanket and something small to share.", "Meet at the main lawn near the beach volleyball court.", "free", "0", "physical", "public", "30", "6", "16", "en", "weekly"],
-  ["Stockholm street-photo walk", "Find better frames with a small creative group.", "Explore Södermalm with a camera or phone, swap composition tips and select a few favourite photos together afterwards.", "Mariatorget", "Mariatorget, 118 48 Stockholm", "2030-06-18T17:30", "2030-06-18T20:00", "2030-06-17T19:00", "Any camera or phone with space for photos.", "Gather beside the statue in the centre of Mariatorget.", "free", "0", "physical", "public", "12", "3", "14", "en", "none"],
-  ["Sunday board-game brunch", "Easy games, pastries and new people.", "A low-pressure Sunday brunch with modern board games. New players are especially welcome and rules will be explained.", "Alphaspel", "Östgötagatan 33, 116 25 Stockholm", "2030-06-23T11:00", "2030-06-23T14:00", "2030-06-22T17:00", "Optional: bring a favourite game to teach.", "Look for the YKCircle table near the café.", "paid", "90", "physical", "public", "18", "4", "16", "en", "none"],
-  ["Swedish fika conversation club", "Practice Swedish in a relaxed small group.", "Build confidence speaking Swedish through guided conversation prompts, café chat and a little help from fellow learners.", "Kulturhuset Stadsteatern", "Sergels torg, 111 57 Stockholm", "2030-06-25T18:00", "2030-06-25T19:30", "2030-06-24T18:00", "A notebook if you like taking notes.", "Meet inside the main entrance by the information desk.", "free", "0", "physical", "public", "14", "4", "18", "sv", "weekly"],
-  ["Kayak taster on Lake Mälaren", "Try kayaking with a supportive crew.", "A beginner-friendly kayak taster with equipment, safety briefing and a calm route close to shore.", "Långholmens Kajak", "Långholmsmuren 21, 117 33 Stockholm", "2030-06-29T10:00", "2030-06-29T12:30", "2030-06-27T18:00", "Swimwear, a towel and water; equipment is included.", "Arrive 15 minutes early for the safety briefing.", "paid", "350", "physical", "public", "10", "4", "18", "en", "none"],
-  ["Remote co-working sprint", "Focus together from wherever you are.", "Join a structured online co-working session with short introductions, two focus blocks and a friendly check-out.", "Online via video call", "A joining link will be sent after registration.", "2030-07-02T09:00", "2030-07-02T11:30", "2030-07-01T18:00", "Headphones and one task you want to finish.", "The video-call link is shared with registered attendees.", "free", "0", "online", "private", "25", "3", "16", "en", "weekly"],
-  ["Evening run by the water", "A social 5 km at a conversational pace.", "Run a relaxed route around Kungsholmen, with a no-drop pace and an optional cool-down drink afterwards.", "Rålambshovsparken", "Smedsuddsvägen, 112 35 Stockholm", "2030-07-05T18:30", "2030-07-05T19:45", "2030-07-04T16:00", "Running shoes and a light layer for after the run.", "Meet at the park entrance closest to Rålambshovsled.", "free", "0", "physical", "public", "24", "4", "16", "en", "none"],
-  ["Ceramics introduction workshop", "Make a small piece from clay and unwind.", "Learn simple hand-building techniques in a calm studio session. Your finished piece will be glazed and fired by the studio.", "Stockholm Ceramic Studio", "Sankt Eriksgatan 39, 112 34 Stockholm", "2030-07-09T18:00", "2030-07-09T20:30", "2030-07-07T18:00", "Wear clothes that can get a little clay on them.", "Meet the host inside the studio courtyard entrance.", "paid", "420", "physical", "public", "12", "4", "18", "en", "none"],
+  ["Sunrise walk at Djurgården","Start the day with a relaxed waterside walk and coffee.","Join a friendly sunrise walk through Djurgården. We will keep an easy pace, stop for photos and finish with coffee together.","Rosendal Garden","Rosendalsvägen 38, 115 21 Stockholm","2030-06-08T08:00","2030-06-08T10:00","free","0","physical","public","none"],
+  ["Beginner bouldering social","Learn the basics and meet other climbers.","A welcoming indoor bouldering session for complete beginners. An instructor will cover safety and basic techniques before open social climbing.","Klättercentret Telefonplan","Tellusgången 22, 126 26 Hägersten","2030-06-12T18:30","2030-06-12T21:00","paid","180","physical","public","none"],
+  ["Midsummer picnic planning","Make new plans over snacks in the park.","Bring a small picnic item to share and help build a friendly Midsummer plan with new people in Stockholm.","Tantolunden","Tantolunden, 118 42 Stockholm","2030-06-15T14:00","2030-06-15T17:00","free","0","physical","public","weekly"],
+  ["Stockholm street-photo walk","Find better frames with a small creative group.","Explore Södermalm with a camera or phone, swap composition tips and select a few favourite photos together afterwards.","Mariatorget","Mariatorget, 118 48 Stockholm","2030-06-18T17:30","2030-06-18T20:00","free","0","physical","public","none"],
+  ["Sunday board-game brunch","Easy games, pastries and new people.","A low-pressure Sunday brunch with modern board games. New players are especially welcome and rules will be explained.","Alphaspel","Östgötagatan 33, 116 25 Stockholm","2030-06-23T11:00","2030-06-23T14:00","paid","90","physical","public","none"],
+  ["Swedish fika conversation club","Practice Swedish in a relaxed small group.","Build confidence speaking Swedish through guided conversation prompts, café chat and a little help from fellow learners.","Kulturhuset Stadsteatern","Sergels torg, 111 57 Stockholm","2030-06-25T18:00","2030-06-25T19:30","free","0","physical","public","weekly"],
+  ["Kayak taster on Lake Mälaren","Try kayaking with a supportive crew.","A beginner-friendly kayak taster with equipment, safety briefing and a calm route close to shore.","Långholmens Kajak","Långholmsmuren 21, 117 33 Stockholm","2030-06-29T10:00","2030-06-29T12:30","paid","350","physical","public","none"],
+  ["Remote co-working sprint","Focus together from wherever you are.","Join a structured online co-working session with short introductions, two focus blocks and a friendly check-out.","Online via video call","A joining link will be sent after registration.","2030-07-02T09:00","2030-07-02T11:30","free","0","online","private","weekly"],
+  ["Evening run by the water","A social 5 km at a conversational pace.","Run a relaxed route around Kungsholmen, with a no-drop pace and an optional cool-down drink afterwards.","Rålambshovsparken","Smedsuddsvägen, 112 35 Stockholm","2030-07-05T18:30","2030-07-05T19:45","free","0","physical","public","none"],
+  ["Ceramics introduction workshop","Make a small piece from clay and unwind.","Learn simple hand-building techniques in a calm studio session. Your finished piece will be glazed and fired by the studio.","Stockholm Ceramic Studio","Sankt Eriksgatan 39, 112 34 Stockholm","2030-07-09T18:00","2030-07-09T20:30","paid","420","physical","public","none"],
 ];
 const toInputDate = (value, timezone = deviceTimezone()) => localDateTimeForZone(value, timezone);
 const todayAtPresetTime = (value) => {
@@ -222,6 +218,7 @@ export default function EventsPage({
   const [form, setForm] = useState(initialForm);
   const [draftId, setDraftId] = useState(null);
   const [draftSaved, setDraftSaved] = useState(false);
+  const [logoBusy, setLogoBusy] = useState(false);
   const [pendingCover, setPendingCover] = useState(null);
   const [dialog, setDialog] = useState(null);
   const [publishedEvent, setPublishedEvent] = useState(null);
@@ -244,7 +241,7 @@ export default function EventsPage({
   }, [draftSaved]);
   useEffect(() => {
     if (!creationPage) return;
-    setForm({ ...initialForm, groupId: requestedGroupId || "" });
+    setForm({ ...initialForm, brandName: user?.name || "", groupId: requestedGroupId || "" });
     setDraftId(null);
     setDraftSaved(false);
     setPendingCover(null);
@@ -341,16 +338,15 @@ export default function EventsPage({
     if (!Number.isInteger(presetIndex) || !testEventPresets[presetIndex]) return;
     const [
       title, shortDescription, description, location, address, startsAt, endsAt,
-      registrationDeadline, whatToBring, meetingInstructions, pricingType, fee,
-      rawLocationType, locationVisibility, capacity, minimumAttendees, minimumAge,
-      languageCode, recurrenceFrequency,
+      pricingType, fee,
+      rawLocationType, locationVisibility,
+      recurrenceFrequency,
     ] = testEventPresets[presetIndex];
     setForm((current) => ({
       ...current,
       title, shortDescription, description, location, address, addressLine1: address, formattedAddress: address, latitude: "59.3293", longitude: "18.0686", startsAt: todayAtPresetTime(startsAt), endsAt: todayAtPresetTime(endsAt),
-      registrationDeadline: todayAtPresetTime(registrationDeadline), whatToBring, meetingInstructions, pricingType, fee,
-      locationType: rawLocationType === "physical" ? "custom" : rawLocationType, locationVisibility, capacity, minimumAttendees, minimumAge,
-      languageCode, recurrenceFrequency,
+      locationType: rawLocationType === "physical" ? "custom" : rawLocationType, locationVisibility, pricingType, fee,
+      recurrenceFrequency,
       recurrenceInterval: "1",
       recurrenceCount: recurrenceFrequency === "none" ? "2" : "4",
       country: "Sweden",
@@ -374,12 +370,13 @@ export default function EventsPage({
       shortDescription: eventValue(event, "shortDescription", "short_description"),
       description: eventValue(event, "description", "longDescription", "long_description"),
       coverImage: eventCover(event),
+      brandName: event.brandName || "",
+      logoImage: event.logoImage || "",
       startsAt: toInputDate(eventValue(event, "startsAt", "startsAtUtc", "starts_at", "starts_at_utc"), eventValue(event, "timezone", "timeZone") || current.timezone),
       endsAt: toInputDate(eventValue(event, "endsAt", "endsAtUtc", "ends_at", "ends_at_utc"), eventValue(event, "timezone", "timeZone") || current.timezone),
       recurrenceFrequency: eventValue(event, "recurrenceFrequency") || "none",
       recurrenceInterval: String(eventValue(event, "recurrenceInterval") || 1),
       recurrenceCount: String(eventValue(event, "recurrenceCount") || 2),
-      registrationDeadline: toInputDate(eventValue(event, "registrationDeadline", "registration_deadline"), eventValue(event, "timezone", "timeZone") || current.timezone),
       categoryId: eventValue(event, "categoryId", "category_id") || event.category?.id || "",
       typeId: eventValue(event, "typeId", "type_id") || event.type?.id || "",
       country: eventValue(event, "country") || event.location?.country || current.country,
@@ -400,12 +397,6 @@ export default function EventsPage({
       onlineUrl: eventValue(event, "onlineUrl", "online_url"),
       onlinePlatform: eventValue(event, "onlinePlatform", "online_platform"),
       timezone: eventValue(event, "timezone", "timeZone") || current.timezone,
-      capacity: eventValue(event, "capacity"),
-      minimumAttendees: eventValue(event, "minimumAttendees", "minimum_attendees"),
-      minimumAge: eventValue(event, "minimumAge", "minimum_age"),
-      languageCode: eventValue(event, "languageCode", "language_code") || current.languageCode,
-      whatToBring: eventValue(event, "whatToBring", "what_to_bring"),
-      meetingInstructions: eventValue(event, "meetingInstructions", "meeting_instructions"),
       groupId: eventValue(event, "groupId", "group_id"),
       locationType: eventValue(event, "locationType", "location_type") === "physical" ? "custom" : eventValue(event, "locationType", "location_type") || current.locationType,
       pricingType: Number(eventValue(event, "fee")) > 0 ? "paid" : "free",
@@ -472,17 +463,9 @@ export default function EventsPage({
         endsAtUtc: form.endsAt
           ? localDateTimeToUtc(form.endsAt, form.timezone, "end")
           : undefined,
-        registrationDeadline: form.registrationDeadline
-          ? localDateTimeToUtc(form.registrationDeadline, form.timezone)
-          : undefined,
-        capacity: form.capacity ? Number(form.capacity) : undefined,
-        minimumAttendees: form.minimumAttendees
-          ? Number(form.minimumAttendees)
-          : undefined,
-        minimumAge: form.minimumAge ? Number(form.minimumAge) : undefined,
         fee: form.pricingType === "paid" ? Number(form.fee) : 0,
       }).filter(
-        ([, value]) => value !== "" && value !== null && value !== undefined,
+        ([key, value]) => ["logoImage", "brandName"].includes(key) || (value !== "" && value !== null && value !== undefined),
       ),
     );
   };
@@ -513,6 +496,7 @@ export default function EventsPage({
   };
   const save = async (event) => {
     event?.preventDefault();
+    if (logoBusy) return;
     setErrors({});
     setError("");
     setMessage("");
@@ -946,6 +930,9 @@ export default function EventsPage({
                 </label>
               )}
               {input("shortDescription", "Short description")}
+              {input("brandName", "Organizer / brand name")}
+              <LogoUpload label="Organizer logo" value={form.logoImage} onChange={(logoImage) => setForm((current) => ({ ...current, logoImage }))} onBusyChange={setLogoBusy} description="Your branding appears on event emails and tickets. Without a logo, we use your brand name." />
+              {errors.logoImage && <p role="alert" className="text-sm text-destructive sm:col-span-2">{errors.logoImage}</p>}
               <label className="block text-sm sm:col-span-2">
                 Cover image
                 {form.coverImage && (
@@ -1048,9 +1035,6 @@ export default function EventsPage({
                   {errors.recurrence && <p className="text-sm text-destructive sm:col-span-3">{errors.recurrence}</p>}
                 </div>
               )}
-              {input("capacity", "Capacity", "number")}
-              {input("minimumAttendees", "Minimum attendees", "number")}
-              {input("languageCode", "Language")}
               <label className="block text-sm">
                 Pricing
                 <select
@@ -1073,14 +1057,6 @@ export default function EventsPage({
                 </select>
                 {form.visibility === "Public" && <span className="mt-2 block border-l-2 border-amber-500 bg-amber-500/10 px-3 py-2 text-xs leading-relaxed text-foreground">Public — anyone can view this and it may appear in search engines.</span>}
               </label>
-              {input(
-                "registrationDeadline",
-                "Registration deadline",
-                "datetime-local",
-              )}
-              {input("minimumAge", "Minimum age", "number")}
-              {input("whatToBring", "What to bring")}
-              {input("meetingInstructions", "Meeting instructions")}
               <label className="block text-sm sm:col-span-2">
                 Description
                 <textarea
@@ -1098,8 +1074,8 @@ export default function EventsPage({
                 )}
               </label>
               <div className="flex flex-wrap gap-3 sm:col-span-2">
-                <button className="min-h-11 bg-primary px-5 text-sm text-primary-foreground">
-                  {editPage ? "Save" : "Save draft"}
+                <button disabled={logoBusy} className="min-h-11 bg-primary px-5 text-sm text-primary-foreground disabled:opacity-60">
+                  {logoBusy ? "Preparing logo…" : editPage ? "Save" : "Save draft"}
                 </button>
               </div>
             </form>
