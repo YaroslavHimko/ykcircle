@@ -5,6 +5,7 @@ import { Helmet } from "react-helmet";
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import SiteChrome from "@/components/SiteChrome";
 import DirectoryActions from '@/components/DirectoryActions';
+import EventPreviewCard from '@/components/EventPreviewCard';
 import MyEventsSection, { useAttendingEvents } from '@/components/MyEventsSection';
 import { RepresentativeEvents } from "@/components/EventRepresentatives";
 import { apiFetch } from "@/lib/api";
@@ -842,7 +843,7 @@ export default function EventsPage({
       <Helmet>
         <title>Events | YKCircle</title>
       </Helmet>
-      <section className="mx-auto max-w-[72rem] px-5 pb-24 pt-32 sm:px-8 sm:pt-40">
+      <section className="mx-auto max-w-[72rem] px-5 pb-24 pt-10 sm:px-8 sm:pt-14">
         <p className="text-xs uppercase tracking-[0.3em] text-primary">
           YKCircle experiences
         </p>
@@ -1193,54 +1194,13 @@ export default function EventsPage({
               </p>
             ) : (
               active.map((event) => (
-                <article
-                  key={event.id}
-                  className="group overflow-hidden border border-border bg-background p-4 shadow-sm transition-shadow hover:shadow-lg"
-                >
-                  <div className="min-w-0 flex-1">
-                    {eventCover(event) ? (
-                      <EventCoverImage event={event} component="EventsPageCard" alt={`${event.title} cover`} className="mb-4 aspect-[16/10] w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]" />
-                    ) : (
-                      <div className="mb-4 flex aspect-[16/10] w-full items-end bg-gradient-to-br from-primary/90 via-primary/65 to-slate-900 p-5 text-white">
-                        <span className="font-display text-2xl leading-none">
-                          {event.title}
-                        </span>
-                      </div>
-                    )}
-                    <p className="text-xs uppercase tracking-[0.2em] text-primary">
-                      {event.status}
-                    </p>
-                    {event.seriesId && (
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        Recurring series · occurrence {event.occurrenceNumber || 1} of {event.recurrenceCount || "?"}
-                      </p>
-                    )}
-                    {event.groupName && (
-                      <Link to={`/groups/${event.groupId}${managementOnly ? "?manage=1" : ""}`} className="mt-2 inline-block text-xs font-medium text-primary hover:underline">
-                        From {event.groupName}
-                      </Link>
-                    )}
-                    <h3 className="mt-2 font-display text-2xl">
-                      {event.title}
-                    </h3>
-                    <p className="mt-3 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
-                      {event.shortDescription ||
-                        event.description ||
-                        "Details coming soon."}
-                    </p>
-                    <p className="mt-2 text-sm text-muted-foreground">
-                      {eventDateTimeLabel(event)}{" "}
-                      ·{" "}
-                      {event.city ||
-                        event.location ||
-                        "Location to be announced"}
-                    </p>
-                    {(event.venueBooking?.status === "confirmed" || event.venue_booking?.status === "confirmed") && (
-                      <p className="mt-2 text-sm text-primary">Confirmed venue: {event.venueBooking?.venue?.name || event.venueBooking?.venueName || event.venue_booking?.venue?.name || event.venue_booking?.venueName}</p>
-                    )}
-                  </div>
+                <EventPreviewCard key={event.id} event={event}>
+                  {event.status !== "Published" && <p className="mb-3 text-xs uppercase tracking-[0.2em] text-primary">{event.status}</p>}
+                  {event.seriesId && <p className="mb-3 text-xs text-muted-foreground">Recurring series · occurrence {event.occurrenceNumber || 1} of {event.recurrenceCount || "?"}</p>}
+                  {event.groupName && <Link to={`/groups/${event.groupId}${managementOnly ? "?manage=1" : ""}`} className="mb-3 inline-block text-xs font-medium text-primary hover:underline">From {event.groupName}</Link>}
+                  {(event.venueBooking?.status === "confirmed" || event.venue_booking?.status === "confirmed") && <p className="mb-3 text-sm text-primary">Confirmed venue: {event.venueBooking?.venue?.name || event.venueBooking?.venueName || event.venue_booking?.venue?.name || event.venue_booking?.venueName}</p>}
                   {canManage ? (
-                    <div className="mt-5 grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-2 gap-2">
                       <a
                         href={`/profile/events/${event.id}/edit`}
                         className="inline-flex min-h-10 items-center justify-center border border-border px-3 text-sm"
@@ -1271,12 +1231,12 @@ export default function EventsPage({
                   ) : (
                     <Link
                       to={`/events/${event.id}`}
-                      className="mt-5 inline-flex min-h-10 items-center bg-primary px-4 text-sm text-primary-foreground"
+                      className="inline-flex min-h-10 items-center bg-primary px-4 text-sm text-primary-foreground"
                     >
                       View
                     </Link>
                   )}
-                </article>
+                </EventPreviewCard>
               ))
             )}
           </div>

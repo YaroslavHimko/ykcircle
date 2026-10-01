@@ -815,7 +815,7 @@ export default function GroupsPage({
         <Helmet>
           <title>{group ? `${group.name} | YKCircle` : "Group | YKCircle"}</title>
         </Helmet>
-        <section className="mx-auto max-w-[72rem] px-5 pb-24 pt-32 sm:px-8 sm:pt-40">
+        <section className="mx-auto max-w-[72rem] px-5 pb-24 pt-10 sm:px-8 sm:pt-14">
           {loading ? (
             <p className="text-muted-foreground">Loading group…</p>
           ) : (
@@ -973,7 +973,7 @@ export default function GroupsPage({
   if (managementOnly && !canManageOwnGroups)
     return (
       <SiteChrome>
-        <section className="mx-auto max-w-[72rem] px-5 pb-24 pt-32 sm:px-8 sm:pt-40">
+        <section className="mx-auto max-w-[72rem] px-5 pb-24 pt-10 sm:px-8 sm:pt-14">
           <h1 className="font-display text-4xl font-semibold">
             Sign in to manage groups
           </h1>
@@ -998,7 +998,7 @@ export default function GroupsPage({
         <Helmet>
           <title>{focusedGroup ? `Manage ${focusedGroup.name} | YKCircle` : "Manage group | YKCircle"}</title>
         </Helmet>
-        <section className="mx-auto max-w-[72rem] px-5 pb-24 pt-32 sm:px-8 sm:pt-40">
+        <section className="mx-auto max-w-[72rem] px-5 pb-24 pt-10 sm:px-8 sm:pt-14">
           {loading ? <p className="text-muted-foreground">Loading group…</p> : !focusedGroup ? <><h1 className="font-display text-4xl font-semibold">Group unavailable</h1><p className="mt-4 text-muted-foreground">You do not have permission to manage this group.</p><Link to="/profile/groups" className="mt-6 inline-flex text-primary">Back to your groups</Link></> : <>
             <Link to={`/groups/${focusedGroup.id}?manage=1`} className="text-sm text-primary">← Back to group</Link>
             <p className="mt-8 text-xs uppercase tracking-[0.25em] text-primary">Group management</p>
@@ -1024,7 +1024,7 @@ export default function GroupsPage({
           {managementOnly ? "Manage groups | YKCircle" : "Groups | YKCircle"}
         </title>
       </Helmet>
-      <section className="mx-auto max-w-[72rem] px-5 pb-24 pt-32 sm:px-8 sm:pt-40">
+      <section className="mx-auto max-w-[72rem] px-5 pb-24 pt-10 sm:px-8 sm:pt-14">
         <div className="flex flex-wrap items-end justify-between gap-5">
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-primary">
