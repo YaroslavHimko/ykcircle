@@ -34,6 +34,7 @@ import { SavedVenuesPage, VenueCityOrDetailPage, VenueDetailPage, VenueEditorPag
 import { OrganizerAvailabilityPage, VenueCalendarPage } from './pages/VenueScheduling';
 import { InvoiceDetailPage } from './pages/InvoicesPage';
 import VenueBillingPage from './pages/VenueBillingPage';
+import OrganizationsPage from './pages/OrganizationsPage';
 import BillingPage, { LegacyBillingRedirect } from './pages/BillingPage';
 import { PaymentAccountReturnPage, PlatformAdminPage, TicketCheckoutPage, TicketOrderPage, TicketsPage } from './pages/FinancialPages';
 import { apiFetch } from './lib/api';
@@ -131,8 +132,13 @@ function App() {
                 <Route path="/admin/users" element={<UserRolesPage />} />
                 <Route path="/admin/reports" element={<AdminReportsPage />} />
                 <Route path="/admin/platform-billing" element={<PlatformAdminPage />} />
-                <Route path="/account/billing" element={<BillingPage />} />
-                <Route path="/account/billing-profiles" element={<LegacyBillingRedirect />} />
+                <Route path="/account/payments" element={<BillingPage />} />
+                <Route path="/account/payments/:area" element={<BillingPage />} />
+                <Route path="/account/organizations" element={<OrganizationsPage />} />
+                <Route path="/account/billing" element={<LegacyBillingRedirect />} />
+                <Route path="/account/plans" element={<LegacyBillingRedirect section="platform" />} />
+                <Route path="/account/venue-billing" element={<LegacyBillingRedirect section="venues" />} />
+                <Route path="/account/billing-profiles" element={<LegacyBillingRedirect section="profiles" />} />
                 <Route path="/billing/payment-account/refresh" element={<PaymentAccountReturnPage refresh />} />
                 <Route path="/billing/payment-account/complete" element={<PaymentAccountReturnPage />} />
                 <Route path="/account/platform-billing" element={<LegacyBillingRedirect section="platform" />} />

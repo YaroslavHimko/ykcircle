@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import BusinessIdentitySelector from '@/components/billing/BusinessIdentitySelector';
+import { formatMoney, subscriptionStatus } from '@/lib/payments';
 import SiteChrome from '@/components/SiteChrome';
 import { apiFetch } from '@/lib/api';
 
@@ -12,7 +14,8 @@ export async function subscriptionRequest(path, body, method = 'POST') {
 export const fieldClass = 'mt-2 min-h-11 w-full min-w-0 border border-border bg-background px-3';
 export const buttonClass = 'inline-flex min-h-11 items-center justify-center bg-primary px-5 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50';
 export const dateLabel = (value) => value ? new Date(value).toLocaleDateString(undefined, { dateStyle: 'medium' }) : '—';
-export function SubscriptionShell({ title, children }) {
+export function SubscriptionShell({ title, children, embedded = false }) {
+  if (embedded) return <div>{children}</div>;
   return <SiteChrome><section className="mx-auto max-w-5xl px-5 pb-24 pt-32 sm:px-8 sm:pt-40"><h1 className="font-display text-4xl font-bold">{title}</h1>{children}</section></SiteChrome>;
 }
 function openBilling(url) {
@@ -20,13 +23,13 @@ function openBilling(url) {
   if (target.protocol !== 'https:' || !(target.hostname === 'stripe.com' || target.hostname.endsWith('.stripe.com'))) throw new Error('The billing link is invalid. Please retry.');
   window.location.assign(target.href);
 }
-export default function SubscriptionsPage() {
+export default function SubscriptionsPage({ embedded = false }) {
   const [params, setParams] = useSearchParams();
   const user = JSON.parse(localStorage.getItem('authUser') || 'null');
   const feature = params.get('feature') === 'author.publish_article' ? 'author.publish_article' : 'organizer.publish_event';
   const isArticle = feature === 'author.publish_article';
   const owner = { type: isArticle ? 'user' : params.get('ownerType') || 'user', id: Number(isArticle ? user?.id : params.get('ownerId') || user?.id) };
-  const returnTo = /^\/profile\/(?:events|articles)(?:\/[1-9]\d*\/edit)?$/.test(params.get('returnTo') || '') ? params.get('returnTo') : isArticle ? '/profile/articles' : '/profile/events';
+  const returnTo = /^(?:\/profile\/(?:events|articles)(?:\/[1-9]\d*\/edit)?|\/account\/payments(?:\/plan)?)$/.test(params.get('returnTo') || '') ? params.get('returnTo') : embedded ? '/account/payments' : isArticle ? '/profile/articles' : '/profile/events';
   const query = `feature=${feature}&ownerType=${encodeURIComponent(owner.type)}&ownerId=${owner.id}`;
   const [options, setOptions] = useState(null), [summary, setSummary] = useState(null), [profiles, setProfiles] = useState([]);
   const [profileId, setProfileId] = useState(''), [busy, setBusy] = useState(false), [error, setError] = useState(''), [polling, setPolling] = useState(false);
@@ -57,10 +60,10 @@ export default function SubscriptionsPage() {
   const run = async (action) => { setBusy(true); setError(''); try { await action(); } catch (failure) { setError(failure.message); } finally { setBusy(false); } };
   const matchingProfiles = profiles.filter((profile) => owner.type === 'organization' ? Number(profile.ownerOrganizationId) === owner.id : !profile.ownerOrganizationId && Number(profile.ownerUserId) === owner.id);
   const existing = summary?.subscriptions.some((entry) => ['active','trialing','past_due','unpaid','paused','incomplete'].includes(entry.status));
-  if (!user) return <SubscriptionShell title="Subscriptions"><Link to={`/login?from=${encodeURIComponent(`/profile/subscriptions?feature=${feature}&returnTo=${encodeURIComponent(returnTo)}`)}`} className="mt-6 inline-block text-primary underline">Log in to view your subscriptions</Link></SubscriptionShell>;
-  return <SubscriptionShell title="Subscriptions">
-    <p className="mt-4 max-w-2xl text-muted-foreground">Manage publishing access for your personal account or organization. You can create and edit drafts at any time.</p>
-    <div className="mt-5 flex flex-wrap gap-3" aria-label="Subscription type">{[['organizer.publish_event', 'Event publishing'], ['author.publish_article', 'Article space']].map(([value, label]) => <button key={value} type="button" aria-pressed={feature === value} onClick={() => { setOptions(null); setParams({ feature: value }); }} className={`min-h-11 border px-4 text-sm ${feature === value ? 'border-primary text-primary' : 'border-border'}`}>{label}</button>)}</div>
+  if (!user) return <SubscriptionShell title="Your plan" embedded={embedded}><Link to={`/login?from=${encodeURIComponent(`/profile/subscriptions?feature=${feature}&returnTo=${encodeURIComponent(returnTo)}`)}`} className="mt-6 inline-block text-primary underline">Log in to view your subscriptions</Link></SubscriptionShell>;
+  return <SubscriptionShell title="Your plan" embedded={embedded}>
+    <p className="mt-4 max-w-2xl text-muted-foreground">Manage your YKCircle plan and premium features. You can create and edit drafts at any time.</p>
+    <div className="mt-5 flex flex-wrap gap-3" aria-label="Subscription type">{[['organizer.publish_event', 'Event publishing'], ['author.publish_article', 'Article space']].map(([value, label]) => <button key={value} type="button" aria-pressed={feature === value} onClick={() => { setOptions(null); setParams({ feature: value, returnTo }); }} className={`min-h-11 border px-4 text-sm ${feature === value ? 'border-primary text-primary' : 'border-border'}`}>{label}</button>)}</div>
     {error && <p role="alert" className="mt-5 text-destructive">{error}</p>}
     {!summary && !error && <p role="status" className="mt-6">Loading subscription…</p>}
     {options && !isArticle && <label className="mt-6 block max-w-md text-sm">Organizing account<select className={fieldClass} value={`${owner.type}:${owner.id}`} onChange={(event) => { const [type,id] = event.target.value.split(':'); setParams({ feature, ownerType: type, ownerId: id, returnTo }); }}>
@@ -69,7 +72,7 @@ export default function SubscriptionsPage() {
     {summary && <>
       <section className="mt-6 border border-border bg-secondary/30 p-5" aria-live="polite">
         <h2 className="text-xl font-semibold">{isArticle ? summary.hasSubscription ? 'Your article space' : 'Subscribe to publish articles' : summary.canPublish ? 'Publishing access enabled' : 'Subscribe to publish events'}</h2>
-        <p className="mt-2 text-sm text-muted-foreground">{isArticle ? `${summary.remaining} of ${summary.monthlyLimit} article spaces remaining this month. Resets ${dateLabel(summary.resetsAt)} (UTC). An active article subscription is required to publish. Unused spaces do not roll over.` : !summary.subscriptionsEnabled ? 'Early access: no subscription is currently required to publish.' : summary.canPublish ? `Access source: ${summary.accessSource?.replaceAll('_', ' ')}.` : 'Your drafts are saved. An active organizer subscription is required when you publish.'}</p>
+        <p className="mt-2 text-sm text-muted-foreground">{isArticle ? `${summary.remaining} of ${summary.monthlyLimit} article spaces remaining this month. Resets ${dateLabel(summary.resetsAt)} (UTC). An active article subscription is required to publish. Unused spaces do not roll over.` : !summary.subscriptionsEnabled ? "You’re using YKCircle during Early Access. Organizer features are currently free." : summary.canPublish ? 'Your plan includes Event publishing.' : 'Your drafts are saved. An active organizer subscription is required when you publish.'}</p>
         {polling && <p role="status" className="mt-3 text-sm">Confirming your subscription. This can take a few moments…</p>}
         {returning && !polling && !summary.entitlements.some((entry) => entry.feature === feature && entry.source === 'subscription') && <p className="mt-3 text-sm">Activation has not arrived yet. Refresh this page shortly. Please don’t purchase another subscription.</p>}
         {params.get('checkout') === 'cancelled' && <p className="mt-3 text-sm">Checkout was cancelled. Your draft is still available.</p>}
@@ -78,19 +81,18 @@ export default function SubscriptionsPage() {
       <section className="mt-8"><h2 className="font-display text-2xl font-semibold">Your subscriptions</h2>
         {!summary.subscriptions.length && <p className="mt-3 text-sm text-muted-foreground">No subscriptions for this account.</p>}
         <div className="mt-4 grid gap-4 sm:grid-cols-2">{summary.subscriptions.map((subscription) => <article key={subscription.id} className="min-w-0 border border-border p-5">
-          <h3 className="text-lg font-semibold">{subscription.planName}</h3><p className="mt-2 text-sm capitalize">{subscription.status.replaceAll('_',' ')}</p>
+          <h3 className="text-lg font-semibold">{subscription.planName}</h3>{subscription.amount != null && <p className="mt-2 text-sm">{formatMoney(subscription.amount, subscription.currency)} / {subscription.billingInterval}</p>}<p className="mt-2 text-sm capitalize">{subscriptionStatus(subscription)}</p>
           <p className="mt-2 text-sm text-muted-foreground">{subscription.cancelAtPeriodEnd ? 'Ends on' : 'Current period ends'} {dateLabel(subscription.currentPeriodEnd)}</p>
           {['active','trialing','past_due'].includes(subscription.status) && !subscription.cancelAtPeriodEnd && <button disabled={busy} className="mt-4 text-sm text-primary underline" onClick={() => { if (window.confirm('Cancel renewal at the end of the current billing period?')) run(async () => { await subscriptionRequest(`/api/subscriptions/${subscription.id}/cancel`, { owner }); setSummary(await subscriptionRequest(`/api/subscriptions/me?${query}`)); }); }}>Cancel renewal</button>}
         </article>)}</div>
         {!!summary.subscriptions.length && <button disabled={busy} className={`${buttonClass} mt-5`} onClick={() => run(async () => openBilling((await subscriptionRequest('/api/subscriptions/portal', { owner, feature })).url))}>Manage billing and invoices</button>}
       </section>
       {summary.subscriptionsEnabled && !existing && !returning && <section className="mt-8"><h2 className="font-display text-2xl font-semibold">Choose a plan</h2>
-        <label className="mt-4 block max-w-md text-sm">Billing profile<select value={profileId} onChange={(event) => setProfileId(event.target.value)} className={fieldClass}><option value="">Choose a billing profile</option>{matchingProfiles.map((profile) => <option key={profile.id} value={profile.id}>{profile.legalName}</option>)}</select></label>
-        {!matchingProfiles.length && <Link to="/account/billing" className="mt-3 inline-block text-sm text-primary underline">Add a billing profile for this account</Link>}
+        <BusinessIdentitySelector context="platform_buyer" profiles={matchingProfiles} value={profileId} onChange={setProfileId} onCreated={(saved) => setProfiles((current) => [...current.filter((item) => item.id !== saved.id), saved])} organizationId={owner.type === 'organization' ? owner.id : null} personalOnly={owner.type === 'user'} />
         {!options?.plans.length && <p className="mt-4 text-sm text-muted-foreground">Subscription plans are being configured. You can continue working on drafts.</p>}
         <div className="mt-5 grid gap-4 sm:grid-cols-2">{options?.plans.map((plan) => <article key={plan.priceId} className="min-w-0 border border-border p-5"><h3 className="text-xl font-semibold">{plan.name}</h3><p className="mt-2 text-sm text-muted-foreground">{plan.description || (isArticle ? `${summary.monthlyLimit} new articles per calendar month (UTC).` : 'Publish events with this organizing account.')}</p><p className="mt-4 text-2xl font-semibold">{new Intl.NumberFormat(undefined,{style:'currency',currency:plan.currency}).format(Number(plan.amount))}<span className="text-sm font-normal"> / {plan.billingInterval}</span></p><p className="mt-2 text-xs text-muted-foreground">Renews automatically. Cancel renewal at any time.</p><button className={`${buttonClass} mt-5`} disabled={busy || !profileId} onClick={() => run(async () => openBilling((await subscriptionRequest('/api/subscriptions/checkout', { owner, feature, priceId: plan.priceId, billingProfileId: Number(profileId), returnTo })).checkoutUrl))}>{busy ? 'Opening checkout…' : 'Subscribe'}</button></article>)}</div>
       </section>}
-      {!!summary.invoices.length && <section className="mt-8"><h2 className="text-xl font-semibold">Subscription invoices</h2><ul className="mt-4 space-y-3">{summary.invoices.map((invoice) => <li className="flex flex-wrap justify-between gap-2 border-b border-border py-3 text-sm" key={invoice.id}><span className="break-all">{invoice.id} · {invoice.status}</span>{invoice.hostedInvoiceUrl && <a className="text-primary underline" href={invoice.hostedInvoiceUrl} target="_blank" rel="noreferrer">View invoice</a>}</li>)}</ul></section>}
+      {!!summary.invoices.length && <section className="mt-8"><h2 className="text-xl font-semibold">Subscription invoices</h2><ul className="mt-4 space-y-3">{summary.invoices.map((invoice) => <li className="flex flex-wrap justify-between gap-2 border-b border-border py-3 text-sm" key={invoice.id}><span className="break-all">YKCircle · {invoice.status}</span>{invoice.hostedInvoiceUrl && <a className="text-primary underline" href={invoice.hostedInvoiceUrl} target="_blank" rel="noreferrer">View invoice</a>}</li>)}</ul></section>}
     </>}
   </SubscriptionShell>;
 }

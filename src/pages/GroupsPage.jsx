@@ -3,6 +3,7 @@ import { Helmet } from "react-helmet";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { Users } from "lucide-react";
 import SiteChrome from "@/components/SiteChrome";
+import DirectoryActions from '@/components/DirectoryActions';
 import ConfirmationDialog from "@/components/ConfirmationDialog";
 import ForumDiscussion from "@/components/ForumDiscussion";
 import { apiAssetUrl, apiFetch } from "@/lib/api";
@@ -1038,19 +1039,8 @@ export default function GroupsPage({
                 : "Join groups to hear when their organizers publish a new event."}
             </p>
           </div>
-          {canManageOwnGroups && (
-            <button
-              type="button"
-              onClick={() => {
-                setCreating((value) => !value);
-                setEditing(null);
-              }}
-              className="min-h-11 bg-primary px-5 text-sm text-primary-foreground"
-            >
-              {creating ? "Close" : "Create group"}
-            </button>
-          )}
         </div>
+        {canManageOwnGroups && <DirectoryActions manageTo={!managementOnly ? '/profile/groups' : null} manageLabel="Manage groups" createLabel={creating ? 'Close' : 'Create group'} onCreate={() => { setCreating(value => !value); setEditing(null); }} />}
         {creating && (
           <GroupForm
             onSave={saveGroup}
@@ -1067,7 +1057,6 @@ export default function GroupsPage({
             saving={saving}
           />
         )}
-        {!managementOnly && token && <Link to="/profile/groups" className="mt-6 inline-flex min-h-11 items-center border border-border px-4 text-sm">Manage groups</Link>}
         {!managementOnly && token && (
           <section className="mt-12">
             <h2 className="font-display text-3xl font-semibold">

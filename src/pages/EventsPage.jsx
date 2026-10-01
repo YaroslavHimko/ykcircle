@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Helmet } from "react-helmet";
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import SiteChrome from "@/components/SiteChrome";
+import DirectoryActions from '@/components/DirectoryActions';
 import MyEventsSection, { useAttendingEvents } from '@/components/MyEventsSection';
 import { RepresentativeEvents } from "@/components/EventRepresentatives";
 import { apiFetch } from "@/lib/api";
@@ -860,7 +861,7 @@ export default function EventsPage({
           </Link>
         )}
         {organizerView && !creationPage && !editPage && <RepresentativeEvents token={token} />}
-        {!managementOnly && token && <div className="mt-6 flex flex-wrap gap-4"><Link to="/profile/events" className="inline-flex min-h-11 items-center border border-border px-4 text-sm">Manage events</Link><Link to="/profile/events/new" className="inline-flex min-h-11 items-center text-sm text-primary underline">Create an event</Link></div>}
+        {!managementOnly && token && <DirectoryActions manageTo="/profile/events" manageLabel="Manage events" createTo="/profile/events/new" createLabel="Create an event" />}
         {!managementOnly && token && <MyEventsSection {...attending} />}
         {!managementOnly && (
           <nav aria-label="Event categories" className="mt-8 flex flex-wrap gap-2">

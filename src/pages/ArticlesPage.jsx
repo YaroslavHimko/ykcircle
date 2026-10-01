@@ -3,6 +3,7 @@ import { Helmet } from 'react-helmet';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Archive, ArrowLeft, FilePlus2, ImagePlus, Send, Trash2 } from 'lucide-react';
 import SiteChrome from '@/components/SiteChrome';
+import DirectoryActions from '@/components/DirectoryActions';
 import ConfirmationDialog from '@/components/ConfirmationDialog';
 import ArticleContent from '@/components/ArticleContent';
 import { articleDate, articleImageUrl, articleRequest, articleSlug } from '@/lib/articles';
@@ -106,11 +107,11 @@ function PublicListing({
   const ownedIds = new Set(own.articles.map(article => String(article.id)));
   const otherArticles = articles.filter(article => !token || !ownedIds.has(String(article.id)));
   const title = selected ? selected.name : tag ? `Articles tagged “${tag}”` : 'Stories, guides, and local knowledge.';
-  return <SiteChrome><Helmet><title>{selected ? `${selected.name} articles | YKCircle` : 'Articles | YKCircle'}</title><meta name="description" content="Guides, stories, and practical ideas for making more of life together." /><link rel="canonical" href={`${window.location.origin}${categorySlug ? `/articles/category/${categorySlug}` : '/articles'}`} /></Helmet><section className="mx-auto max-w-[76rem] px-5 pb-24 pt-32 sm:px-8 sm:pt-40"><div className="flex flex-wrap items-end justify-between gap-5"><div><p className="text-xs uppercase tracking-[0.3em] text-primary">YKCircle journal</p><h1 className="mt-3 max-w-3xl font-display text-5xl font-black leading-[0.95]">{title}</h1><p className="mt-5 max-w-2xl text-muted-foreground">Useful ideas, local perspective, and stories that help people make real plans together.</p></div><Link to={token ? '/profile/articles/new' : '/login?from=%2Fprofile%2Farticles%2Fnew'} className="inline-flex min-h-11 items-center gap-2 bg-primary px-5 text-sm text-primary-foreground"><FilePlus2 className="h-4 w-4" />New article</Link></div>
+  return <SiteChrome><Helmet><title>{selected ? `${selected.name} articles | YKCircle` : 'Articles | YKCircle'}</title><meta name="description" content="Guides, stories, and practical ideas for making more of life together." /><link rel="canonical" href={`${window.location.origin}${categorySlug ? `/articles/category/${categorySlug}` : '/articles'}`} /></Helmet><section className="mx-auto max-w-[76rem] px-5 pb-24 pt-32 sm:px-8 sm:pt-40"><div className="flex flex-wrap items-end justify-between gap-5"><div><p className="text-xs uppercase tracking-[0.3em] text-primary">YKCircle journal</p><h1 className="mt-3 max-w-3xl font-display text-5xl font-black leading-[0.95]">{title}</h1><p className="mt-5 max-w-2xl text-muted-foreground">Useful ideas, local perspective, and stories that help people make real plans together.</p></div></div>
+        <DirectoryActions manageTo={token ? '/profile/articles' : null} manageLabel="Manage articles" createTo={token ? '/profile/articles/new' : '/login?from=%2Fprofile%2Farticles%2Fnew'} createLabel="New article" />
         {token && <section className="mt-10" aria-labelledby="my-articles-title">
           <h2 id="my-articles-title" className="font-display text-3xl font-semibold">My Articles</h2>
           <p className="mt-3 text-sm text-muted-foreground">Your drafts, published articles, and archived stories. Select an article to edit it.</p>
-          {readUser()?.role === 'admin' && <Link to="/profile/articles" className="mt-3 inline-flex min-h-11 items-center text-sm text-primary underline">Manage articles</Link>}
           {own.error && <p role="alert" className="mt-5 text-destructive">{own.error}</p>}
           {own.loading ? <p role="status" className="mt-5 text-muted-foreground">Loading your articles…</p> : <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{own.articles.map(article => <ArticleCard key={article.id} article={article} editable />)}</div>}
           {!own.loading && !own.error && !own.articles.length && <p className="mt-5 text-muted-foreground">No articles yet. Create your first draft to begin.</p>}

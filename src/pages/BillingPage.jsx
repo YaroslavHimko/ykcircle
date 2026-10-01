@@ -1,116 +1,84 @@
-import React, { useCallback, useEffect, useState } from 'react';
+﻿import React, { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet';
-import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowRight, Building2, Check, ChevronDown, CreditCard, FileText, Landmark, Plus, Receipt } from 'lucide-react';
+import { Link, Navigate, useLocation, useParams, useSearchParams } from 'react-router-dom';
+import { BriefcaseBusiness, Building2, CreditCard, FileText, Ticket } from 'lucide-react';
 import SiteChrome from '@/components/SiteChrome';
 import BillingProfileEditor from '@/components/billing/BillingProfileEditor';
-import OrganizationEditor from '@/components/billing/OrganizationEditor';
+import BusinessIdentitySelector from '@/components/billing/BusinessIdentitySelector';
 import PaymentAccounts from '@/components/billing/PaymentAccounts';
-import { asList, billingRequest, ErrorNotice, primaryButton, secondaryButton } from '@/components/billing/shared';
+import { BusinessIdentityCard, PaymentCard, PaymentStatus } from '@/components/billing/PaymentCards';
+import { billingRequest, ErrorNotice, secondaryButton } from '@/components/billing/shared';
 import { safeBillingReturn } from '@/lib/billing';
+import { formatDate, formatMoney, legacyPaymentsPath, methodLabels, missingLabels, paymentTitles, subscriptionStatus, ticketStatus } from '@/lib/payments';
+import SubscriptionsPage from './SubscriptionsPage';
 import { PlatformBillingPage } from './FinancialPages';
-import { InvoicesPanel } from './InvoicesPage';
+import { DocumentsPanel } from './InvoicesPage';
 import VenueBillingPage from './VenueBillingPage';
 
-export function LegacyBillingRedirect({ section = 'profiles' }) {
+export function LegacyBillingRedirect({ section = 'overview' }) {
   const location = useLocation();
-  const params = new URLSearchParams(location.search);
-  if (!params.has('section')) params.set('section', section);
-  return <Navigate replace to={`/account/billing?${params}`} />;
+  return <Navigate replace to={legacyPaymentsPath(location.search, section)} />;
 }
-
-function BillingSection({ id, title, description, icon: Icon, open, onToggle, children }) {
-  return <section className="overflow-hidden rounded-lg border border-border bg-background"><h2><button type="button" aria-expanded={open} aria-controls={`billing-${id}`} onClick={onToggle} className="flex w-full items-center gap-4 p-5 text-left hover:bg-secondary/20 sm:p-6"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border bg-secondary/30"><Icon className="h-5 w-5 text-primary" /></span><span className="flex-1"><span className="block font-medium">{title}</span><span className="mt-1 block text-sm font-normal text-muted-foreground">{description}</span></span><ChevronDown className={`h-5 w-5 shrink-0 text-muted-foreground transition-transform ${open ? 'rotate-180' : ''}`} /></button></h2>{open && <div id={`billing-${id}`} className="border-t border-border p-5 sm:p-6">{children}</div>}</section>;
+function DashboardGroup({ title, children, split = false }) {
+  return <section className="space-y-4"><h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">{title}</h2><div className={`grid gap-4 ${split ? 'md:grid-cols-2' : ''}`}>{children}</div></section>;
 }
-
+function Overview({ data }) {
+  const { plan, ticketSellers, venuePayments, businesses } = data;
+  const current = plan.subscriptions.find((entry) => entry.feature === 'organizer.publish_event' && ['active', 'trialing', 'past_due', 'unpaid'].includes(entry.status));
+  const connected = ticketSellers.filter((seller) => seller.accounts.length);
+  const ticket = connected.find((seller) => seller.status !== 'ready') || connected[0];
+  const readyVenues = venuePayments.filter((venue) => venue.status === 'ready');
+  return <div className="space-y-9">
+    <DashboardGroup title="Your YKCircle account"><PaymentCard icon={CreditCard} title="Your plan" description="Manage your YKCircle plan and premium features." to="/account/payments/plan" action="Manage plan"><p className="text-lg font-medium">{current?.planName || (plan.earlyAccess ? 'Early Access' : 'No active plan')}</p>{current?.amount != null && <p className="text-sm">{formatMoney(current.amount, current.currency)} / {current.billingInterval}</p>}{current?.currentPeriodEnd && !current.cancelAtPeriodEnd && <p className="text-sm text-muted-foreground">Renews {formatDate(current.currentPeriodEnd)}</p>}<PaymentStatus state={current?.status || (plan.earlyAccess ? 'active' : 'unused')}>{current ? subscriptionStatus(current) : plan.earlyAccess ? 'Free during launch' : 'No active plan'}</PaymentStatus><p className="text-sm text-muted-foreground">{plan.earlyAccess ? 'Organizer tools and Event publishing are currently included.' : 'Payments you make to YKCircle for premium features.'}</p></PaymentCard></DashboardGroup>
+    <DashboardGroup title="Get paid" split><PaymentCard icon={Ticket} title="Ticket payments" description="Receive payments when people buy tickets to your Events." to="/account/payments/tickets" action={connected.length ? 'Manage ticket payments' : 'Set up ticket payments'}><PaymentStatus state={ticket?.status}>{ticket ? ticketStatus[ticket.status] : 'Not set up'}</PaymentStatus><p className="text-sm text-muted-foreground">{ticket?.sellerName || 'Set up payments when you start selling paid tickets.'}</p>{connected.length > 1 && <p className="text-sm text-muted-foreground">{connected.length} sellers</p>}</PaymentCard><PaymentCard icon={Building2} title="Venue payments" description="Configure how customers pay you when they book your Venues." to="/account/payments/venues" action="Manage Venue payments"><PaymentStatus state={readyVenues.length ? 'ready' : 'unused'}>{readyVenues.length ? `${readyVenues.length} ${readyVenues.length === 1 ? 'Venue' : 'Venues'} configured` : 'No paid Venue setup yet'}</PaymentStatus>{venuePayments.some((venue) => venue.status === 'incomplete') && <p className="text-sm">Some Venues need setup</p>}{readyVenues.slice(0, 2).map((venue) => <p key={venue.id} className="text-sm text-muted-foreground">{venue.name} · {venue.methods.map((method) => methodLabels[method] || 'Other').join(', ') || 'Your accounting system'}</p>)}</PaymentCard></DashboardGroup>
+    <DashboardGroup title="Business"><PaymentCard icon={BriefcaseBusiness} title="Business details" description="Personal and company information used for payments, invoices and selling." to="/account/payments/business" action="Manage business details"><p className="text-sm">{businesses.filter((profile) => profile.profileType === 'organization').length} {businesses.filter((profile) => profile.profileType === 'organization').length === 1 ? 'business' : 'businesses'}{businesses.some((profile) => profile.profileType === 'individual') ? ' + Personal' : ''}</p></PaymentCard></DashboardGroup>
+    <DashboardGroup title="Documents"><PaymentCard icon={FileText} title="Invoices & receipts" description="View Venue invoices and purchases made through YKCircle." to="/account/payments/documents" action="View invoices & receipts"><p className="text-sm">{data.unpaidInvoices ? `${data.unpaidInvoices} ${data.unpaidInvoices === 1 ? 'invoice' : 'invoices'} awaiting payment` : data.documents.length ? 'Venue and YKCircle documents' : 'No invoices or receipts yet'}</p></PaymentCard></DashboardGroup>
+  </div>;
+}
+export function VenuePaymentSummary({ venue, children }) {
+  return <article className="rounded-xl border border-border p-5 sm:p-6"><h2 className="font-display text-2xl font-semibold">{venue.name}</h2><div className="mt-4"><PaymentStatus state={venue.status}>{venue.status === 'ready' ? 'Ready to accept paid bookings' : venue.status === 'free' ? 'Free Venue · No payment setup needed' : 'Setup incomplete'}</PaymentStatus></div><dl className="mt-5 grid gap-4 text-sm sm:grid-cols-2">{[['Seller', venue.sellerName || 'Business details required'], ['Pricing', venue.status === 'free' ? 'Free' : `${formatMoney(venue.rate, venue.currency)}${venue.rate == null ? '' : ` / ${venue.unit.replaceAll('_', ' ')}`}`], ['Invoices', venue.invoiceMode === 'external' ? 'Your accounting system' : 'Created by YKCircle'], ['Customers pay via', venue.methods.map((method) => methodLabels[method] || 'Other').join(', ') || (venue.invoiceMode === 'external' ? 'Your invoice instructions' : 'Payment method required')], ['Payment terms', `${venue.paymentTermsDays} days`]].map(([label, value]) => <div key={label}><dt className="text-muted-foreground">{label}</dt><dd className="mt-1 font-medium">{value}</dd></div>)}</dl>{venue.missing.length > 0 && <div className="mt-5 text-sm"><p className="font-medium">Missing</p><ul className="mt-2 list-inside list-disc text-muted-foreground">{venue.missing.map((item) => <li key={item}>{missingLabels[item] || 'Payment settings'}</li>)}</ul></div>}<div className="mt-5">{children}</div></article>;
+}
 export default function BillingPage() {
-  const navigate = useNavigate();
+  const { area } = useParams();
   const [params, setParams] = useSearchParams();
-  const [profiles, setProfiles] = useState([]);
-  const [organizations, setOrganizations] = useState([]);
-  const [venues, setVenues] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [errors, setErrors] = useState({});
-  const [notice, setNotice] = useState('');
-  const [editor, setEditor] = useState(null);
-  const [organizationEditor, setOrganizationEditor] = useState(null);
-  const [expandedProfile, setExpandedProfile] = useState(null);
-  const [archiving, setArchiving] = useState(null);
+  const location = useLocation();
+  const [data, setData] = useState(null), [error, setError] = useState(''), [notice, setNotice] = useState('');
+  const [editor, setEditor] = useState(null), [archiving, setArchiving] = useState(false), [selectedSeller, setSelectedSeller] = useState('');
   const [revision, setRevision] = useState(0);
-  const section = params.get('section') || 'profiles';
-  const venueId = params.get('venueId');
-  const requestedOrganizationId = params.get('organizationId');
-  const newOrganization = params.get('new') === 'organization' && /^\d+$/.test(requestedOrganizationId || '');
+  const load = useCallback(async () => { setError(''); try { setData(await billingRequest('/api/account/payments-overview')); } catch (failure) { setError(failure.message); } }, []);
+  useEffect(() => { if (localStorage.getItem('authToken')) load(); }, [load]);
+  useEffect(() => {
+    if (data && params.get('new') === 'organization') {
+      const organization = data.organizations.find((item) => String(item.id) === params.get('organizationId'));
+      if (organization) setEditor(data.businesses.find((item) => Number(item.ownerOrganizationId) === Number(organization.id)) || { profileType: 'organization', ownerOrganizationId: organization.id, legalName: organization.name, billingEmail: organization.contactEmail || '' });
+    }
+  }, [data, params]);
   const returnTo = safeBillingReturn(params.get('returnTo'));
-
-  const load = useCallback(async () => {
-    if (!localStorage.getItem('authToken')) return;
-    setLoading(true);
-    const results = await Promise.allSettled([billingRequest('/api/me/billing-profiles'), billingRequest('/api/my/organizations'), billingRequest('/api/venues/mine')]);
-    const nextErrors = {};
-    [['profiles', setProfiles, 'profiles'], ['organizations', setOrganizations, 'organizations'], ['venues', setVenues, 'venues']].forEach(([key, setter, listKey], index) => {
-      if (results[index].status === 'fulfilled') setter(asList(results[index].value, listKey));
-      else nextErrors[key] = results[index].reason.message;
-    });
-    setErrors(nextErrors); setLoading(false);
-  }, []);
-  useEffect(() => { load(); }, [load]);
-  useEffect(() => { if (newOrganization) setEditor({ profileType: 'organization', ownerOrganizationId: requestedOrganizationId }); }, [newOrganization, requestedOrganizationId]);
-  const changeSection = (next, extra = {}) => {
-    setParams((current) => { const query = new URLSearchParams(current); query.set('section', next); Object.entries(extra).forEach(([key, value]) => value ? query.set(key, value) : query.delete(key)); return query; });
-  };
-  const closeEditor = () => {
-    setEditor(null);
-    if (params.has('new')) setParams((current) => { const query = new URLSearchParams(current); query.delete('new'); query.delete('organizationId'); return query; }, { replace: true });
-  };
-  const organizationSaved = (saved) => {
-    setOrganizations((current) => [...current.filter((item) => item.id !== saved.id), saved]);
-    setOrganizationEditor(null);
-  };
-  const profileSaved = (saved) => {
-    const wasNew = !editor.id;
-    setProfiles((current) => [...current.filter((item) => item.id !== saved.id).map((item) => saved.isDefault && Number(item.ownerOrganizationId || 0) === Number(saved.ownerOrganizationId || 0) ? { ...item, isDefault: false } : item), saved]);
-    setExpandedProfile(saved.id); closeEditor(); setRevision((value) => value + 1);
-    if (section === 'organizations') changeSection('profiles');
-    setNotice(wasNew ? 'Billing profile saved. You can now use it for purchases, or connect Stripe to collect ticket payments.' : 'Billing details updated.');
-    if (wasNew && returnTo) navigate(returnTo);
-  };
+  const venue = data?.venuePayments.find((item) => String(item.id) === params.get('venueId'));
+  const sellerId = selectedSeller || params.get('sellerId') || data?.ticketSellers.find((item) => item.accounts.length)?.profileId || data?.businesses[0]?.id || '';
+  const seller = data?.businesses.find((item) => String(item.id) === String(sellerId));
+  const closeEditor = () => { setEditor(null); if (params.has('new')) setParams((current) => { const next = new URLSearchParams(current); next.delete('new'); return next; }, { replace: true }); };
+  const saved = (profile) => { closeEditor(); setSelectedSeller(String(profile.id)); setRevision((value) => value + 1); setNotice('Business details saved.'); load(); };
   const archive = async (profile) => {
-    if (!window.confirm(`Archive ${profile.legalName}? Historical invoices and ticket orders remain available.`)) return;
-    setArchiving(profile.id); setNotice('');
-    try {
-      await billingRequest(`/api/me/billing-profiles/${profile.id}`, { method: 'DELETE' });
-      setProfiles((current) => current.filter((item) => item.id !== profile.id));
-      setRevision((value) => value + 1); setNotice('Billing profile archived. Historical invoices and ticket orders remain available.');
-    } catch (error) { setErrors((current) => ({ ...current, profiles: error.message })); } finally { setArchiving(null); }
+    if (!window.confirm(`Archive ${profile.legalName}? Historical invoices and orders remain available.`)) return;
+    setArchiving(true);
+    try { await billingRequest(`/api/me/billing-profiles/${profile.id}`, { method: 'DELETE' }); await load(); setNotice('Business details archived.'); } catch (failure) { setError(failure.message); } finally { setArchiving(false); }
   };
-  if (!localStorage.getItem('authToken')) return <Navigate replace to={`/login?from=${encodeURIComponent(`/account/billing?${params}`)}`} />;
-
-  return <SiteChrome><Helmet><title>Billing & organizations | YKCircle</title><meta name="robots" content="noindex" /></Helmet><section className="mx-auto max-w-5xl px-5 pb-24 pt-32 sm:px-8 sm:pt-40">
-    <p className="text-xs font-medium uppercase tracking-[0.25em] text-primary">Your account</p>
-    <div className="mt-3"><h1 className="font-display text-4xl font-bold sm:text-5xl">Billing & organizations</h1><p className="mt-3 max-w-xl text-muted-foreground">Your details, payments, and invoices. All in one place.</p></div>
-    {notice && <p role="status" className="mt-6 rounded-md border border-primary/25 bg-primary/5 p-4 text-sm">{notice}</p>}
-    {loading ? <p role="status" className="mt-10 text-muted-foreground">Loading your billing details…</p> : <>
-      {!profiles.length && !errors.profiles && <section className="mt-8 rounded-lg border border-primary/20 bg-primary/5 p-6 sm:p-8"><p className="text-xs font-semibold uppercase tracking-widest text-primary">Get started</p><h2 className="mt-2 font-display text-3xl font-semibold">Set up billing, one step at a time.</h2><p className="mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground">Add your personal or organization details once, then use them for purchases, venue invoices, and paid tickets. Free events don’t need billing setup.</p><ol className="my-6 grid gap-4 text-sm sm:grid-cols-3">{['Choose your identity', 'Add invoice details', 'Review and start using'].map((label, index) => <li key={label} className="flex items-center gap-3"><span className="flex h-7 w-7 items-center justify-center rounded-full border border-primary/30 text-xs text-primary">{index + 1}</span>{label}</li>)}</ol><button onClick={() => setEditor({})} className={primaryButton}>Set up billing<ArrowRight className="h-4 w-4" /></button></section>}
-      <div className="mt-8 space-y-4">
-        <BillingSection id="profiles" icon={CreditCard} title="Billing details & payments" description={`${profiles.length} billing ${profiles.length === 1 ? 'profile' : 'profiles'} · Personal and organization details, connected Stripe accounts`} open={section === 'profiles'} onToggle={() => changeSection(section === 'profiles' ? 'overview' : 'profiles')}>
-          <div className="mb-5 flex flex-wrap items-center justify-between gap-3"><p className="max-w-lg text-sm text-muted-foreground">Choose who pays or receives payments. Each profile holds the legal details used on invoices.</p><button onClick={() => setEditor({})} className={secondaryButton}><Plus className="h-4 w-4" />Add billing profile</button></div><ErrorNotice error={errors.profiles} />
-          <div className="divide-y divide-border">{profiles.map((profile) => <article key={profile.id} className="py-4"><div className="flex flex-wrap items-center justify-between gap-3"><button type="button" aria-expanded={expandedProfile === profile.id} onClick={() => setExpandedProfile(expandedProfile === profile.id ? null : profile.id)} className="flex min-w-0 flex-1 items-center gap-3 text-left"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary"><FileText className="h-4 w-4" /></span><span className="min-w-0"><span className="flex flex-wrap items-center gap-2 font-medium">{profile.legalName}{profile.isDefault && <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">Default</span>}</span><span className="mt-1 block break-words text-xs text-muted-foreground">{profile.profileType === 'organization' ? 'Organization' : 'Individual'} · {profile.billingEmail}</span></span><ChevronDown className={`ml-auto h-4 w-4 shrink-0 ${expandedProfile === profile.id ? 'rotate-180' : ''}`} /></button><button type="button" onClick={() => setEditor(profile)} className={secondaryButton}>Edit<span className="sr-only"> {profile.legalName}</span></button></div>{expandedProfile === profile.id && <div className="mt-5 space-y-5 rounded-md border border-border p-4 sm:p-5"><div className="flex flex-wrap justify-between gap-4"><div><p className="flex items-center gap-2 text-sm font-medium"><Check className="h-4 w-4 text-primary" />Billing profile saved</p><p className="mt-2 text-sm text-muted-foreground">{[profile.addressLine1, profile.postalCode, profile.city, profile.country].filter(Boolean).join(', ')}</p></div><button type="button" disabled={archiving !== null} onClick={() => archive(profile)} className="text-sm text-destructive underline disabled:opacity-50">{archiving === profile.id ? 'Archiving…' : 'Archive profile'}</button></div><div className="border-t border-border pt-5"><PaymentAccounts profile={profile} /></div></div>}</article>)}</div>
-        </BillingSection>
-        <BillingSection id="organizations" icon={Building2} title="Organizations" description={`${organizations.length} ${organizations.length === 1 ? 'organization' : 'organizations'} · Business information and contact details`} open={section === 'organizations'} onToggle={() => changeSection(section === 'organizations' ? 'overview' : 'organizations')}>
-          <ErrorNotice error={errors.organizations} /><div className="mb-4 flex flex-wrap items-center justify-between gap-3"><p className="text-sm text-muted-foreground">Manage the organizations behind your venues and billing profiles.</p><button type="button" onClick={() => setOrganizationEditor({})} className={secondaryButton}><Plus className="h-4 w-4" />Add organization</button></div><div className="divide-y divide-border">{organizations.map((organization) => <article key={organization.id} className="flex flex-wrap items-center justify-between gap-4 py-4"><div><h3 className="font-medium">{organization.name}</h3><p className="mt-1 text-sm text-muted-foreground">{organization.contactEmail || 'No contact email added'}</p></div><div className="flex flex-wrap gap-2"><button onClick={() => setEditor({ profileType: 'organization', ownerOrganizationId: organization.id, legalName: organization.name, billingEmail: organization.contactEmail || '' })} className={secondaryButton}>Add billing profile</button><button onClick={() => setOrganizationEditor(organization)} className={secondaryButton}>Edit<span className="sr-only"> {organization.name}</span></button></div></article>)}</div>{!organizations.length && !errors.organizations && <p className="py-4 text-sm text-muted-foreground">Add an organization here, or create one during billing setup.</p>}
-        </BillingSection>
-        <BillingSection id="platform" icon={Receipt} title="Plans & purchases" description="YKCircle services, platform payments, and subscriptions" open={section === 'platform'} onToggle={() => changeSection(section === 'platform' ? 'overview' : 'platform')}><PlatformBillingPage embedded key={revision} onAddProfile={() => setEditor({})} /></BillingSection>
-        <BillingSection id="invoices" icon={FileText} title="Invoices" description={venueId && section === 'invoices' ? `Invoices for ${venues.find((venue) => String(venue.id) === String(venueId))?.name || 'selected venue'}` : 'View and download venue and platform invoices'} open={section === 'invoices'} onToggle={() => changeSection(section === 'invoices' ? 'overview' : 'invoices')}>
-          {venues.length > 0 && <label className="mb-5 block text-sm font-medium">Filter by venue<select value={venueId || ''} onChange={(event) => changeSection('invoices', { venueId: event.target.value })} className="mt-2 min-h-11 w-full rounded-md border border-border bg-background px-3"><option value="">All invoices</option>{venues.map((venue) => <option key={venue.id} value={venue.id}>{venue.name}</option>)}</select></label>}
-          <InvoicesPanel venueId={section === 'invoices' ? venueId : null} venueName={venues.find((venue) => String(venue.id) === String(venueId))?.name || ''} />
-        </BillingSection>
-        <BillingSection id="venues" icon={Landmark} title="Venue billing" description="Seller details, invoice settings, and payment instructions for each venue" open={section === 'venues'} onToggle={() => changeSection(section === 'venues' ? 'overview' : 'venues')}>
-          <ErrorNotice error={errors.venues} />{venues.length > 0 && <label className="mb-6 block text-sm font-medium">Venue<select value={venueId || ''} onChange={(event) => changeSection('venues', { venueId: event.target.value })} className="mt-2 min-h-11 w-full rounded-md border border-border bg-background px-3"><option value="">Choose a venue</option>{venues.map((venue) => <option key={venue.id} value={venue.id}>{venue.name}</option>)}</select></label>}{venueId ? <VenueBillingPage key={venueId} venueId={venueId} profileRevision={revision} embedded onAddProfile={(organizationId) => { if (organizationId) setEditor({ profileType: 'organization', ownerOrganizationId: organizationId }); else setEditor({}); }} /> : <p className="text-sm text-muted-foreground">{venues.length ? 'Choose a venue to manage its billing settings here.' : 'Your venues will appear here once you have a listing.'} <Link to="/profile/venues" className="text-primary underline">Manage venues</Link></p>}
-        </BillingSection>
-      </div>{Object.keys(errors).length > 0 && <div className="mt-5 space-y-3"><ErrorNotice error="Some billing information could not be loaded. Open the relevant section for details, or try again." /><button type="button" onClick={load} className={secondaryButton}>Reload billing information</button></div>}
-    </>}
-    {editor && <BillingProfileEditor profile={editor} organizations={organizations} onOrganizationSaved={organizationSaved} onSaved={profileSaved} onClose={closeEditor} />}
-    {organizationEditor && <OrganizationEditor organization={organizationEditor} onSaved={(saved) => { organizationSaved(saved); setNotice('Organization details saved.'); }} onClose={() => setOrganizationEditor(null)} />}
-  </section></SiteChrome>;
+  if (!localStorage.getItem('authToken')) return <Navigate replace to={`/login?from=${encodeURIComponent(location.pathname + location.search)}`} />;
+  if (area && !paymentTitles[area]) return <Navigate replace to="/account/payments" />;
+  const title = paymentTitles[area] || 'Payments & business';
+  return <SiteChrome><Helmet><title>{title} | YKCircle</title><meta name="robots" content="noindex" /></Helmet><main className="mx-auto max-w-5xl px-5 pb-24 pt-32 sm:px-8 sm:pt-40">
+    <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground"><Link to="/profile" className="inline-flex min-h-11 items-center hover:underline">Your account</Link>{area && <><span aria-hidden="true">/</span><Link to="/account/payments" className="inline-flex min-h-11 items-center hover:underline">Payments & business</Link></>}<span aria-hidden="true">/</span><span aria-current="page">{title}</span></nav>
+    <h1 className="mt-3 font-display text-4xl font-bold sm:text-5xl">{title}</h1><p className="mt-4 max-w-2xl leading-relaxed text-muted-foreground">{({ plan: 'Payments you make to YKCircle for premium features.', tickets: 'Ticket payments are used when attendees buy paid Event tickets. Money is processed for the Event seller.', venues: 'Payments you receive from organizers booking your Venue.', business: 'Legal and contact information used on payments and invoices.', documents: 'Financial documents from Venue bookings and YKCircle purchases.' })[area] || 'Manage what you pay for, how you receive money, and the business details used for transactions.'}</p>
+    {returnTo && <Link to={returnTo} className="mt-4 inline-flex min-h-11 items-center text-sm text-primary underline">Return to where you started</Link>}{notice && <p role="status" className="mt-5 text-sm text-primary">{notice}</p>}{error && <div className="mt-6"><ErrorNotice error={error} /><button className={secondaryButton} onClick={load}>Try again</button></div>}{!data && !error && <p role="status" className="mt-8">Loading payments and business details…</p>}
+    {data && <div className="mt-9">
+      {!area && <Overview data={data} />}
+      {area === 'plan' && <><SubscriptionsPage embedded /><details className="mt-8 rounded-lg border border-border p-5"><summary className="min-h-11 cursor-pointer font-medium">Other YKCircle purchases</summary><PlatformBillingPage embedded /></details></>}
+      {area === 'tickets' && <div className="space-y-6">{!data.ticketSellers.some((item) => item.accounts.length) && <div className="rounded-xl bg-secondary/40 p-6"><h2 className="font-display text-2xl font-semibold">Not selling tickets yet?</h2><p className="mt-2 text-sm text-muted-foreground">You only need to set up ticket payments when you want to sell paid Event tickets.</p></div>}<BusinessIdentitySelector context="ticket_seller" profiles={data.businesses} value={sellerId} onChange={setSelectedSeller} onCreated={saved} />{seller && <section className="rounded-xl border border-border p-6"><h2 className="font-display text-2xl font-semibold">{seller.legalName}</h2><PaymentAccounts key={`${seller.id}-${revision}`} profile={seller} returnTo={returnTo || '/account/payments'} onUpdated={load} /></section>}</div>}
+      {area === 'business' && <><div className="mb-6 flex flex-wrap items-center justify-between gap-4"><p className="text-sm text-muted-foreground">Reuse your existing details across payments and purchases.</p><button type="button" onClick={() => setEditor({})} className={secondaryButton}>Add business</button></div>{!data.businesses.some((item) => item.profileType === 'organization') && <p className="mb-5 text-sm text-muted-foreground">No business added yet. Add business details when you organize Events, sell tickets or operate a Venue as a company.</p>}<div className="space-y-4">{data.businesses.map((profile) => <BusinessIdentityCard key={profile.id} profile={profile} ticket={data.ticketSellers.find((item) => item.profileId === profile.id)} onEdit={setEditor} onArchive={archive} archiving={archiving} />)}</div></>}
+      {area === 'venues' && <div className="space-y-5">{!data.venuePayments.length && <div className="rounded-xl border border-border p-6"><h2 className="font-display text-2xl font-semibold">No paid Venue setup yet.</h2><p className="my-4 text-sm text-muted-foreground">When you list a paid Venue, you’ll configure how customers pay you for bookings.</p><Link to="/profile/venues" className={secondaryButton}>Manage Venues</Link></div>}{(venue ? [venue] : data.venuePayments).map((item) => <VenuePaymentSummary key={item.id} venue={item}><Link className={secondaryButton} to={`/account/payments/venues?${new URLSearchParams({ venueId: item.id, edit: '1', ...(returnTo ? { returnTo } : {}) })}`}>{item.status === 'incomplete' ? 'Complete setup' : 'Edit Venue payment settings'}</Link><Link to={`/profile/venues/${item.id}/calendar`} className="ml-4 inline-flex min-h-11 items-center text-sm text-primary underline">Edit pricing</Link></VenuePaymentSummary>)}{venue && params.get('edit') === '1' && <VenueBillingPage embedded key={venue.id} venueId={venue.id} profileRevision={revision} onSaved={load} />}{venue && <Link to="/account/payments/venues" className="inline-flex min-h-11 items-center text-sm text-primary underline">All Venue payments</Link>}</div>}
+      {area === 'documents' && <DocumentsPanel documents={data.documents} venueId={params.get('venueId')} />}
+    </div>}
+    {editor && <BillingProfileEditor profile={editor} organizations={data?.organizations || []} existingProfiles={data?.businesses || []} onOrganizationSaved={(organization) => setData((current) => ({ ...current, organizations: [...current.organizations, organization] }))} onSaved={saved} onClose={closeEditor} />}
+  </main></SiteChrome>;
 }

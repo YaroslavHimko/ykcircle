@@ -18,7 +18,7 @@ export default function OrganizationEditor({ organization, onSaved, onClose }) {
   };
   return <Dialog open onOpenChange={(open) => { if (!open && !saving) onClose(); }}><DialogContent className="max-h-[90dvh] max-w-xl overflow-y-auto">
     <DialogTitle>{form.id ? 'Edit organization' : 'Add organization'}</DialogTitle>
-    <DialogDescription>Your organization owns its venues and organization billing profiles. Invoice details are managed in its billing profile.</DialogDescription>
+    <DialogDescription>Your organization brings together your team, Events and Venues. Manage legal and payment information under Business details.</DialogDescription>
     <form onSubmit={save} className="space-y-5"><fieldset disabled={saving} className="grid gap-4 sm:grid-cols-2">
       <Field label="Organization name" required minLength={2} maxLength={160} value={form.name} onChange={set('name')} />
       <Field label="Organization URL name" maxLength={180} value={form.slug} placeholder="Generated from your name" onChange={set('slug')} />

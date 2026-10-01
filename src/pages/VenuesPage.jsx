@@ -136,7 +136,7 @@ export function VenueBookingsPage() {
         setReviewing(null);
         setBillingSetupBlocked(true);
         const missing = Array.isArray(data.missing) && data.missing.length ? ` Missing: ${data.missing.join(", ")}.` : "";
-        setNotification(`${data.error || "Complete the Venue booking and billing setup before approving this paid booking."}${missing}`);
+        setNotification(`${data.error || "Complete the Venue payment setup before approving this paid booking."}${missing}`);
         return;
       }
       if (!response.ok) throw new Error(errorText(data, "Unable to update booking."));
@@ -150,7 +150,7 @@ export function VenueBookingsPage() {
 
   return <Shell title="Venue requests">
     <Link to="/profile/venues" className="text-sm text-primary underline">Back to my venues</Link>
-    <Link to={`/profile/venues/${id}/billing`} className="ml-4 text-sm text-primary underline">Booking & billing settings</Link>
+    <Link to={`/account/payments/venues?venueId=${id}&edit=1&returnTo=${encodeURIComponent(window.location.pathname)}`} className="ml-4 text-sm text-primary underline">Venue payments</Link>
     <h1 className="mt-5 font-display text-4xl font-bold">Venue requests</h1>
     <p className="mt-3 max-w-2xl text-muted-foreground">Direct venue inquiries and event bookings are separate request types. Both are shown below.</p>
     {error && <Error text={error} />}
@@ -200,7 +200,7 @@ export function VenueBookingsPage() {
         <div className="mt-6 flex flex-wrap justify-end gap-3"><button type="button" onClick={() => setReviewing(null)} className="border border-border px-4 py-2 text-sm">Cancel</button><button className={reviewing.status === "confirmed" ? "bg-primary px-4 py-2 text-sm text-primary-foreground" : "border border-destructive px-4 py-2 text-sm text-destructive"}>{reviewing.status === "confirmed" ? "Confirm booking" : "Decline booking"}</button></div>
       </form>
     </div>}
-    {notification && <p role="alert" className="fixed bottom-6 left-5 z-[60] max-w-md border border-destructive/30 bg-background px-4 py-3 text-sm text-destructive shadow-lg sm:left-auto sm:right-6">{notification}{billingSetupBlocked && <> <Link to={`/profile/venues/${id}/billing`} className="font-medium underline">Complete billing setup</Link></>}</p>}
+    {notification && <p role="alert" className="fixed bottom-6 left-5 z-[60] max-w-md border border-destructive/30 bg-background px-4 py-3 text-sm text-destructive shadow-lg sm:left-auto sm:right-6">{notification}{billingSetupBlocked && <> <Link to={`/account/payments/venues?venueId=${id}&edit=1&returnTo=${encodeURIComponent(window.location.pathname)}`} className="font-medium underline">Complete Venue payment setup</Link></>}</p>}
   </Shell>;
 }
 
