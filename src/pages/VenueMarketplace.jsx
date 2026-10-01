@@ -2,7 +2,7 @@ import { useProductConfiguration } from '@/lib/product-configuration';
 import LogoUpload from "@/components/LogoUpload";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Helmet } from "react-helmet";
-import { Link as RouterLink, useNavigate, useParams } from "react-router-dom";
+import { Link as RouterLink, Navigate, useNavigate, useParams } from "react-router-dom";
 import { Check, ChevronLeft, ChevronRight, Heart, MapPin, Users, X } from "lucide-react";
 import SiteChrome from "@/components/SiteChrome";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -129,8 +129,30 @@ function FilterSelect({ label, value, onChange, options, placeholder }) {
 
 export function VenuesDiscoveryPage({ city: routeCity = "", venueType: routeVenueType = "" }) {
   const taxonomy = useTaxonomy();
+  const [token, setToken] = useState(() => localStorage.getItem("authToken"));
+  const [saved, setSaved] = useState({ loading: Boolean(token), error: "", venues: [] });
+  const [savedRevision, setSavedRevision] = useState(0);
   const [filters, setFilters] = useState({ city: routeCity.replace(/-/g, " "), venueType: routeVenueType, eventType: "", amenity: "", minCapacity: "", maxCapacity: "", maxPrice: "", verified: false });
   const [state, setState] = useState({ loading: true, error: "", venues: [] });
+  useEffect(() => {
+    const refreshAuth = () => setToken(localStorage.getItem("authToken"));
+    window.addEventListener("auth-change", refreshAuth);
+    return () => window.removeEventListener("auth-change", refreshAuth);
+  }, []);
+  useEffect(() => {
+    if (!token) { setSaved({ loading: false, error: "", venues: [] }); return; }
+    let active = true;
+    setSaved({ loading: true, error: "", venues: [] });
+    apiFetch("/api/my/saved-venues", { headers: { Authorization: `Bearer ${token}` } })
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok) throw new Error(getError(data, "Unable to load saved venues."));
+        const venues = asList(data, "venues").map((item) => normalizeVenue(item.venue || item)).filter((venue) => venue.id != null);
+        if (active) setSaved({ loading: false, error: "", venues });
+      })
+      .catch((error) => { if (active) setSaved({ loading: false, error: error.message, venues: [] }); });
+    return () => { active = false; };
+  }, [token, savedRevision]);
   useEffect(() => setFilters((current) => ({ ...current, city: routeCity.replace(/-/g, " "), venueType: routeVenueType })), [routeCity, routeVenueType]);
   const load = useCallback(async () => {
     setState((current) => ({ ...current, loading: true, error: "" }));
@@ -146,7 +168,14 @@ export function VenuesDiscoveryPage({ city: routeCity = "", venueType: routeVenu
   useEffect(() => { load(); }, [load]);
   const setFilter = (key) => (value) => setFilters((current) => ({ ...current, [key]: value }));
   const title = routeCity ? `Venues in ${humanize(routeCity)}` : "Find a venue for your next event";
+  const savedIds = new Set(saved.venues.map((venue) => String(venue.id)));
+  const otherVenues = state.venues.filter((venue) => !savedIds.has(String(venue.id)));
   return <Shell title={title} description="Discover spaces for meetups, workshops, celebrations and community events."><div className="max-w-3xl"><p className="text-xs uppercase tracking-[0.28em] text-primary">Venue marketplace</p><h1 className="mt-3 font-display text-4xl font-bold sm:text-5xl">{title}</h1><p className="mt-4 text-muted-foreground">Find spaces that fit your people, plan and budget. Send a request—no payment or booking is completed here.</p></div>
+    {token && <section id="saved-venues" aria-labelledby="saved-venues-title" className="mt-10 scroll-mt-8">
+      <h2 id="saved-venues-title" className="font-display text-3xl font-semibold">Saved Venues</h2>
+      {saved.error ? <ErrorState error={saved.error} retry={() => setSavedRevision((value) => value + 1)} /> : saved.loading ? <div className="mt-5 grid gap-5 md:grid-cols-2 lg:grid-cols-3">{[1, 2, 3].map((item) => <VenueCardSkeleton key={item} />)}</div> : saved.venues.length ? <div className="mt-5 grid gap-5 md:grid-cols-2 lg:grid-cols-3">{saved.venues.map((venue) => <VenueCard key={venue.id} venue={venue} />)}</div> : <p className="mt-4 text-sm text-muted-foreground">Save a venue using the heart on its page. Your saved venues will appear here.</p>}
+    </section>}
+    {token && <h2 className="mt-12 font-display text-3xl font-semibold">Browse venues</h2>}
     <form onSubmit={(event) => { event.preventDefault(); load(); }} className="mt-9 grid gap-3 border border-border bg-secondary/20 p-4 sm:grid-cols-2 lg:grid-cols-4">
       <label className="block text-sm font-medium">Location<input value={filters.city} onChange={(event) => setFilter("city")(event.target.value)} placeholder="City or area" className={inputClass} /></label>
       <FilterSelect label="Venue type" value={filters.venueType} onChange={setFilter("venueType")} options={taxonomy.value.venueTypes} placeholder="Any type" />
@@ -159,7 +188,7 @@ export function VenuesDiscoveryPage({ city: routeCity = "", venueType: routeVenu
       <div className="flex items-end"><button className="min-h-11 w-full bg-primary px-4 text-sm font-medium text-primary-foreground">Search venues</button></div>
       {taxonomy.error && <p className="sm:col-span-2 lg:col-span-4 text-sm text-muted-foreground">Filters are unavailable right now; you can still search by location.</p>}
     </form>
-    {state.error ? <ErrorState error={state.error} retry={load} /> : state.loading ? <div className="mt-9 grid gap-5 md:grid-cols-2 lg:grid-cols-3">{[1, 2, 3, 4, 5, 6].map((item) => <VenueCardSkeleton key={item} />)}</div> : state.venues.length ? <div className="mt-9 grid gap-5 md:grid-cols-2 lg:grid-cols-3">{state.venues.map((venue) => <VenueCard key={venue.id} venue={venue} />)}</div> : <p className="mt-9 border border-border p-6 text-muted-foreground">No venues found for these filters.</p>}
+    {state.error ? <ErrorState error={state.error} retry={load} /> : state.loading || (token && saved.loading) ? <div className="mt-9 grid gap-5 md:grid-cols-2 lg:grid-cols-3">{[1, 2, 3, 4, 5, 6].map((item) => <VenueCardSkeleton key={item} />)}</div> : otherVenues.length ? <div className="mt-9 grid gap-5 md:grid-cols-2 lg:grid-cols-3">{otherVenues.map((venue) => <VenueCard key={venue.id} venue={venue} />)}</div> : <p className="mt-9 border border-border p-6 text-muted-foreground">{state.venues.length ? "All matching venues are in your Saved Venues area above." : "No venues found for these filters."}</p>}
   </Shell>;
 }
 
@@ -350,9 +379,7 @@ function Input({ label, required, type = "text", value, onChange, min, max }) { 
 function CheckOption({ item, checked, onChange }) { return <label className="flex min-h-11 items-center gap-2 border border-border px-3 text-sm"><input type="checkbox" checked={checked} onChange={onChange} />{item.name || humanize(item.slug || item)}</label>; }
 
 export function SavedVenuesPage() {
-  const [state, setState] = useState({ loading: true, error: "", venues: [] }); const navigate = useNavigate();
-  const load = useCallback(async () => { if (!localStorage.getItem("authToken")) return navigate(`/login?from=${encodeURIComponent("/profile/saved-venues")}`); setState((current) => ({ ...current, loading: true, error: "" })); try { const response = await apiFetch("/api/my/saved-venues", { headers: authHeaders() }); const data = await response.json(); if (!response.ok) throw new Error(getError(data, "Unable to load saved venues.")); setState({ loading: false, error: "", venues: asList(data, "venues").length ? asList(data, "venues") : asList(data, "savedVenues") }); } catch (error) { setState((current) => ({ ...current, loading: false, error: error.message })); } }, [navigate]); useEffect(() => { load(); }, [load]);
-  return <Shell title="Saved venues" noindex><h1 className="font-display text-4xl font-bold">My saved venues</h1>{state.error ? <ErrorState error={state.error} retry={load} /> : state.loading ? <div className="mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-3">{[1, 2, 3].map((item) => <VenueCardSkeleton key={item} />)}</div> : state.venues.length ? <div className="mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-3">{state.venues.map((item) => <VenueCard key={item.venue?.id || item.id} venue={item.venue || item} />)}</div> : <p className="mt-8 border border-border p-6 text-muted-foreground">You have not saved any venues yet.</p>}</Shell>;
+  return <Navigate to="/venues#saved-venues" replace />;
 }
 
 export function VenueCityOrDetailPage() {

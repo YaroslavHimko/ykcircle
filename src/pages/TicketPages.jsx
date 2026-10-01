@@ -130,6 +130,8 @@ export function TicketCheckoutPage() {
 }
 
 export function TicketsPage({ success = false }) {
+  const location = useLocation();
+  const eventId = new URLSearchParams(location.search).get("eventId");
   const [orders, setOrders] = useState([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -147,10 +149,12 @@ export function TicketsPage({ success = false }) {
     const timer = setInterval(load, 15000);
     return () => { active = false; clearInterval(timer); };
   }, []);
-  return <Shell title="My tickets">
+  const visibleOrders = eventId ? orders.filter((order) => String(order.eventId) === eventId && order.paymentStatus === "paid") : orders;
+  return <Shell title={eventId ? "Your event tickets" : "My tickets"}>
+    {eventId && <Link to="/profile/my-events" className="mt-4 inline-block text-sm text-primary underline">Back to My events</Link>}
     {success && <p className="mt-5">Open your order to check payment confirmation and view your tickets.</p>}
     <ErrorNotice message={error} />
-    {loading ? <p className="mt-8">Loading tickets…</p> : <div className="mt-7 space-y-3">{orders.map((order) => <Link key={order.id} to={"/tickets/" + order.id} className="block border border-border p-5 hover:border-primary"><div className="flex justify-between gap-3"><span>{order.orderNumber}</span><span className="capitalize">{order.paymentStatus}</span></div><p className="mt-2 text-sm">{money(order.totalAmount, order.currency)}</p></Link>)}{!orders.length && <p>No ticket orders yet.</p>}</div>}
+    {loading ? <p className="mt-8">Loading tickets…</p> : <div className="mt-7 space-y-3">{visibleOrders.map((order) => <Link key={order.id} to={"/tickets/" + order.id} className="block border border-border p-5 hover:border-primary"><div className="flex justify-between gap-3"><span>{order.orderNumber}</span><span className="capitalize">{order.paymentStatus}</span></div><p className="mt-2 text-sm">{money(order.totalAmount, order.currency)}</p></Link>)}{!visibleOrders.length && <p>{eventId ? "No issued ticket orders for this event." : "No ticket orders yet."}</p>}</div>}
   </Shell>;
 }
 

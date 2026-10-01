@@ -296,7 +296,14 @@ export default function EventDetailPage() {
   const [registrationStatus, setRegistrationStatus] = useState("");
   const [registered, setRegistered] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [confirmationBusy, setConfirmationBusy] = useState(false);
   const [confirmationMessage, setConfirmationMessage] = useState("");
+  const [finishingEvent, setFinishingEvent] = useState(false);
+  const [followups, setFollowups] = useState(null);
+  const [followupDrafts, setFollowupDrafts] = useState({ attended: { subject: "", body: "" }, no_show: { subject: "", body: "" } });
+  const [followupBusy, setFollowupBusy] = useState("");
+  const [followupMessage, setFollowupMessage] = useState("");
+  const [followupError, setFollowupError] = useState("");
   const [venues, setVenues] = useState([]);
   const [billingProfiles, setBillingProfiles] = useState([]);
   const [buyerBillingProfileId, setBuyerBillingProfileId] = useState("");
@@ -311,6 +318,21 @@ export default function EventDetailPage() {
     const timer = window.setTimeout(() => setError(""), 5000);
     return () => window.clearTimeout(timer);
   }, [error]);
+  const refreshFollowups = async (prefill = false) => {
+    const response = await apiFetch(`/api/events/${id}/followups`, { headers: { Authorization: `Bearer ${token}` } });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Unable to load follow-up emails.");
+    setFollowups(data);
+    if (prefill) setFollowupDrafts({
+      attended: data.templates.attended || { subject: `Thank you for joining ${event.title}`, body: "Thank you for joining us. We hope you enjoyed the event and look forward to seeing you again." },
+      no_show: data.templates.no_show || { subject: `We missed you at ${event.title}`, body: "We missed you at the event. We hope to see you another time." },
+    });
+    return data;
+  };
+  useEffect(() => {
+    if (!canManageEvents || event?.status !== "Completed") return;
+    refreshFollowups(true).catch((requestError) => setFollowupError(requestError.message));
+  }, [canManageEvents, event?.status, id, token]);
   const sameIdentifier = (left, right) =>
     left !== undefined &&
     left !== null &&
@@ -799,24 +821,41 @@ export default function EventDetailPage() {
     setPendingRegistration(true);
     setShowConfirmation(true);
   };
-  const confirmRegistration = async () => {
-    const response = await apiFetch(`/api/events/${id}/registrations`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const data = await response.json();
-    if (!response.ok) {
-      setError(data.error || "Unable to register for event.");
-      setShowConfirmation(false);
-      return;
-    }
-    setRegistered(true);
-    setRegistrationStatus("Pending");
-    await load();
+  const closeConfirmation = () => {
+    if (confirmationBusy) return;
+    setShowConfirmation(false);
     setPendingRegistration(false);
-    setConfirmationMessage(
-      "Your registration request has been sent. The event organiser will review your application and contact you with the outcome.",
-    );
+    setPendingWithdrawal(false);
+    setConfirmationMessage("");
+  };
+  const confirmRegistration = async () => {
+    if (confirmationBusy) return;
+    setConfirmationBusy(true);
+    try {
+      const response = await apiFetch(`/api/events/${id}/registrations`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Unable to register for event.");
+      setRegistered(true);
+      setRegistrationStatus("Pending");
+      setPendingRegistration(false);
+      setConfirmationMessage(
+        "Your registration request has been sent. The event organiser will review it and contact you with the outcome.",
+      );
+      try {
+        await load();
+      } catch {
+        setError("Registration succeeded, but event details could not refresh.");
+      }
+    } catch (requestError) {
+      setError(requestError.message || "Unable to register for event.");
+      setShowConfirmation(false);
+      setPendingRegistration(false);
+    } finally {
+      setConfirmationBusy(false);
+    }
   };
   const withdraw = () => {
     confirmWithdrawal();
@@ -898,6 +937,7 @@ export default function EventDetailPage() {
     }
     setAttendance((current) => ({ ...current, [participantId]: status }));
     load().catch((requestError) => setError(requestError.message));
+    if (event?.status === "Completed") refreshFollowups().catch((requestError) => setFollowupError(requestError.message));
   };
   const updateInvitationStatus = async (invitationId, status) => {
     const response = await apiFetch(
@@ -1081,6 +1121,51 @@ export default function EventDetailPage() {
       setRatingSaving(false);
     }
   };
+  const finishEvent = async () => {
+    if (finishingEvent) return;
+    setFinishingEvent(true);
+    setFollowupError("");
+    try {
+      const response = await apiFetch(`/api/events/${id}/status`, {
+        method: "PATCH", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "Completed" }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Unable to finish event.");
+      setEvent((current) => ({ ...current, status: "Completed" }));
+      setFollowupMessage("Event marked finished. Review attendance before sending follow-up emails.");
+    } catch (requestError) { setFollowupError(requestError.message); }
+    finally { setFinishingEvent(false); }
+  };
+  const saveFollowup = async (audience) => {
+    setFollowupBusy(audience);
+    setFollowupError(""); setFollowupMessage("");
+    try {
+      const response = await apiFetch(`/api/events/${id}/followups/${audience}`, {
+        method: "PUT", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify(followupDrafts[audience]),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Unable to save message.");
+      setFollowups(data);
+      setFollowupMessage("Follow-up message saved. Check the audience before sending.");
+    } catch (requestError) { setFollowupError(requestError.message); }
+    finally { setFollowupBusy(""); }
+  };
+  const sendFollowup = async (audience) => {
+    setFollowupBusy(audience);
+    setFollowupError(""); setFollowupMessage("");
+    try {
+      const response = await apiFetch(`/api/events/${id}/followups/${audience}/send`, {
+        method: "POST", headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Unable to send messages.");
+      setFollowups(data);
+      setFollowupMessage(`${data.sent} email${data.sent === 1 ? "" : "s"} sent${data.failed ? `; ${data.failed} failed and can be retried` : ""}.`);
+    } catch (requestError) { setFollowupError(requestError.message); }
+    finally { setFollowupBusy(""); }
+  };
   return (
     <SiteChrome>
       <Helmet>
@@ -1143,6 +1228,40 @@ export default function EventDetailPage() {
             </p>
             {venueBooking?.status === "confirmed" && <p className="mt-2 text-sm text-muted-foreground">Confirmed venue: {venueBooking.venue?.name || venueBooking.venueName}{(venueBooking.venue?.location || venueBooking.venueLocation) && ` — ${venueBooking.venue?.location || venueBooking.venueLocation}`}</p>}
             {bookingTimeLabel(venueBooking) && <p className="mt-2 text-sm text-muted-foreground">Requested time: {bookingTimeLabel(venueBooking)}</p>}
+            {canManageEvents && ["Published", "Completed"].includes(event.status) && (
+              <section className="mt-8 max-w-2xl border border-border p-5">
+                <h2 className="font-display text-2xl font-semibold">Finish event and follow up</h2>
+                {event.status === "Published" ? <>
+                  <p className="mt-2 text-sm text-muted-foreground">After the scheduled end, mark the event finished to prepare attendance-based emails. For events without an end time, this is available after the start.</p>
+                  <button type="button" onClick={finishEvent} disabled={finishingEvent || !event.startsAt || new Date(event.endsAt || event.startsAt).getTime() > Date.now()} className="mt-4 min-h-10 bg-primary px-4 text-sm text-primary-foreground disabled:opacity-50">{finishingEvent ? "Finishing…" : "Mark as finished"}</button>
+                </> : <>
+                  <p className="mt-2 text-sm text-muted-foreground">Only people marked Attended or No Show receive a follow-up. Check attendance before sending; each message is locked once sending starts.</p>
+                  {followups?.attendance?.unmarked > 0 && <p className="mt-3 text-sm text-amber-700">{followups.attendance.unmarked} participant{followups.attendance.unmarked === 1 ? " is" : "s are"} still unmarked and will receive no email.</p>}
+                  {event.logoImage && <div className="mt-4 flex items-center gap-3"><img src={event.logoImage} alt="Organizer logo used in follow-up emails" className="h-14 max-w-32 object-contain" /><span className="text-sm text-muted-foreground">Organizer logo in each email</span></div>}
+                  {followups && ([{ audience: "attended", title: "Attended", count: followups.attendance.attendedWithEmail }, { audience: "no_show", title: "No Show", count: followups.attendance.noShowWithEmail }].map(({ audience, title, count }) => {
+                    const delivery = followups.deliveries[audience] || {};
+                    const locked = Object.values(delivery).some((total) => total > 0);
+                    const draft = followupDrafts[audience];
+                    const saved = followups.templates[audience];
+                    const dirty = !saved || draft.subject.trim() !== saved.subject || draft.body.trim() !== saved.body;
+                    const remaining = Math.max(0, count - (delivery.sent || 0) - (delivery.sending || 0));
+                    return <div key={audience} className="mt-6 border-t border-border pt-5">
+                      <h3 className="font-display text-xl font-semibold">{title} · {count} email recipient{count === 1 ? "" : "s"}</h3>
+                      <p className="mt-1 text-xs text-muted-foreground">{delivery.sent || 0} sent{delivery.failed ? ` · ${delivery.failed} failed` : ""}{delivery.sending ? ` · ${delivery.sending} sending` : ""}</p>
+                      <label className="mt-4 block text-sm">Subject<input value={draft.subject} disabled={locked || Boolean(followupBusy)} maxLength={180} onChange={(e) => setFollowupDrafts((current) => ({ ...current, [audience]: { ...current[audience], subject: e.target.value } }))} className="mt-1 min-h-10 w-full border border-border bg-background px-3 disabled:opacity-60" /></label>
+                      <label className="mt-3 block text-sm">Your message<textarea value={draft.body} disabled={locked || Boolean(followupBusy)} maxLength={5000} rows={5} onChange={(e) => setFollowupDrafts((current) => ({ ...current, [audience]: { ...current[audience], body: e.target.value } }))} className="mt-1 w-full border border-border bg-background px-3 py-2 disabled:opacity-60" /></label>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <button type="button" onClick={() => saveFollowup(audience)} disabled={locked || Boolean(followupBusy) || !draft.subject.trim() || !draft.body.trim() || !dirty} className="min-h-10 border border-border px-4 text-sm disabled:opacity-50">Save message</button>
+                        <button type="button" onClick={() => sendFollowup(audience)} disabled={Boolean(followupBusy) || dirty || remaining === 0} className="min-h-10 bg-primary px-4 text-sm text-primary-foreground disabled:opacity-50">{followupBusy === audience ? "Working…" : `Send to ${title.toLowerCase()}`}</button>
+                      </div>
+                      {remaining > 25 && <p className="mt-2 text-xs text-muted-foreground">Up to 25 emails are sent per click. Use this button again for the remaining recipients.</p>}
+                    </div>;
+                  }))}
+                </>}
+                {followupMessage && <p role="status" className="mt-4 text-sm text-primary">{followupMessage}</p>}
+                {followupError && <p role="alert" className="mt-4 text-sm text-destructive">{followupError}</p>}
+              </section>
+            )}
             {canManageEvents && (
               <section className="mt-8 max-w-2xl border border-border p-5">
                 <h2 className="font-display text-2xl font-semibold">Venue booking</h2>
@@ -1582,35 +1701,27 @@ export default function EventDetailPage() {
           role="dialog"
           aria-modal="true"
         >
-          <div className="w-full max-w-md bg-background p-8 shadow-xl">
-            <h2 className="font-display text-3xl font-semibold">
+          <div className="relative w-full max-w-md bg-background p-8 shadow-xl">
+            <button type="button" onClick={closeConfirmation} disabled={confirmationBusy} aria-label="Close confirmation" className="absolute right-4 top-4 inline-flex h-10 w-10 items-center justify-center text-muted-foreground hover:text-foreground disabled:opacity-50"><X className="h-5 w-5" aria-hidden="true" /></button>
+            <h2 className="pr-8 font-display text-3xl font-semibold">
               {pendingWithdrawal
                 ? "Confirm withdrawal"
                 : pendingRegistration
                   ? "Confirm registration"
                   : confirmationMessage.includes("withdrawn")
                     ? "Participation withdrawn"
-                    : confirmationMessage.includes("review your application")
+                    : confirmationMessage.includes("review it")
                       ? "Registration request sent"
                       : "You are registered"}
             </h2>
             <p className="mt-4 text-muted-foreground">{confirmationMessage}</p>
-            <button
-              onClick={
-                pendingWithdrawal
-                  ? confirmWithdrawal
-                  : pendingRegistration
-                    ? confirmRegistration
-                    : () => setShowConfirmation(false)
-              }
-              className="mt-7 min-h-12 bg-primary px-7 text-sm uppercase tracking-widest text-primary-foreground"
-            >
-              {pendingWithdrawal
-                ? "Confirm withdrawal"
-                : pendingRegistration
-                  ? "Confirm registration"
-                  : "Got it"}
-            </button>
+            {pendingRegistration && Array.isArray(event?.foodOptions) && event.foodOptions.length > 0 && <div className="mt-5 border border-border bg-secondary/20 p-4"><p className="text-sm font-medium">Food options at this event</p><ul className="mt-2 list-inside list-disc space-y-1 text-sm text-muted-foreground">{event.foodOptions.map((option, index) => <li key={`${option}-${index}`}>{option}</li>)}</ul></div>}
+            <div className="mt-7 flex flex-wrap gap-3">
+              <button type="button" disabled={confirmationBusy} onClick={pendingWithdrawal ? confirmWithdrawal : pendingRegistration ? confirmRegistration : closeConfirmation} className="min-h-12 bg-primary px-7 text-sm uppercase tracking-widest text-primary-foreground disabled:opacity-50">
+                {confirmationBusy ? "Please wait…" : pendingWithdrawal ? "Confirm withdrawal" : pendingRegistration ? "Confirm registration" : "Got it"}
+              </button>
+              {(pendingRegistration || pendingWithdrawal) && <button type="button" disabled={confirmationBusy} onClick={closeConfirmation} className="min-h-12 border border-border px-7 text-sm uppercase tracking-widest disabled:opacity-50">Cancel</button>}
+            </div>
           </div>
         </div>
       )}

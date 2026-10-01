@@ -16,6 +16,7 @@ const initialForm = {
   title: "",
   shortDescription: "",
   description: "",
+  foodOptions: [],
   coverImage: "",
   brandName: "",
   logoImage: "",
@@ -255,9 +256,10 @@ export default function EventsPage({
   const load = async (showLoading = true) => {
     if (showLoading) setLoading(true);
     try {
+      const eventEndpoint = managementOnly ? '/api/my/events' : '/api/events';
       const eventPath = selectedCategory
-          ? `/api/events?category=${encodeURIComponent(selectedCategory)}`
-          : "/api/events";
+          ? `${eventEndpoint}?category=${encodeURIComponent(selectedCategory)}`
+          : eventEndpoint;
       const response = await apiFetch(
         eventPath,
         managementOnly && token
@@ -373,6 +375,7 @@ export default function EventsPage({
       title: eventValue(event, "title", "name"),
       shortDescription: eventValue(event, "shortDescription", "short_description"),
       description: eventValue(event, "description", "longDescription", "long_description"),
+      foodOptions: Array.isArray(event.foodOptions) ? event.foodOptions : [],
       coverImage: eventCover(event),
       brandName: event.brandName || "",
       logoImage: event.logoImage || "",
@@ -444,6 +447,7 @@ export default function EventsPage({
     return Object.fromEntries(
       Object.entries({
         ...eventForm,
+        foodOptions: form.foodOptions.map((option) => option.trim()).filter(Boolean),
         venueId: form.locationType === "venue" ? Number(venueId) || undefined : undefined,
         customAddressLine1: form.locationType === "custom" ? addressLine1 : undefined,
         customAddressLine2: form.locationType === "custom" ? addressLine2 : undefined,
@@ -1082,6 +1086,18 @@ export default function EventsPage({
                   </span>
                 )}
               </label>
+              <label className="block text-sm sm:col-span-2">
+                Food options <span className="text-muted-foreground">(optional)</span>
+                <textarea
+                  value={form.foodOptions.join("\n")}
+                  onChange={(event) => setForm((current) => ({ ...current, foodOptions: event.target.value.split("\n") }))}
+                  rows="3"
+                  placeholder={"Vegetarian\nVegan\nChicken"}
+                  className="mt-2 w-full border border-border bg-background px-3 py-3"
+                />
+                <span className="mt-1 block text-xs text-muted-foreground">One option per line, up to 12. These will be shown before someone registers.</span>
+                {errors.foodOptions && <span className="mt-1 block text-xs text-destructive">{errors.foodOptions}</span>}
+              </label>
               <div className="flex flex-wrap gap-3 sm:col-span-2">
                 <button disabled={logoBusy} className="min-h-11 bg-primary px-5 text-sm text-primary-foreground disabled:opacity-60">
                   {logoBusy ? "Preparing logo…" : editPage ? "Save" : "Save draft"}
@@ -1223,13 +1239,13 @@ export default function EventsPage({
                       >
                         Manage
                       </a>
-                      <button
+                      {event.status !== "Completed" && <button
                         type="button"
                         onClick={() => archiveEvent(event.id)}
                         className="min-h-10 border border-border px-3 text-sm"
                       >
                         Archive
-                      </button>
+                      </button>}
                       <button
                         type="button"
                         onClick={() => deleteEvent(event.id)}

@@ -47,6 +47,9 @@ export async function articleRequest(path, { token, body, headers, ...options } 
     const error = new Error(data.error || 'Unable to complete that article request.');
     error.fields = data.fields || {};
     error.status = response.status;
+    error.code = data.code;
+    error.subscribeUrl = data.subscribeUrl;
+    error.resetsAt = data.resetsAt;
     throw error;
   }
   return data;

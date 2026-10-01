@@ -9,14 +9,13 @@ import JoinPage from './pages/JoinPage';
 import ContactPage from './pages/ContactPage';
 import AuthPage from './pages/AuthPage';
 import ProfilePage from './pages/ProfilePage';
-import AdminApplicationsPage from './pages/AdminApplicationsPage';
+import AdminContactMessagesPage from './pages/AdminContactMessagesPage';
 import CheckEmailPage from './pages/CheckEmailPage';
 import VerifyEmailPage from './pages/VerifyEmailPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
-import AdminApplicationPage from './pages/AdminApplicationPage';
 import AccountDeletedPage from './pages/AccountDeletedPage';
-import ApplicationSentPage from './pages/ApplicationSentPage';
+import MyAttendingEventsPage from './pages/MyAttendingEventsPage';
 import EventsPage from './pages/EventsPage';
 import EventDetailPage from './pages/EventDetailPage';
 import InvitationResponsePage from './pages/InvitationResponsePage';
@@ -30,7 +29,7 @@ import LegalDocumentsPage from './pages/LegalDocumentsPage';
 import { CompanyInformationPage, SubprocessorsPage } from './pages/CompanyInformationPage';
 import AppealPage from './pages/AppealPage';
 import AdminReportsPage from './pages/AdminReportsPage';
-import { AdminVenueApplicationsPage, MyVenuesPage, VenueBookingsPage, VenueOwnerApplicationPage } from './pages/VenuesPage';
+import { MyVenuesPage, VenueBookingsPage } from './pages/VenuesPage';
 import { SavedVenuesPage, VenueCityOrDetailPage, VenueDetailPage, VenueEditorPage, VenuesDiscoveryPage, VenueSearchRoutePage } from './pages/VenueMarketplace';
 import { OrganizerAvailabilityPage, VenueCalendarPage } from './pages/VenueScheduling';
 import { InvoiceDetailPage } from './pages/InvoicesPage';
@@ -120,13 +119,10 @@ function App() {
                 <Route path="/profile/subscriptions" element={<SubscriptionsPage />} />
                 <Route path="/subscribe" element={<SubscriptionsPage />} />
                 <Route path="/admin/configuration" element={<ConfigurationPage />} />
-                <Route path="/admin/applications" element={<AdminApplicationsPage />} />
-                <Route path="/admin/applications/:id" element={<AdminApplicationPage />} />
+                <Route path="/admin/contact-messages" element={<AdminContactMessagesPage />} />
                 <Route path="/admin/users" element={<UserRolesPage />} />
                 <Route path="/admin/reports" element={<AdminReportsPage />} />
                 <Route path="/admin/platform-billing" element={<PlatformAdminPage />} />
-                <Route path="/admin/venue-owner-applications" element={<AdminVenueApplicationsPage />} />
-                <Route path="/become-a-venue-owner" element={<VenueOwnerApplicationPage />} />
                 <Route path="/account/billing" element={<BillingPage />} />
                 <Route path="/account/billing-profiles" element={<LegacyBillingRedirect />} />
                 <Route path="/billing/payment-account/refresh" element={<PaymentAccountReturnPage refresh />} />
@@ -151,7 +147,7 @@ function App() {
                 <Route path="/venues/:city/:venueType" element={<VenueSearchRoutePage />} />
                 <Route path="/venues/:city" element={<VenueCityOrDetailPage />} />
                 <Route path="/account-deleted" element={<AccountDeletedPage />} />
-                <Route path="/application-sent" element={<ApplicationSentPage />} />
+                <Route path="/profile/my-events" element={<MyAttendingEventsPage />} />
                 <Route path="/events" element={<EventsPage key="events" />} />
                 <Route path="/profile/events" element={<EventsPage key="manage-events" managementOnly />} />
                 <Route path="/profile/events/new" element={<EventsPage key="new-event" managementOnly creationPage />} />

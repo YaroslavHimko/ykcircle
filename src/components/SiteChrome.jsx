@@ -80,20 +80,19 @@ export function Header() {
                             <p className="break-words px-3 py-2 text-sm font-medium">{user.name}</p>
                             <p className="px-3 pb-1 pt-2 text-xs text-muted-foreground">Your account</p>
                             {accountLink('/profile', 'View profile')}
-                            {accountLink('/profile/saved-venues', 'Saved venues')}
+                            {accountLink('/profile/my-events', 'My events')}
                             {accountLink('/account/tickets', 'My tickets')}
                             {accountLink('/account/billing', 'Billing & organizations')}
-                            {accountLink('/profile/subscriptions', 'Subscriptions')}
                             <p className="mt-2 border-t border-border px-3 pb-1 pt-3 text-xs text-muted-foreground">Manage</p>
                             {accountLink('/profile/events', 'Events')}
                             {accountLink('/profile/groups', 'Groups')}
                             {accountLink('/profile/venues', 'Venues')}
+                            {accountLink('/profile/articles', 'Articles')}
                             {canManage && <>
                                 <p className="mt-2 border-t border-border px-3 pb-1 pt-3 text-xs text-muted-foreground">Administration</p>
                                 {accountLink('/admin/configuration', 'Configuration')}
-                                {accountLink('/admin/applications', 'Applications')}
+                                {accountLink('/admin/contact-messages', 'Contact messages')}
                                 {accountLink('/admin/users', 'User roles')}
-                                {accountLink('/profile/articles', 'Articles')}
                                 {isAdmin && accountLink('/admin/reports', 'Content reports')}
                             </>}
                             <button type="button" onClick={logout} className="mt-2 flex min-h-11 w-full items-center gap-2 rounded-lg border-t border-border px-3 py-3 text-left text-sm text-destructive hover:bg-secondary/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"><LogOut aria-hidden="true" className="h-4 w-4" /> Log out</button>
