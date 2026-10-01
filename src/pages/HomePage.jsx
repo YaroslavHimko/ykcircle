@@ -56,11 +56,12 @@ export default function HomePage() {
       if (!response.ok) throw new Error('Events could not be loaded. Please try again.');
       const data = await response.json();
       const rows = Array.isArray(data) ? data : data.events || [];
-      const upcoming = rows.filter(event => {
-        const end = backendInstant(event.endsAt || event.startsAt);
-        return event.status === 'Published' && (!end || end.getTime() >= Date.now());
-      }).sort((a, b) => (backendInstant(a.startsAt)?.getTime() ?? Infinity) - (backendInstant(b.startsAt)?.getTime() ?? Infinity)).slice(0, 6);
-      if (active) setEvents(upcoming);
+      // The API already puts public events first. Keep its result order and
+      // preserve events with older or incomplete dates; otherwise a timezone
+      // change or an unmaintained end date can make every published event
+      // disappear from the homepage.
+      const visible = rows.filter(event => !['archived', 'draft', 'cancelled'].includes(String(event.status || '').toLowerCase())).slice(0, 6);
+      if (active) setEvents(visible);
     }).catch(failure => { if (active) setError(failure.message); }).finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, [attempt]);
