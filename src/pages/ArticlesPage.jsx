@@ -58,6 +58,22 @@ function PublicListing({
 }) {
   const [searchParams] = useSearchParams();
   const tag = searchParams.get('tag') || '';
+  const [token, setToken] = useState(() => localStorage.getItem('authToken'));
+  const [own, setOwn] = useState({ loading: Boolean(token), articles: [], error: '' });
+  useEffect(() => {
+    const refresh = () => setToken(localStorage.getItem('authToken'));
+    window.addEventListener('auth-change', refresh);
+    return () => window.removeEventListener('auth-change', refresh);
+  }, []);
+  useEffect(() => {
+    if (!token) { setOwn({ loading: false, articles: [], error: '' }); return; }
+    let active = true;
+    setOwn({ loading: true, articles: [], error: '' });
+    articleRequest('/api/my/articles?ownedOnly=true', { token }).then(items => {
+      if (active) setOwn({ loading: false, articles: Array.isArray(items) ? items : [], error: '' });
+    }).catch(error => { if (active) setOwn({ loading: false, articles: [], error: error.message }); });
+    return () => { active = false; };
+  }, [token]);
   const [articles, setArticles] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -87,8 +103,20 @@ function PublicListing({
     };
   }, [categorySlug, tag]);
   const selected = categories.find(item => item.slug === categorySlug);
+  const ownedIds = new Set(own.articles.map(article => String(article.id)));
+  const otherArticles = articles.filter(article => !token || !ownedIds.has(String(article.id)));
   const title = selected ? selected.name : tag ? `Articles tagged “${tag}”` : 'Stories, guides, and local knowledge.';
-  return <SiteChrome><Helmet><title>{selected ? `${selected.name} articles | YKCircle` : 'Articles | YKCircle'}</title><meta name="description" content="Guides, stories, and practical ideas for making more of life together." /><link rel="canonical" href={`${window.location.origin}${categorySlug ? `/articles/category/${categorySlug}` : '/articles'}`} /></Helmet><section className="mx-auto max-w-[76rem] px-5 pb-24 pt-32 sm:px-8 sm:pt-40"><div className="flex flex-wrap items-end justify-between gap-5"><div><p className="text-xs uppercase tracking-[0.3em] text-primary">YKCircle journal</p><h1 className="mt-3 max-w-3xl font-display text-5xl font-black leading-[0.95]">{title}</h1><p className="mt-5 max-w-2xl text-muted-foreground">Useful ideas, local perspective, and stories that help people make real plans together.</p></div></div><nav aria-label="Article categories" className="mt-10 flex flex-wrap gap-2"><Link to="/articles" className={`border px-4 py-2 text-sm ${!categorySlug ? 'border-primary text-primary' : 'border-border'}`}>All articles</Link>{categories.map(category => <Link key={category.id} to={`/articles/category/${category.slug}`} className={`border px-4 py-2 text-sm ${category.slug === categorySlug ? 'border-primary text-primary' : 'border-border'}`}>{category.name}</Link>)}</nav>{tag && <p className="mt-6 text-sm text-muted-foreground">Filtering by tag: <Link to="/articles" className="text-primary underline underline-offset-4">{tag} ×</Link></p>}{error && <p role="alert" className="mt-8 text-destructive">{error}</p>}<div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{loading ? <p className="text-muted-foreground">Loading articles…</p> : articles.map(article => <ArticleCard key={article.id} article={article} />)}{!loading && !error && articles.length === 0 && <p className="border border-border p-6 text-muted-foreground">No published articles match this view yet.</p>}</div></section></SiteChrome>;
+  return <SiteChrome><Helmet><title>{selected ? `${selected.name} articles | YKCircle` : 'Articles | YKCircle'}</title><meta name="description" content="Guides, stories, and practical ideas for making more of life together." /><link rel="canonical" href={`${window.location.origin}${categorySlug ? `/articles/category/${categorySlug}` : '/articles'}`} /></Helmet><section className="mx-auto max-w-[76rem] px-5 pb-24 pt-32 sm:px-8 sm:pt-40"><div className="flex flex-wrap items-end justify-between gap-5"><div><p className="text-xs uppercase tracking-[0.3em] text-primary">YKCircle journal</p><h1 className="mt-3 max-w-3xl font-display text-5xl font-black leading-[0.95]">{title}</h1><p className="mt-5 max-w-2xl text-muted-foreground">Useful ideas, local perspective, and stories that help people make real plans together.</p></div><Link to={token ? '/profile/articles/new' : '/login?from=%2Fprofile%2Farticles%2Fnew'} className="inline-flex min-h-11 items-center gap-2 bg-primary px-5 text-sm text-primary-foreground"><FilePlus2 className="h-4 w-4" />New article</Link></div>
+        {token && <section className="mt-10" aria-labelledby="my-articles-title">
+          <h2 id="my-articles-title" className="font-display text-3xl font-semibold">My Articles</h2>
+          <p className="mt-3 text-sm text-muted-foreground">Your drafts, published articles, and archived stories. Select an article to edit it.</p>
+          {readUser()?.role === 'admin' && <Link to="/profile/articles" className="mt-3 inline-flex min-h-11 items-center text-sm text-primary underline">Manage articles</Link>}
+          {own.error && <p role="alert" className="mt-5 text-destructive">{own.error}</p>}
+          {own.loading ? <p role="status" className="mt-5 text-muted-foreground">Loading your articles…</p> : <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{own.articles.map(article => <ArticleCard key={article.id} article={article} editable />)}</div>}
+          {!own.loading && !own.error && !own.articles.length && <p className="mt-5 text-muted-foreground">No articles yet. Create your first draft to begin.</p>}
+        </section>}
+        {token && <h2 className="mt-12 font-display text-3xl font-semibold">Browse Articles</h2>}
+        <nav aria-label="Article categories" className="mt-10 flex flex-wrap gap-2"><Link to="/articles" className={`border px-4 py-2 text-sm ${!categorySlug ? 'border-primary text-primary' : 'border-border'}`}>All articles</Link>{categories.map(category => <Link key={category.id} to={`/articles/category/${category.slug}`} className={`border px-4 py-2 text-sm ${category.slug === categorySlug ? 'border-primary text-primary' : 'border-border'}`}>{category.name}</Link>)}</nav>{tag && <p className="mt-6 text-sm text-muted-foreground">Filtering by tag: <Link to="/articles" className="text-primary underline underline-offset-4">{tag} ×</Link></p>}{error && <p role="alert" className="mt-8 text-destructive">{error}</p>}<div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{loading || (token && own.loading) ? <p className="text-muted-foreground">Loading articles…</p> : otherArticles.map(article => <ArticleCard key={article.id} article={article} />)}{!loading && !error && !own.loading && otherArticles.length === 0 && <p className="border border-border p-6 text-muted-foreground">{articles.length ? "Your matching articles are listed above. No other articles match this view." : "No published articles match this view yet."}</p>}</div></section></SiteChrome>;
 }
 function PublicArticle() {
   const {
@@ -278,7 +306,7 @@ function EditorialWorkspace({
     try {
       const [items, articleCategories, access] = await Promise.all([articleRequest('/api/my/articles', {
         token
-      }), articleRequest('/api/article-categories'), articleRequest('/api/my/article-access', { token })]);
+      }), articleRequest('/api/article-categories'), view === 'list' ? Promise.resolve(null) : articleRequest('/api/my/article-access', { token })]);
       setArticleAccess(access);
       const nextArticles = Array.isArray(items) ? items : [];
       setArticles(nextArticles);
@@ -490,7 +518,7 @@ function EditorialWorkspace({
     }
   });
   if (!permitted) return <SiteChrome><Helmet><title>Article workspace | YKCircle</title><meta name="robots" content="noindex" /></Helmet><section className="mx-auto max-w-3xl px-5 pb-24 pt-32 sm:px-8 sm:pt-40"><h1 className="font-display text-5xl font-black">Log in to write articles.</h1><p className="mt-5 text-muted-foreground">Everyone can prepare drafts. Publishing requires an article space subscription.</p>{!user && <Link to="/login?from=%2Fprofile%2Farticles" className="mt-7 inline-flex min-h-11 items-center bg-primary px-5 text-sm text-primary-foreground">Log in</Link>}</section></SiteChrome>;
-  if (view === 'list') return <SiteChrome><Helmet><title>Manage articles | YKCircle</title><meta name="robots" content="noindex" /></Helmet><section className="mx-auto max-w-[76rem] px-5 pb-24 pt-32 sm:px-8 sm:pt-40"><div className="flex flex-wrap items-end justify-between gap-5"><div><p className="text-xs uppercase tracking-[0.3em] text-primary">Editorial workspace</p><h1 className="mt-3 font-display text-5xl font-black">Articles</h1><p className="mt-5 max-w-2xl text-muted-foreground">Create drafts, edit your articles, and publish when they are ready for readers.</p></div><Link to="/profile/articles/new" className="inline-flex min-h-11 items-center gap-2 bg-primary px-5 text-sm text-primary-foreground"><FilePlus2 className="h-4 w-4" />New article</Link></div><ArticleAccessPanel access={articleAccess} />{error && <p role="alert" className="mt-6 text-destructive">{error}</p>}<div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{loading ? <p className="text-muted-foreground">Loading articles…</p> : articles.map(article => <ArticleCard key={article.id} article={article} editable />)}{!loading && articles.length === 0 && <div className="border border-border p-6 text-muted-foreground">No articles yet. Create your first draft to begin.</div>}</div></section></SiteChrome>;
+  if (view === 'list') return <SiteChrome><Helmet><title>Manage articles | YKCircle</title><meta name="robots" content="noindex" /></Helmet><section className="mx-auto max-w-[76rem] px-5 pb-24 pt-32 sm:px-8 sm:pt-40"><div className="flex flex-wrap items-end justify-between gap-5"><div><p className="text-xs uppercase tracking-[0.3em] text-primary">Editorial workspace</p><h1 className="mt-3 font-display text-5xl font-black">Articles</h1><p className="mt-5 max-w-2xl text-muted-foreground">Create drafts, edit your articles, and publish when they are ready for readers.</p></div><Link to="/profile/articles/new" className="inline-flex min-h-11 items-center gap-2 bg-primary px-5 text-sm text-primary-foreground"><FilePlus2 className="h-4 w-4" />New article</Link></div>{error && <p role="alert" className="mt-6 text-destructive">{error}</p>}<div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{loading ? <p className="text-muted-foreground">Loading articles…</p> : articles.map(article => <ArticleCard key={article.id} article={article} editable />)}{!loading && articles.length === 0 && <div className="border border-border p-6 text-muted-foreground">No articles yet. Create your first draft to begin.</div>}</div></section></SiteChrome>;
   const editorArticle = current || (view === 'new' ? newArticle : null);
   return <SiteChrome><Helmet><title>{view === 'new' ? 'New article' : 'Edit article'} | YKCircle</title><meta name="robots" content="noindex" /></Helmet><section className="px-5 pb-24 pt-32 sm:px-8 sm:pt-40"><ArticleAccessPanel access={articleAccess} />{loading && view === 'edit' ? <p className="mx-auto max-w-3xl text-muted-foreground">Loading article…</p> : editorArticle && <ArticleEditor article={editorArticle} categories={categories} role={user.role} saving={saving} errors={errors} onSave={persist} onPublish={form => persist(form, true)} onStatus={changeStatus} onUploadCover={uploadCover} onUploadMedia={uploadMedia} onDeleteMedia={deleteMedia} />}{error && <p role="alert" className="fixed bottom-6 right-6 z-50 max-w-md border border-destructive/30 bg-background px-4 py-3 text-sm text-destructive shadow-lg">{error}</p>}{notice && <p role="status" className="fixed bottom-6 right-6 z-50 max-w-md border border-primary/30 bg-background px-4 py-3 text-sm shadow-lg">{notice}</p>}</section>{confirmation && <ConfirmationDialog title={confirmation.title} description={confirmation.description} confirmLabel={confirmation.label} destructive={confirmation.destructive} busy={saving} onCancel={() => setConfirmation(null)} onConfirm={confirmation.action} />}</SiteChrome>;
 }

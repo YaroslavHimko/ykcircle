@@ -79,7 +79,6 @@ export function Header() {
                             {accountLink('/profile', 'View profile')}
                             {accountLink('/account/tickets', 'My tickets')}
                             {accountLink('/account/billing', 'Billing & organizations')}
-                            {accountLink('/profile/articles', 'Write articles')}
                         </> : <>
                             <p className="px-3 pb-1 pt-2 text-xs text-muted-foreground">Your account</p>
                             {accountLink('/login', 'Log in')}
