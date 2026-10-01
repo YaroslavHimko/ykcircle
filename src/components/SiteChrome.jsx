@@ -73,9 +73,6 @@ export function Header() {
                         <UserRound aria-hidden="true" className="h-5 w-5" strokeWidth={1.75} />
                     </button>
                     {profileOpen && <div id="profile-navigation" className="absolute right-0 top-[calc(100%+0.75rem)] z-50 max-h-[calc(100dvh-7rem)] w-72 max-w-[calc(100vw-2.5rem)] overflow-y-auto overscroll-contain rounded-xl border border-border bg-background p-2 shadow-xl">
-                        <nav aria-label="Browse" className="mb-2 border-b border-border pb-2">
-                            {baseNav.map(item => <NavLink key={item.to} to={item.to} onClick={() => setProfileOpen(false)} className={({ isActive }) => `${menuLinkClass} ${isActive ? 'bg-primary/5 font-medium text-primary' : ''}`}>{item.label}</NavLink>)}
-                        </nav>
                         {user ? <>
                             <p className="break-words px-3 py-2 text-sm font-medium">{user.name}</p>
                             <p className="px-3 pb-1 pt-2 text-xs text-muted-foreground">Your account</p>
@@ -83,18 +80,23 @@ export function Header() {
                             {accountLink('/account/tickets', 'My tickets')}
                             {accountLink('/account/billing', 'Billing & organizations')}
                             {accountLink('/profile/articles', 'Write articles')}
-                            {canManage && <>
-                                <p className="mt-2 border-t border-border px-3 pb-1 pt-3 text-xs text-muted-foreground">Administration</p>
-                                {accountLink('/admin/configuration', 'Configuration')}
-                                {accountLink('/admin/contact-messages', 'Contact messages')}
-                                {accountLink('/admin/users', 'User roles')}
-                                {isAdmin && accountLink('/admin/reports', 'Content reports')}
-                            </>}
-                            <button type="button" onClick={logout} className="mt-2 flex min-h-11 w-full items-center gap-2 rounded-lg border-t border-border px-3 py-3 text-left text-sm text-destructive hover:bg-secondary/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"><LogOut aria-hidden="true" className="h-4 w-4" /> Log out</button>
                         </> : <>
+                            <p className="px-3 pb-1 pt-2 text-xs text-muted-foreground">Your account</p>
                             {accountLink('/login', 'Log in')}
                             {accountLink('/register', 'Create account')}
                         </>}
+                        <nav aria-label="Explore" className="mt-2 border-t border-border pt-3">
+                            <p className="px-3 pb-1 text-xs text-muted-foreground">Explore</p>
+                            {baseNav.map(item => <NavLink key={item.to} to={item.to} onClick={() => setProfileOpen(false)} className={({ isActive }) => `${menuLinkClass} ${isActive ? 'bg-primary/5 font-medium text-primary' : ''}`}>{item.label}</NavLink>)}
+                        </nav>
+                        {canManage && <>
+                            <p className="mt-2 border-t border-border px-3 pb-1 pt-3 text-xs text-muted-foreground">Administration</p>
+                            {accountLink('/admin/configuration', 'Configuration')}
+                            {accountLink('/admin/contact-messages', 'Contact messages')}
+                            {accountLink('/admin/users', 'User roles')}
+                            {isAdmin && accountLink('/admin/reports', 'Content reports')}
+                        </>}
+                        {user && <button type="button" onClick={logout} className="mt-2 flex min-h-11 w-full items-center gap-2 rounded-lg border-t border-border px-3 py-3 text-left text-sm text-destructive hover:bg-secondary/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"><LogOut aria-hidden="true" className="h-4 w-4" /> Log out</button>}
                     </div>}
                 </div>
             </div>

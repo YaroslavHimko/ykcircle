@@ -96,7 +96,7 @@ function ErrorState({ error, retry }) {
   return <div role="alert" className="mt-8 border border-destructive/30 bg-destructive/5 p-5 text-sm text-destructive"><p>{error}</p>{retry && <button type="button" onClick={retry} className="mt-3 border border-destructive/40 px-3 py-2 text-foreground">Try again</button>}</div>;
 }
 
-function VenueCard({ venue, compact = false }) {
+function VenueCard({ venue, compact = false, owned = false }) {
   const photo = imageUrl(venue);
   if (photo) mediaRenderDebug({ component: "VenueCard", venueId: venueId(venue), rawUrl: photo });
   const amenities = (venue.amenities || []).slice(0, 3);
@@ -112,6 +112,7 @@ function VenueCard({ venue, compact = false }) {
         {!compact && amenities.length > 0 && <p className="mt-3 line-clamp-1 text-sm text-muted-foreground">{amenities.map((item) => item.name || humanize(item.slug || item)).join(" · ")}</p>}
       </div>
     </Link>
+    {owned && <div className="flex flex-wrap items-center gap-4 border-t border-border px-5 py-3"><span className="text-xs text-muted-foreground">{humanize(venue.moderationStatus || 'draft')}</span><RouterLink to={`/profile/venues/${venue.id}/edit`} className="inline-flex min-h-10 items-center text-sm text-primary underline">Edit venue</RouterLink><RouterLink to={`/profile/venues/${venue.id}/bookings`} className="inline-flex min-h-10 items-center text-sm text-primary underline">Bookings</RouterLink></div>}
   </article>;
 }
 
@@ -132,6 +133,8 @@ export function VenuesDiscoveryPage({ city: routeCity = "", venueType: routeVenu
   const [token, setToken] = useState(() => localStorage.getItem("authToken"));
   const [saved, setSaved] = useState({ loading: Boolean(token), error: "", venues: [] });
   const [savedRevision, setSavedRevision] = useState(0);
+  const [owned, setOwned] = useState({ loading: Boolean(token), error: "", venues: [] });
+  const [ownedRevision, setOwnedRevision] = useState(0);
   const [filters, setFilters] = useState({ city: routeCity.replace(/-/g, " "), venueType: routeVenueType, eventType: "", amenity: "", minCapacity: "", maxCapacity: "", maxPrice: "", verified: false });
   const [state, setState] = useState({ loading: true, error: "", venues: [] });
   useEffect(() => {
@@ -153,6 +156,20 @@ export function VenuesDiscoveryPage({ city: routeCity = "", venueType: routeVenu
       .catch((error) => { if (active) setSaved({ loading: false, error: error.message, venues: [] }); });
     return () => { active = false; };
   }, [token, savedRevision]);
+  useEffect(() => {
+    if (!token) { setOwned({ loading: false, error: "", venues: [] }); return; }
+    let active = true;
+    setOwned({ loading: true, error: "", venues: [] });
+    apiFetch("/api/my/venues", { headers: { Authorization: `Bearer ${token}` } })
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok) throw new Error(getError(data, "Unable to load your venues."));
+        const venues = asList(data, "venues").map(normalizeVenue).filter((venue) => venue.id != null);
+        if (active) setOwned({ loading: false, error: "", venues });
+      })
+      .catch((error) => { if (active) setOwned({ loading: false, error: error.message, venues: [] }); });
+    return () => { active = false; };
+  }, [token, ownedRevision]);
   useEffect(() => setFilters((current) => ({ ...current, city: routeCity.replace(/-/g, " "), venueType: routeVenueType })), [routeCity, routeVenueType]);
   const load = useCallback(async () => {
     setState((current) => ({ ...current, loading: true, error: "" }));
@@ -169,12 +186,18 @@ export function VenuesDiscoveryPage({ city: routeCity = "", venueType: routeVenu
   const setFilter = (key) => (value) => setFilters((current) => ({ ...current, [key]: value }));
   const title = routeCity ? `Venues in ${humanize(routeCity)}` : "Find a venue for your next event";
   const savedIds = new Set(saved.venues.map((venue) => String(venue.id)));
-  const otherVenues = state.venues.filter((venue) => !savedIds.has(String(venue.id)));
+  const ownedIds = new Set(owned.venues.map((venue) => String(venue.id)));
+  const savedVenues = saved.venues.filter((venue) => !ownedIds.has(String(venue.id)));
+  const otherVenues = state.venues.filter((venue) => !ownedIds.has(String(venue.id)) && !savedIds.has(String(venue.id)));
   return <Shell title={title} description="Discover spaces for meetups, workshops, celebrations and community events."><div className="max-w-3xl"><p className="text-xs uppercase tracking-[0.28em] text-primary">Venue marketplace</p><h1 className="mt-3 font-display text-4xl font-bold sm:text-5xl">{title}</h1><p className="mt-4 text-muted-foreground">Find spaces that fit your people, plan and budget. Send a request—no payment or booking is completed here.</p></div>
     {token && <div className="mt-6 flex flex-wrap gap-4"><RouterLink to="/profile/venues" className="inline-flex min-h-11 items-center border border-border px-4 text-sm">Manage venues</RouterLink><RouterLink to="/profile/venues/new" className="inline-flex min-h-11 items-center text-sm text-primary underline">Add venue</RouterLink></div>}
+    {token && <section id="my-venues" aria-labelledby="my-venues-title" className="mt-10 scroll-mt-8">
+      <h2 id="my-venues-title" className="font-display text-3xl font-semibold">My Venues</h2>
+      {owned.error ? <ErrorState error={owned.error} retry={() => setOwnedRevision((value) => value + 1)} /> : owned.loading ? <div className="mt-5 grid gap-5 md:grid-cols-2 lg:grid-cols-3">{[1, 2, 3].map((item) => <VenueCardSkeleton key={item} />)}</div> : owned.venues.length ? <div className="mt-5 grid gap-5 md:grid-cols-2 lg:grid-cols-3">{owned.venues.map((venue) => <VenueCard key={venue.id} venue={venue} owned />)}</div> : <p className="mt-4 text-sm text-muted-foreground">Venues you own will appear here. <RouterLink to="/profile/venues/new" className="text-primary underline">Add a venue</RouterLink> to get started.</p>}
+    </section>}
     {token && <section id="saved-venues" aria-labelledby="saved-venues-title" className="mt-10 scroll-mt-8">
       <h2 id="saved-venues-title" className="font-display text-3xl font-semibold">Saved Venues</h2>
-      {saved.error ? <ErrorState error={saved.error} retry={() => setSavedRevision((value) => value + 1)} /> : saved.loading ? <div className="mt-5 grid gap-5 md:grid-cols-2 lg:grid-cols-3">{[1, 2, 3].map((item) => <VenueCardSkeleton key={item} />)}</div> : saved.venues.length ? <div className="mt-5 grid gap-5 md:grid-cols-2 lg:grid-cols-3">{saved.venues.map((venue) => <VenueCard key={venue.id} venue={venue} />)}</div> : <p className="mt-4 text-sm text-muted-foreground">Save a venue using the heart on its page. Your saved venues will appear here.</p>}
+      {saved.error ? <ErrorState error={saved.error} retry={() => setSavedRevision((value) => value + 1)} /> : saved.loading || owned.loading ? <div className="mt-5 grid gap-5 md:grid-cols-2 lg:grid-cols-3">{[1, 2, 3].map((item) => <VenueCardSkeleton key={item} />)}</div> : savedVenues.length ? <div className="mt-5 grid gap-5 md:grid-cols-2 lg:grid-cols-3">{savedVenues.map((venue) => <VenueCard key={venue.id} venue={venue} />)}</div> : <p className="mt-4 text-sm text-muted-foreground">{saved.venues.length ? "Venues you own are shown in My Venues above." : "Save a venue using the heart on its page. Your saved venues will appear here."}</p>}
     </section>}
     {token && <h2 className="mt-12 font-display text-3xl font-semibold">Browse venues</h2>}
     <form onSubmit={(event) => { event.preventDefault(); load(); }} className="mt-9 grid gap-3 border border-border bg-secondary/20 p-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -189,7 +212,7 @@ export function VenuesDiscoveryPage({ city: routeCity = "", venueType: routeVenu
       <div className="flex items-end"><button className="min-h-11 w-full bg-primary px-4 text-sm font-medium text-primary-foreground">Search venues</button></div>
       {taxonomy.error && <p className="sm:col-span-2 lg:col-span-4 text-sm text-muted-foreground">Filters are unavailable right now; you can still search by location.</p>}
     </form>
-    {state.error ? <ErrorState error={state.error} retry={load} /> : state.loading || (token && saved.loading) ? <div className="mt-9 grid gap-5 md:grid-cols-2 lg:grid-cols-3">{[1, 2, 3, 4, 5, 6].map((item) => <VenueCardSkeleton key={item} />)}</div> : otherVenues.length ? <div className="mt-9 grid gap-5 md:grid-cols-2 lg:grid-cols-3">{otherVenues.map((venue) => <VenueCard key={venue.id} venue={venue} />)}</div> : <p className="mt-9 border border-border p-6 text-muted-foreground">{state.venues.length ? "All matching venues are in your Saved Venues area above." : "No venues found for these filters."}</p>}
+    {state.error ? <ErrorState error={state.error} retry={load} /> : state.loading || (token && (saved.loading || owned.loading)) ? <div className="mt-9 grid gap-5 md:grid-cols-2 lg:grid-cols-3">{[1, 2, 3, 4, 5, 6].map((item) => <VenueCardSkeleton key={item} />)}</div> : otherVenues.length ? <div className="mt-9 grid gap-5 md:grid-cols-2 lg:grid-cols-3">{otherVenues.map((venue) => <VenueCard key={venue.id} venue={venue} />)}</div> : <p className="mt-9 border border-border p-6 text-muted-foreground">{state.venues.length ? "All matching venues are shown in My Venues or Saved Venues above." : "No venues found for these filters."}</p>}
   </Shell>;
 }
 
