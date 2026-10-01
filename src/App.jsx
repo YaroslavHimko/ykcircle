@@ -1,7 +1,7 @@
 import SubscriptionsPage from './pages/SubscriptionsPage';
 import ConfigurationPage from './pages/ConfigurationPage';
 import React from 'react';
-import { Route, Routes, BrowserRouter as Router, useNavigate } from 'react-router-dom';
+import { Route, Routes, BrowserRouter as Router, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import ScrollToTop from './components/ScrollToTop';
 import HomePage from './pages/HomePage';
 import AboutPage from './pages/AboutPage';
@@ -83,6 +83,14 @@ function IframeRouteNavigation() {
     return null;
 }
 
+function CreateEventRoute() {
+    const location = useLocation();
+    if (!localStorage.getItem('authToken')) {
+        return <Navigate to={`/login?from=${encodeURIComponent(location.pathname + location.search)}`} replace />;
+    }
+    return <EventsPage key="new-event" managementOnly creationPage />;
+}
+
 function App() {
     return (
         <Router>
@@ -150,7 +158,7 @@ function App() {
                 <Route path="/profile/my-events" element={<MyAttendingEventsPage />} />
                 <Route path="/events" element={<EventsPage key="events" />} />
                 <Route path="/profile/events" element={<EventsPage key="manage-events" managementOnly />} />
-                <Route path="/profile/events/new" element={<EventsPage key="new-event" managementOnly creationPage />} />
+                <Route path="/profile/events/new" element={<CreateEventRoute />} />
                 <Route path="/profile/events/:id/edit" element={<EventsPage key="edit-event" managementOnly editPage />} />
                 <Route path="/events/:id" element={<EventDetailPage />} />
                 <Route path="/events/:id/check-in" element={<EventCheckInPage />} />

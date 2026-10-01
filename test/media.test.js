@@ -147,7 +147,7 @@ test("event rendering surfaces cannot reintroduce the legacy event-covers URL", 
   const surfaces = [
     "src/pages/EventsPage.jsx",
     "src/pages/EventDetailPage.jsx",
-    "src/pages/HomePage.jsx",
+    "src/components/EventPreviewCard.jsx",
     "src/pages/GroupsPage.jsx",
   ];
 

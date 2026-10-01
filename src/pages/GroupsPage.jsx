@@ -441,7 +441,7 @@ export default function GroupsPage({
       ),
       token
         ? apiFetch("/api/my/groups", { headers }).then((response) =>
-            response.ok ? response.json() : [],
+            read(response, "Unable to load your groups."),
           )
         : Promise.resolve([]),
       canManageOwnGroups
@@ -1015,7 +1015,7 @@ export default function GroupsPage({
         {confirmationDialog}
       </SiteChrome>
     );
-  const displayGroups = managementOnly ? managedGroups : groups;
+  const displayGroups = managementOnly ? managedGroups : groups.filter(item => !myGroups.some(joined => String(joined.id) === String(item.id)));
   return (
     <SiteChrome>
       <Helmet>
@@ -1067,17 +1067,16 @@ export default function GroupsPage({
             saving={saving}
           />
         )}
-        {managementOnly && myGroups.length > 0 && (
+        {!managementOnly && token && <Link to="/profile/groups" className="mt-6 inline-flex min-h-11 items-center border border-border px-4 text-sm">Manage groups</Link>}
+        {!managementOnly && token && (
           <section className="mt-12">
             <h2 className="font-display text-3xl font-semibold">
-              Groups you joined
+              My Groups
             </h2>
+            {loading && <p role="status" className="mt-5 text-muted-foreground">Loading your groups…</p>}
+            {!loading && !myGroups.length && <p className="mt-5 text-muted-foreground">Groups you join will appear here. Explore groups below to find your people.</p>}
             <div className="mt-5 grid gap-4 sm:grid-cols-2">
               {myGroups
-                .filter(
-                  (item) =>
-                    !managedGroups.some((managed) => managed.id === item.id),
-                )
                 .map((item) => (
                   <GroupCard key={item.id} group={item} />
                 ))}
@@ -1136,7 +1135,7 @@ export default function GroupsPage({
             <p className="mt-5 text-muted-foreground">
               {managementOnly
                 ? "You have not created any groups yet."
-                : "No groups are available yet."}
+                : myGroups.length ? "Your groups are listed above. No other groups are available yet." : "No groups are available yet."}
             </p>
           )}
         </section>

@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Helmet } from "react-helmet";
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import SiteChrome from "@/components/SiteChrome";
+import MyEventsSection, { useAttendingEvents } from '@/components/MyEventsSection';
 import { RepresentativeEvents } from "@/components/EventRepresentatives";
 import { apiFetch } from "@/lib/api";
 import { eventImageRenderDebug, eventMediaUrl } from "@/lib/media";
@@ -203,6 +204,7 @@ export default function EventsPage({
   const user = JSON.parse(localStorage.getItem("authUser") || "null");
   const token = localStorage.getItem("authToken");
   const canManage = Boolean(managementOnly && token);
+  const attending = useAttendingEvents(!managementOnly ? token : null);
   const canManageAllEvents = Boolean(
     user && ["manager", "admin"].includes(user.role),
   );
@@ -511,6 +513,14 @@ export default function EventsPage({
     setError("");
     setMessage("");
     try {
+      if (!form.endsAt || !localDateTimeToUtc(form.endsAt, form.timezone, 'end')) {
+        setErrors({ endsAt: 'Choose an end date and time.' });
+        throw new Error('Choose an end date and time before saving the event.');
+      }
+      if (form.startsAt && localDateTimeToUtc(form.endsAt, form.timezone, 'end') <= localDateTimeToUtc(form.startsAt, form.timezone)) {
+        setErrors({ endsAt: 'The end must be after the start.' });
+        throw new Error('The event must end after it starts.');
+      }
       if (form.locationType === "custom" && (!form.formattedAddress || !Number.isFinite(Number(form.latitude)) || !Number.isFinite(Number(form.longitude)))) {
         setErrors({ location: "Choose an address from the Google suggestions so its location can be saved." });
         throw new Error("Choose an address from the Google suggestions.");
@@ -698,7 +708,7 @@ export default function EventsPage({
       : events;
   const eventStatus = (event) => String(event?.status || "Published").toLowerCase();
   const active = displayed.filter(
-    (event) => !["archived", "draft"].includes(eventStatus(event)),
+    (event) => !["archived", "draft"].includes(eventStatus(event)) && (managementOnly || !attending.events.some(item => String(item.id) === String(event.id))),
   );
   const drafts = displayed.filter((event) => eventStatus(event) === "draft");
   const archived = [...archivedEvents, ...displayed.filter((event) => eventStatus(event) === "archived")]
@@ -850,6 +860,8 @@ export default function EventsPage({
           </Link>
         )}
         {organizerView && !creationPage && !editPage && <RepresentativeEvents token={token} />}
+        {!managementOnly && token && <div className="mt-6 flex flex-wrap gap-4"><Link to="/profile/events" className="inline-flex min-h-11 items-center border border-border px-4 text-sm">Manage events</Link><Link to="/profile/events/new" className="inline-flex min-h-11 items-center text-sm text-primary underline">Create an event</Link></div>}
+        {!managementOnly && token && <MyEventsSection {...attending} />}
         {!managementOnly && (
           <nav aria-label="Event categories" className="mt-8 flex flex-wrap gap-2">
             <button
@@ -1014,7 +1026,8 @@ export default function EventsPage({
                 {form.locationType === "online" && <div className="grid gap-4 sm:col-span-2 sm:grid-cols-2"><p className="sm:col-span-2 text-sm text-muted-foreground">The event is online. Joining links are shown only to the event manager/admin.</p>{input("onlinePlatform", "Platform (for example, Zoom)")}{input("onlineUrl", "Joining URL", "url")}</div>}
               </fieldset>
               {form.locationType !== "venue" && input("startsAt", "Starts", "datetime-local", true)}
-              {form.locationType !== "venue" && input("endsAt", "Ends", "datetime-local")}
+              {form.locationType !== "venue" && input("endsAt", "Ends", "datetime-local", true)}
+              {form.locationType === "venue" && errors.endsAt && <p role="alert" className="text-sm text-destructive">{errors.endsAt}</p>}
               {creationPage && !draftId && (
                 <div className="grid gap-4 border border-border p-4 sm:col-span-2 sm:grid-cols-3">
                   <label className="block text-sm">
@@ -1165,7 +1178,7 @@ export default function EventsPage({
             {managementOnly ? "Your events" : "Upcoming experiences"}
           </h2>
           <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {loading ? (
+            {loading || (!managementOnly && attending.loading) ? (
               <div className="flex items-center gap-3 py-8 text-muted-foreground">
                 <span
                   className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent"
@@ -1175,7 +1188,7 @@ export default function EventsPage({
               </div>
             ) : active.length === 0 ? (
               <p className="py-6 text-muted-foreground">
-                No published events are available yet.
+                {!managementOnly && attending.events.length ? 'Your events are listed above. No other events match this selection.' : 'No published events are available yet.'}
               </p>
             ) : (
               active.map((event) => (
