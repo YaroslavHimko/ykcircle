@@ -1,282 +1,91 @@
-import React, { useEffect, useState } from "react";
-import { Helmet } from "react-helmet";
-import { Link } from "react-router-dom";
-import { ArrowRight, CalendarDays, MapPin, Users } from "lucide-react";
-import SiteChrome from "@/components/SiteChrome";
-import { apiFetch } from "@/lib/api";
-import { eventImageRenderDebug, eventMediaUrl } from "@/lib/media";
+import React, { useEffect, useState } from 'react';
+import { Helmet } from 'react-helmet';
+import { Link } from 'react-router-dom';
+import { ArrowRight, CalendarDays, MapPin } from 'lucide-react';
+import SiteChrome from '@/components/SiteChrome';
+import { apiFetch } from '@/lib/api';
+import { eventImageRenderDebug, eventMediaUrl } from '@/lib/media';
+import { backendInstant } from '@/lib/time';
 
-const images = {
-  hero: `/images/hero.png?v=${import.meta.env.VITE_HERO_IMAGE_VERSION}`,
-  stockholm: "/images/stockholm.png",
-  taipei: "/images/taipei.png",
-  minsk: "/images/minsk.png",
-  tennis: "/images/tennis-game.png",
-  band: "/images/band.png",
-  art: "/images/art.png",
+const interests = [
+  { slug: 'music', label: 'Music' },
+  { slug: 'sports', label: 'Sport' },
+  { slug: 'art', label: 'Art & creativity' },
+  { slug: 'culture', label: 'Culture' },
+];
+const formatDate = (value) => {
+  const date = backendInstant(value);
+  return date ? new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(date) : 'Date to be announced';
 };
-const formatDate = (value) =>
-  value
-    ? new Intl.DateTimeFormat("en-SE", {
-        dateStyle: "medium",
-        timeStyle: "short",
-      }).format(new Date(value))
-    : "Date to be announced";
-
-const eventLocationLabel = (event) =>
-  event.location || event.venue?.name || event.venueName || event.city || "Location to be announced";
+const eventLocationLabel = (event) => {
+  if (event.locationType === 'online') return 'Online';
+  return event.venue?.name || event.venueName || (typeof event.location === 'string' ? event.location : event.location?.formattedAddress || event.location?.locality) || event.city || 'Location to be announced';
+};
+const priceLabel = (event) => Number(event.fee) > 0 ? `${event.fee} ${event.currency || 'SEK'}` : 'Free';
 
 function EventCard({ event }) {
   const image = eventMediaUrl(event);
-  if (image) eventImageRenderDebug({ component: "HomeEventCard", event });
-  return (
-    <Link
-      to={`/events/${event.id}`}
-      className="group grid overflow-hidden border border-border bg-background sm:grid-cols-[10rem_1fr] md:grid-cols-[14rem_1fr_15rem]"
-    >
-      {image ? (
-        <img
-          src={image}
-          alt=""
-          className="aspect-[16/9] h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-        />
-      ) : (
-        <div className="flex aspect-[16/9] items-end bg-gradient-to-br from-primary/90 via-primary/65 to-slate-900 p-4 text-xl font-display text-white">
-          {event.title}
-        </div>
-      )}
-      <div className="p-5">
-        <p className="text-xs uppercase tracking-[0.2em] text-primary">
-          {event.status || "Published"} ·{" "}
-          {event.fee > 0 ? `${event.fee} SEK` : "Free"}
-        </p>
-        {event.groupName && (
-          <p className="mt-2 text-xs font-medium text-primary">
-            From {event.groupName}
-          </p>
-        )}
-        <h3 className="mt-2 font-display text-2xl font-semibold group-hover:text-primary">
-          {event.title}
-        </h3>
-        {event.description && (
-          <p className="mt-2 line-clamp-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-            {event.shortDescription || event.description}
-          </p>
-        )}
+  const organizer = event.brandName || event.groupName || event.managerName;
+  if (image) eventImageRenderDebug({ component: 'HomeEventCard', event });
+  return <Link to={`/events/${event.id}`} className="group flex min-w-0 flex-col overflow-hidden rounded-xl border border-border/70 bg-background transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-4">
+    <div className="relative aspect-[16/10] overflow-hidden bg-secondary/60">
+      {image ? <img src={image} alt="" loading="lazy" className="h-full w-full object-cover transition-transform duration-300 motion-safe:group-hover:scale-105" /> : <div className="flex h-full items-center justify-center text-muted-foreground/40"><CalendarDays aria-hidden="true" className="h-12 w-12" strokeWidth={1} /></div>}
+      <span className="absolute right-3 top-3 rounded-full bg-background/95 px-3 py-1.5 text-xs font-medium shadow-sm">{priceLabel(event)}</span>
+    </div>
+    <div className="flex flex-1 flex-col p-5">
+      <h3 className="line-clamp-2 text-xl font-semibold leading-snug tracking-tight transition-colors group-hover:text-primary">{event.title}</h3>
+      {organizer && <p className="mt-2 text-sm text-muted-foreground">By {organizer}</p>}
+      <div className="mt-4 space-y-2 text-sm text-muted-foreground">
+        <p className="flex items-start gap-2"><CalendarDays aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" /><span>{formatDate(event.startsAt)}</span></p>
+        <p className="flex items-start gap-2"><MapPin aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" /><span className="line-clamp-2">{eventLocationLabel(event)}</span></p>
       </div>
-      <div className="space-y-2 border-t border-border p-5 text-sm text-muted-foreground sm:border-l sm:border-t-0">
-        <p className="flex gap-2">
-          <CalendarDays className="h-4 w-4 text-primary" />
-          {formatDate(event.startsAt)}
-        </p>
-        <p className="flex gap-2">
-          <MapPin className="h-4 w-4 text-primary" />
-          {eventLocationLabel(event)}
-        </p>
-        <p className="flex gap-2">
-          <Users className="h-4 w-4 text-primary" />
-          {event.managerName || "YKCircle"}
-        </p>
-      </div>
-    </Link>
-  );
+      {(event.shortDescription || event.description) && <p className="mt-4 line-clamp-2 text-sm leading-relaxed text-muted-foreground">{event.shortDescription || event.description}</p>}
+    </div>
+  </Link>;
 }
 
 export default function HomePage() {
   const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
-    apiFetch("/api/events")
-      .then(async (response) => {
-        if (!response.ok) return;
-        const data = await response.json();
-        const published = data
-          .filter(
-            (event) =>
-              !["Archived", "Draft", "Cancelled"].includes(event.status),
-          )
-          .slice(0, 4);
-        setEvents(published);
-      })
-      .catch(() => {});
-  }, []);
-  return (
-    <SiteChrome>
-      <Helmet>
-        <title>YKCircle | Real people, real plans, real places</title>
-        <meta
-          name="description"
-          content="Find people for the things you want to do, make a plan together, and discover local places through YKCircle."
-        />
-      </Helmet>
-      <section className="relative overflow-hidden">
-        <img
-          src={images.hero}
-          alt="A person discovering a city"
-          className="h-[36rem] w-full object-cover sm:h-[38rem]"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-        <div className="absolute inset-x-0 bottom-0 mx-auto max-w-[90rem] px-5 pb-10 sm:px-8 sm:pb-16">
-          <p className="text-xs uppercase tracking-[0.3em] text-white/80">
-            YKCircle · Stockholm community
-          </p>
-          <h1 className="mt-3 max-w-3xl font-display text-4xl font-black leading-[0.95] text-white sm:text-7xl">
-            Find people for the things you want to do.
-          </h1>
-          <p className="mt-5 max-w-xl text-base leading-relaxed text-white/85 sm:text-lg">
-            Turn an idea into a real plan: find people, form a group, join an event, or discover the right local place.
-          </p>
-          <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-            <Link
-              to="/register"
-              className="inline-flex min-h-12 items-center justify-center gap-2 bg-primary px-5 text-sm text-primary-foreground"
-            >
-              Join YKCircle <ArrowRight className="h-4 w-4" />
-            </Link>
-            <Link
-              to="/events?category=music"
-              className="inline-flex min-h-12 items-center justify-center border border-white/70 px-5 text-sm text-white"
-            >
-              Explore events
-            </Link>
-          </div>
-        </div>
-      </section>
+    let active = true;
+    setLoading(true); setError('');
+    apiFetch('/api/events').then(async response => {
+      if (!response.ok) throw new Error('Events could not be loaded. Please try again.');
+      const data = await response.json();
+      const rows = Array.isArray(data) ? data : data.events || [];
+      const upcoming = rows.filter(event => {
+        const end = backendInstant(event.endsAt || event.startsAt);
+        return event.status === 'Published' && (!end || end.getTime() >= Date.now());
+      }).sort((a, b) => (backendInstant(a.startsAt)?.getTime() ?? Infinity) - (backendInstant(b.startsAt)?.getTime() ?? Infinity)).slice(0, 6);
+      if (active) setEvents(upcoming);
+    }).catch(failure => { if (active) setError(failure.message); }).finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [attempt]);
 
-      <section className="mx-auto max-w-[90rem] px-5 py-16 sm:px-8 sm:py-20">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <p className="text-xs uppercase tracking-[0.25em] text-primary">
-              This week in the city
-            </p>
-            <h2 className="mt-2 font-display text-4xl font-semibold">
-              Upcoming experiences
-            </h2>
-          </div>
-          <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">
-            Activity first, people second. Find a reason to step outside.
-          </p>
-        </div>
-        <div className="mt-8">
-          {events.length ? (
-            events.map((event) => <EventCard event={event} key={event.id} />)
-          ) : (
-            <p className="border-t border-border py-5 text-muted-foreground">
-              New experiences are being prepared.
-            </p>
-          )}
-        </div>
-      </section>
-
-      <section className="border-y border-border bg-secondary/40">
-        <div className="mx-auto max-w-[90rem] px-5 py-16 sm:px-8 sm:py-20">
-          <div className="flex items-end justify-between gap-5">
-            <div>
-              <p className="text-xs uppercase tracking-[0.25em] text-primary">
-                Find your kind of day
-              </p>
-              <h2 className="mt-2 font-display text-4xl font-semibold">
-                Start with an interest
-              </h2>
-            </div>
-            <Link
-              to="/events"
-              className="hidden items-center gap-2 text-sm text-primary sm:inline-flex"
-            >
-              Browse all <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Link
-              to="/events?category=music"
-              className="group relative aspect-[4/3] overflow-hidden"
-            >
-              <img
-                src={images.band}
-                alt="Friends playing music together"
-                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-              />
-              <div className="absolute inset-0 bg-black/35" />
-              <span className="absolute bottom-4 left-4 text-xl font-medium text-white">
-                Music
-              </span>
-            </Link>
-            <Link
-              to="/events?category=sports"
-              className="group relative aspect-[4/3] overflow-hidden"
-            >
-              <img
-                src={images.tennis}
-                alt="Playing sport"
-                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-              />
-              <div className="absolute inset-0 bg-black/35" />
-              <span className="absolute bottom-4 left-4 text-xl font-medium text-white">
-                Sport
-              </span>
-            </Link>
-            <Link
-              to="/events?category=art"
-              className="group relative aspect-[4/3] overflow-hidden"
-            >
-              <img
-                src={images.art}
-                alt="Friends painting together at an art workshop"
-                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-              />
-              <div className="absolute inset-0 bg-black/35" />
-              <span className="absolute bottom-4 left-4 text-xl font-medium text-white">
-                Art & creativity
-              </span>
-            </Link>
-            <Link
-              to="/events?category=culture"
-              className="group relative aspect-[4/3] overflow-hidden"
-            >
-              <img
-                src={images.minsk}
-                alt="Culture and places"
-                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-              />
-              <div className="absolute inset-0 bg-black/35" />
-              <span className="absolute bottom-4 left-4 text-xl font-medium text-white">
-                Culture
-              </span>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      <section className="mx-auto grid max-w-[90rem] gap-10 px-5 py-16 sm:px-8 sm:py-24 md:grid-cols-2 md:items-center">
-        <div>
-          <p className="text-xs uppercase tracking-[0.25em] text-primary">
-            Promote your idea
-          </p>
-          <h2 className="mt-3 font-display text-4xl font-semibold">
-            Give your event or business a place in the conversation.
-          </h2>
-          <p className="mt-5 max-w-xl leading-relaxed text-muted-foreground">
-            Planning something worth sharing? Request an article space to introduce your event, venue, service, or business to the YKCircle community.
-          </p>
-          <Link
-            to="/contact"
-            className="mt-6 inline-flex items-center gap-2 text-sm text-primary"
-          >
-            Request article space <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <img
-            src={images.stockholm}
-            alt="Stockholm"
-            className="aspect-[3/4] w-full object-cover"
-          />
-          <img
-            src={images.minsk}
-            alt="Minsk"
-            className="mt-8 aspect-[3/4] w-full object-cover"
-          />
-        </div>
-      </section>
-    </SiteChrome>
-  );
+  return <SiteChrome>
+    <Helmet><title>Discover local events | YKCircle</title><meta name="description" content="Explore upcoming events, discover local organizers, and find something you'd love to join." /></Helmet>
+    <section className="mx-auto max-w-[90rem] px-5 pb-12 pt-9 sm:px-8 sm:pb-16 sm:pt-12">
+      <h1 className="font-display text-3xl font-semibold tracking-tight sm:text-5xl">Find your next event</h1>
+      <p className="mt-3 max-w-xl text-base text-muted-foreground">Discover something to do, from the people who make it happen.</p>
+      <nav aria-label="Event interests" className="mt-6 flex flex-wrap gap-2">
+        <Link to="/events" className="inline-flex min-h-11 items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-4 text-sm font-medium text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">All events <ArrowRight aria-hidden="true" className="h-4 w-4" /></Link>
+        {interests.map(interest => <Link key={interest.slug} to={`/events?category=${interest.slug}`} className="inline-flex min-h-11 items-center rounded-full border border-border px-4 text-sm transition-colors hover:border-primary/50 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">{interest.label}</Link>)}
+      </nav>
+      <div className="mt-9 flex flex-wrap items-center justify-between gap-3 sm:mt-10">
+        <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">Upcoming events</h2>
+        <Link to="/events" className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-primary underline-offset-4 hover:underline">View all events <ArrowRight aria-hidden="true" className="h-4 w-4" /></Link>
+      </div>
+      {loading ? <div role="status" aria-label="Loading upcoming events" className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-3"><span className="sr-only">Loading upcoming events…</span>{[1, 2, 3].map(key => <div key={key} aria-hidden="true" className="overflow-hidden rounded-xl border border-border/60"><div className="aspect-[16/10] bg-secondary/60 motion-safe:animate-pulse" /><div className="space-y-3 p-5"><div className="h-5 w-3/4 rounded bg-secondary/60" /><div className="h-4 w-1/2 rounded bg-secondary/40" /><div className="h-4 w-2/3 rounded bg-secondary/40" /></div></div>)}</div>
+        : error ? <div className="mt-4 rounded-xl border border-border p-6"><p role="alert" className="text-sm text-muted-foreground">{error}</p><button type="button" onClick={() => setAttempt(value => value + 1)} className="mt-3 min-h-11 text-sm font-medium text-primary underline">Try again</button></div>
+          : events.length ? <div className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{events.map(event => <EventCard key={event.id} event={event} />)}</div>
+            : <div className="mt-4 rounded-xl border border-border px-6 py-10 text-center"><CalendarDays aria-hidden="true" className="mx-auto h-8 w-8 text-muted-foreground" /><p className="mt-3 text-lg font-medium">No upcoming events yet</p><p className="mt-2 text-sm text-muted-foreground">Explore local groups or share an event of your own.</p><Link to="/groups" className="mt-3 inline-flex min-h-11 items-center text-sm font-medium text-primary underline">Explore groups</Link></div>}
+      <div className="mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-border/60 pt-5 text-sm">
+        <p className="text-muted-foreground">Organizing something?</p>
+        <Link to="/profile/events/new" className="inline-flex min-h-11 items-center gap-2 font-medium text-primary underline-offset-4 hover:underline">Create an event <ArrowRight aria-hidden="true" className="h-4 w-4" /></Link>
+      </div>
+    </section>
+  </SiteChrome>;
 }
