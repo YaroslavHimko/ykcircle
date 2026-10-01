@@ -1,0 +1,55 @@
+import React, { useEffect, useState } from 'react';
+import { SubscriptionShell, subscriptionRequest as request, buttonClass, fieldClass, dateLabel } from './SubscriptionsPage';
+
+const switches = [
+  ['subscriptionsEnabled', 'Require organizer subscriptions', 'An active subscription or granted access is required to publish. Drafts remain available.'],
+  ['paidEventsEnabled', 'Enable paid events', 'Organizers can create paid events and sell tickets after completing their payment setup.'],
+  ['paidVenuesEnabled', 'Enable paid venues', 'Venue owners can set rates and charge for new bookings.'],
+];
+const emptyPlan = { code: 'organizer', name: 'Organizer', amount: '', currency: 'SEK', billingInterval: 'month', providerPriceId: '' };
+export default function ConfigurationPage() {
+  const user = JSON.parse(localStorage.getItem('authUser') || 'null');
+  const staff = ['admin','manager'].includes(user?.role);
+  const [configuration, setConfiguration] = useState(null), [customers, setCustomers] = useState(null), [products, setProducts] = useState([]);
+  const [error, setError] = useState(''), [notice, setNotice] = useState(''), [busy, setBusy] = useState(false), [filter, setFilter] = useState('');
+  const [plan, setPlan] = useState(emptyPlan);
+  const [grant, setGrant] = useState({ type: 'user', id: '', source: 'admin', endsAt: '', reason: '' });
+  const load = async () => { const [settings, rows, plans] = await Promise.all([request('/api/product-configuration'), request('/api/admin/subscriptions'), request('/api/platform/products')]); setConfiguration(settings); setCustomers(rows); setProducts(plans); };
+  useEffect(() => { if (staff) load().catch((failure) => setError(failure.message)); }, [staff]);
+  const run = async (action) => { setBusy(true); setError(''); setNotice(''); try { await action(); } catch (failure) { setError(failure.message); } finally { setBusy(false); } };
+  if (!staff) return <SubscriptionShell title="Configuration"><p className="mt-6">Administrator or manager access is required.</p></SubscriptionShell>;
+  const subscriptions = customers?.subscriptions.filter((entry) => `${entry.customerName} ${entry.email || ''} ${entry.planName} ${entry.status}`.toLowerCase().includes(filter.toLowerCase())) || [];
+  const savePlan = (event) => { event.preventDefault(); run(async () => {
+    let product = products.find((entry) => entry.code === plan.code);
+    if (product && (product.productType !== 'subscription' || product.entitlementFeature !== 'organizer.publish_event')) throw new Error('That code belongs to a different product. Choose another code.');
+    if (!product) { product = await request('/api/admin/platform/products', { productType: 'subscription', code: plan.code, name: plan.name, entitlementFeature: 'organizer.publish_event', isActive: true }); setProducts(current => [...current, { ...product, code: plan.code, productType: 'subscription', entitlementFeature: 'organizer.publish_event' }]); }
+    await request(`/api/admin/platform/products/${product.id}/prices`, { amount: Number(plan.amount), currency: plan.currency, billingInterval: plan.billingInterval, providerPriceId: plan.providerPriceId, isActive: true });
+    await load(); setNotice('Organizer plan saved.'); setPlan(emptyPlan);
+  }); };
+  return <SubscriptionShell title="Configuration">
+    <p className="mt-4 text-muted-foreground">Control paid features and organizer publishing access.</p>
+    {error && <p role="alert" className="mt-5 text-destructive">{error}</p>}{notice && <p role="status" className="mt-5 text-primary">{notice}</p>}
+    {!configuration && !error && <p className="mt-6">Loading configuration…</p>}
+    {configuration && <form className="mt-7 space-y-5 border border-border p-5 sm:p-7" onSubmit={(event) => { event.preventDefault(); run(async () => { setConfiguration(await request('/api/admin/configuration', configuration, 'PUT')); setNotice('Configuration saved.'); }); }}>
+      {switches.map(([key, label, description]) => <label key={key} className="flex items-start gap-4"><input type="checkbox" checked={configuration[key]} onChange={(event) => setConfiguration({ ...configuration, [key]: event.target.checked })} className="mt-1 h-5 w-5 shrink-0 accent-primary" /><span><span className="font-medium">{label}</span><span className="mt-1 block text-sm text-muted-foreground">{description}</span></span></label>)}
+      <p className="text-xs text-muted-foreground">Changing these switches does not cancel subscriptions, unpublish existing events, or invalidate existing tickets and invoices.</p><button disabled={busy} className={buttonClass}>Save configuration</button>
+    </form>}
+    <section className="mt-10"><h2 className="font-display text-2xl font-semibold">Organizer plans</h2><p className="mt-2 text-sm text-muted-foreground">Use a recurring Stripe Price from the platform account. Add monthly and optional annual prices using the same plan code.</p>
+      <ul className="mt-4 space-y-2">{products.filter((entry) => entry.entitlementFeature === 'organizer.publish_event').map((entry) => <li key={`${entry.id}:${entry.priceId}`} className="break-words border border-border p-3 text-sm">{entry.name} · {entry.amount} {entry.currency} / {entry.billingInterval} · {entry.providerPriceId || 'No Stripe price configured'}</li>)}</ul>
+      <form onSubmit={savePlan} className="mt-5 grid gap-4 border border-border p-5 sm:grid-cols-2">{[['code','Plan code'],['name','Plan name'],['amount','Amount'],['providerPriceId','Stripe Price ID']].map(([key,label]) => <label key={key} className="min-w-0 text-sm">{label}<input required className={fieldClass} type={key === 'amount' ? 'number' : 'text'} min={key === 'amount' ? '0.01' : undefined} step={key === 'amount' ? '0.01' : undefined} value={plan[key]} onChange={(event) => setPlan({ ...plan, [key]: event.target.value })} /></label>)}<label className="text-sm">Currency<select className={fieldClass} value={plan.currency} onChange={(event) => setPlan({ ...plan, currency: event.target.value })}>{['SEK','EUR','USD'].map((currency) => <option key={currency}>{currency}</option>)}</select></label><label className="text-sm">Billing interval<select className={fieldClass} value={plan.billingInterval} onChange={(event) => setPlan({ ...plan, billingInterval: event.target.value })}><option value="month">Monthly</option><option value="year">Annual</option></select></label><button disabled={busy} className={`${buttonClass} justify-self-start`}>Save plan price</button></form>
+    </section>
+    <section className="mt-10"><h2 className="font-display text-2xl font-semibold">Subscribed customers</h2><label className="mt-4 block max-w-md text-sm">Search customers, plans or status<input className={fieldClass} value={filter} onChange={(event) => setFilter(event.target.value)} /></label>
+      <div className="mt-5 grid gap-4 sm:grid-cols-2">{subscriptions.map((entry) => <article key={entry.id} className="min-w-0 border border-border p-5"><h3 className="font-semibold">{entry.customerName || 'Deleted account'}</h3><p className="mt-1 text-xs text-muted-foreground">{entry.organizationId ? `Organization #${entry.organizationId}` : `User #${entry.userId}`} · {entry.email}</p><p className="mt-3 text-sm">{entry.planName} · {entry.status}</p><p className="mt-2 text-sm">{entry.cancelAtPeriodEnd ? 'Ends' : 'Period ends'} {dateLabel(entry.currentPeriodEnd)}</p><p className="mt-3 break-all text-xs text-muted-foreground">{entry.providerCustomerId}<br />{entry.providerSubscriptionId}</p></article>)}</div>{customers && !subscriptions.length && <p className="mt-5 text-sm text-muted-foreground">No matching subscriptions.</p>}
+    </section>
+    <section className="mt-10"><h2 className="font-display text-2xl font-semibold">Publishing access grants</h2><p className="mt-2 text-sm text-muted-foreground">Grant temporary access for a customer or organization. Each change records your reason.</p>
+      <form className="mt-5 grid gap-4 border border-border p-5 sm:grid-cols-2" onSubmit={(event) => { event.preventDefault(); run(async () => { await request('/api/admin/subscriptions/grants', { owner: { type: grant.type, id: Number(grant.id) }, source: grant.source, endsAt: new Date(grant.endsAt).toISOString(), reason: grant.reason }); await load(); setNotice('Publishing access granted.'); }); }}>
+        <label className="text-sm">Account type<select className={fieldClass} value={grant.type} onChange={(event) => setGrant({ ...grant, type: event.target.value })}><option value="user">User</option><option value="organization">Organization</option></select></label>
+        <label className="text-sm">Account ID<input required type="number" min="1" className={fieldClass} value={grant.id} onChange={(event) => setGrant({ ...grant, id: event.target.value })} /></label>
+        <label className="text-sm">Access source<select className={fieldClass} value={grant.source} onChange={(event) => setGrant({ ...grant, source: event.target.value })}>{['admin','early_access','promotion','partner','grandfathered','trial'].map((source) => <option key={source} value={source}>{source.replaceAll('_',' ')}</option>)}</select></label>
+        <label className="text-sm">Expires at<input required type="datetime-local" className={fieldClass} value={grant.endsAt} onChange={(event) => setGrant({ ...grant, endsAt: event.target.value })} /></label>
+        <label className="text-sm sm:col-span-2">Reason<input required maxLength="1000" className={fieldClass} value={grant.reason} onChange={(event) => setGrant({ ...grant, reason: event.target.value })} /></label><button disabled={busy} className={`${buttonClass} justify-self-start`}>Grant access</button>
+      </form>
+      <ul className="mt-5 space-y-3">{customers?.entitlements.filter((entry) => !entry.revokedAt && (!entry.endsAt || Date.parse(entry.endsAt) > Date.now())).map((entry) => <li key={entry.id} className="flex flex-wrap items-center justify-between gap-3 border border-border p-4 text-sm"><span>{entry.customerName} · {entry.source}<br /><span className="text-xs text-muted-foreground">{entry.feature} · until {dateLabel(entry.endsAt)}</span></span>{!['subscription','platform_subscription'].includes(entry.source) && <button disabled={busy} className="text-primary underline" onClick={() => { const reason = window.prompt('Reason for revoking this access grant:'); if (reason?.trim()) run(async () => { await request(`/api/admin/subscriptions/grants/${entry.id}/revoke`, { reason }); await load(); setNotice('Access grant revoked.'); }); }}>Revoke</button>}</li>)}</ul>
+    </section>
+  </SubscriptionShell>;
+}

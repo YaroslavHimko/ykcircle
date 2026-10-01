@@ -90,6 +90,8 @@ export function Header() {
                             <Link to="/profile/saved-venues" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Saved venues</Link>
                             <Link to="/account/tickets" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">My tickets</Link>
                             <Link to="/account/billing" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Billing & organizations</Link>
+                            <Link to="/profile/subscriptions" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Subscriptions</Link>
+                            {canManage && <Link to="/admin/configuration" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Configuration</Link>}
                             <p className="mt-2 border-t border-border px-3 pt-4 text-[0.65rem] font-medium uppercase tracking-[0.2em] text-muted-foreground">Manage</p>
                             <Link to="/profile/events" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Events</Link>
                             <Link to="/profile/groups" onClick={() => setProfileOpen(false)} className="block px-3 py-3 text-sm hover:bg-secondary">Groups</Link>
@@ -138,6 +140,8 @@ export function Header() {
                             <Link to="/profile/saved-venues" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">Saved venues</Link>
                             <Link to="/account/tickets" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">My tickets</Link>
                             <Link to="/account/billing" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">Billing & organizations</Link>
+                            <Link to="/profile/subscriptions" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">Subscriptions</Link>
+                            {canManage && <Link to="/admin/configuration" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">Configuration</Link>}
                             <p className="pt-5 text-[0.65rem] font-medium uppercase tracking-[0.2em] text-muted-foreground">Manage</p>
                             <Link to="/profile/events" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">Events</Link>
                             <Link to="/profile/groups" onClick={() => setOpen(false)} className="min-h-[44px] border-b border-border/60 py-3 text-base">Groups</Link>

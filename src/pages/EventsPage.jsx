@@ -1,3 +1,4 @@
+import { useProductConfiguration } from '@/lib/product-configuration';
 import LogoUpload from "@/components/LogoUpload";
 import React, { useEffect, useRef, useState } from "react";
 import { Helmet } from "react-helmet";
@@ -215,6 +216,9 @@ export default function EventsPage({
   const [venues, setVenues] = useState([]);
   const [venueSchedule, setVenueSchedule] = useState({ loading: false, error: "", date: "", timezone: "", slots: [] });
   const [pendingVenueSlot, setPendingVenueSlot] = useState(null);
+  const productConfiguration = useProductConfiguration();
+  const [organizers, setOrganizers] = useState([]);
+  useEffect(() => { if (!token || !managementOnly) return; let alive = true; apiFetch('/api/subscriptions/options').then(response => response.ok ? response.json() : null).then(data => { if (alive && data) setOrganizers(data.owners.filter(owner => owner.type === 'organization')); }).catch(() => {}); return () => { alive = false; }; }, [token, managementOnly]);
   const [form, setForm] = useState(initialForm);
   const [draftId, setDraftId] = useState(null);
   const [draftSaved, setDraftSaved] = useState(false);
@@ -398,6 +402,7 @@ export default function EventsPage({
       onlinePlatform: eventValue(event, "onlinePlatform", "online_platform"),
       timezone: eventValue(event, "timezone", "timeZone") || current.timezone,
       groupId: eventValue(event, "groupId", "group_id"),
+      organizerOrganizationId: event.organizerOrganizationId || "",
       locationType: eventValue(event, "locationType", "location_type") === "physical" ? "custom" : eventValue(event, "locationType", "location_type") || current.locationType,
       pricingType: Number(eventValue(event, "fee")) > 0 ? "paid" : "free",
       fee: eventValue(event, "fee") || 0,
@@ -463,6 +468,7 @@ export default function EventsPage({
         endsAtUtc: form.endsAt
           ? localDateTimeToUtc(form.endsAt, form.timezone, "end")
           : undefined,
+        organizerOrganizationId: form.organizerOrganizationId ? Number(form.organizerOrganizationId) : null,
         fee: form.pricingType === "paid" ? Number(form.fee) : 0,
       }).filter(
         ([key, value]) => ["logoImage", "brandName"].includes(key) || (value !== "" && value !== null && value !== undefined),
@@ -561,6 +567,7 @@ export default function EventsPage({
     const data = await response.json();
     if (!response.ok) {
       setErrors(data.fields || {});
+      if (data.code === "SUBSCRIPTION_REQUIRED" && data.subscribeUrl?.startsWith("/subscribe?")) { navigate(data.subscribeUrl); return; }
       setError(data.error || "Event cannot be published.");
       return;
     }
@@ -1035,6 +1042,8 @@ export default function EventsPage({
                   {errors.recurrence && <p className="text-sm text-destructive sm:col-span-3">{errors.recurrence}</p>}
                 </div>
               )}
+              <label className="block text-sm">Organizing account<select name="organizerOrganizationId" value={form.organizerOrganizationId || ""} onChange={update} disabled={Boolean(draftId)} className="mt-2 min-h-11 w-full border border-border bg-background px-3"><option value="">Personal account</option>{organizers.map(owner => <option key={owner.id} value={owner.id}>{owner.name}</option>)}</select><span className="mt-2 block text-xs text-muted-foreground">Publishing uses this account's subscription. The organizer is fixed when you save the draft.</span></label>
+              {productConfiguration.subscriptionsEnabled && <p className="text-sm text-muted-foreground">Drafts are always available. Publishing requires an active subscription or publishing access for the organizing account.</p>}
               <label className="block text-sm">
                 Pricing
                 <select
@@ -1044,7 +1053,7 @@ export default function EventsPage({
                   className="mt-2 min-h-11 w-full border border-border bg-background px-3"
                 >
                   <option value="free">Free</option>
-                  <option value="paid">Paid</option>
+                  <option value="paid" disabled={!productConfiguration.paidEventsEnabled}>Paid{!productConfiguration.paidEventsEnabled ? " (currently unavailable)" : ""}</option>
                 </select>
               </label>
               {form.pricingType === "paid" &&

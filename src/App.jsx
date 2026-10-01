@@ -1,3 +1,5 @@
+import SubscriptionsPage from './pages/SubscriptionsPage';
+import ConfigurationPage from './pages/ConfigurationPage';
 import React from 'react';
 import { Route, Routes, BrowserRouter as Router, useNavigate } from 'react-router-dom';
 import ScrollToTop from './components/ScrollToTop';
@@ -115,6 +117,9 @@ function App() {
                 <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                 <Route path="/reset-password" element={<ResetPasswordPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
+                <Route path="/profile/subscriptions" element={<SubscriptionsPage />} />
+                <Route path="/subscribe" element={<SubscriptionsPage />} />
+                <Route path="/admin/configuration" element={<ConfigurationPage />} />
                 <Route path="/admin/applications" element={<AdminApplicationsPage />} />
                 <Route path="/admin/applications/:id" element={<AdminApplicationPage />} />
                 <Route path="/admin/users" element={<UserRolesPage />} />
