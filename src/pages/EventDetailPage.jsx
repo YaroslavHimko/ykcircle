@@ -5,6 +5,7 @@ import { Helmet } from "react-helmet";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { Check, X } from "lucide-react";
 import SiteChrome from "@/components/SiteChrome";
+import EventExperience from "@/components/EventExperience";
 import VenueBookingConversation from "@/components/VenueBookingConversation";
 import ForumDiscussion from "@/components/ForumDiscussion";
 import TicketScanner from "@/components/TicketScanner";
@@ -29,17 +30,6 @@ const eventLocationText = (event) => {
   return [event?.locationType === "venue" ? event.venue?.name : "", ...lines].filter(Boolean).join(", ") || "To be announced";
 };
 
-const bookingTimeLabel = (booking) => {
-  if (!booking?.startAt || !booking?.endAt) return "";
-  const options = { hour: "2-digit", minute: "2-digit" };
-  const timezone = booking.timezone || booking.venue?.timezone;
-  try {
-    const formatter = new Intl.DateTimeFormat(undefined, timezone ? { ...options, timeZone: timezone } : options);
-    return `${formatter.format(new Date(booking.startAt))}–${formatter.format(new Date(booking.endAt))}`;
-  } catch {
-    return `${new Date(booking.startAt).toLocaleTimeString([], options)}–${new Date(booking.endAt).toLocaleTimeString([], options)}`;
-  }
-};
 const eventDateTimeLabel = (event) => {
   if (!event?.startsAt) return "To be announced";
   const options = { dateStyle: "medium", timeStyle: "short" };
@@ -1153,10 +1143,10 @@ export default function EventDetailPage() {
   return (
     <SiteChrome>
       <Helmet>
-        <title>{event?.title || "Event"} | Yaro Himko</title>
+        <title>{event?.title || "Event"} | YKCircle</title>
       </Helmet>
       <section className="mx-auto max-w-[72rem] px-5 pb-24 pt-10 sm:px-8 sm:pt-14">
-        <Link to={manageView ? "/profile/events" : "/events"} className="text-sm text-primary underline">
+        <Link to={manageView ? "/profile/events" : "/events"} className="inline-flex min-h-11 items-center text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
           Back to {manageView ? "manage events" : "all events"}
         </Link>
         {loading && (
@@ -1178,40 +1168,7 @@ export default function EventDetailPage() {
         )}
         {event && (
           <>
-            <p className="mt-10 text-[0.7rem] uppercase tracking-[0.35em] text-primary">
-              {event.status}
-            </p>
-            {event.groupName && (
-              <Link to={`/groups/${event.groupId}`} className="mt-3 inline-block text-sm font-medium text-primary hover:underline">
-                From {event.groupName}
-              </Link>
-            )}
-            <h1 className="mt-3 font-display text-5xl font-black">
-              {event.title}
-            </h1>
-            {eventCover(event) && (
-              <div className="relative mt-8 aspect-[16/7] w-full overflow-hidden bg-secondary">
-                {!imageLoaded && (
-                  <div
-                    className="absolute inset-0 animate-pulse bg-gradient-to-r from-secondary via-muted to-secondary"
-                    aria-label="Loading event image"
-                  />
-                )}
-                {eventImageRenderDebug({ component: "EventDetailPage", event })}
-                <img
-                  src={eventCover(event)}
-                  alt={`${event.title} cover`}
-                  onLoad={() => setImageLoaded(true)}
-                  className={`h-full w-full object-cover transition-opacity duration-300 ${imageLoaded ? "opacity-100" : "opacity-0"}`}
-                />
-              </div>
-            )}
-            <p className="mt-5 text-muted-foreground">
-              {eventDateTimeLabel(event)} ·{" "}
-              {venueBooking?.status === "confirmed" ? (venueBooking.venue?.name || venueBooking.venueName || event.venue?.name || eventLocationText(event)) : eventLocationText(event)}
-            </p>
-            {venueBooking?.status === "confirmed" && <p className="mt-2 text-sm text-muted-foreground">Confirmed venue: {venueBooking.venue?.name || venueBooking.venueName}{(venueBooking.venue?.location || venueBooking.venueLocation) && ` — ${venueBooking.venue?.location || venueBooking.venueLocation}`}</p>}
-            {bookingTimeLabel(venueBooking) && <p className="mt-2 text-sm text-muted-foreground">Requested time: {bookingTimeLabel(venueBooking)}</p>}
+            <EventExperience key={event.id} event={event} location={eventLocation(event)} locationText={venueBooking?.status === "confirmed" ? (venueBooking.venue?.name || venueBooking.venueName || event.venue?.name || eventLocationText(event)) : eventLocationText(event)} dateLabel={eventDateTimeLabel(event)} canManage={canManageEvents} participates={currentUserParticipates} registrationStatus={registrationStatus} canWithdraw={canWithdraw} onRegister={register} onWithdraw={withdraw} />
             {canManageEvents && ["Published", "Completed"].includes(event.status) && (
               <section className="mt-8 max-w-2xl border border-border p-5">
                 <h2 className="font-display text-2xl font-semibold">Finish event and follow up</h2>
@@ -1270,57 +1227,6 @@ export default function EventDetailPage() {
             {canManageEvents && <EventRepresentatives key={event.id} eventId={event.id} token={token} />}
             {canManageEvents && (event.pricingType === "paid" || Number(event.fee || 0) > 0) && <PaidEventFinancialConsole onProfileCreated={(saved) => setBillingProfiles((current) => [...current.filter((item) => item.id !== saved.id), saved])} eventId={event.id} token={token} currency={event.currency || "SEK"} billingProfiles={billingProfiles} />}
             {canManageEvents && venueBooking?.id && <div className="mt-5 max-w-2xl"><VenueBookingConversation bookingId={venueBooking.id} /></div>}
-            {event.description && (
-              <p className="mt-6 max-w-2xl leading-relaxed">
-                {event.description}
-              </p>
-            )}
-            <div className="mt-8 grid gap-4 border-y border-border py-6 text-sm sm:grid-cols-2">
-              <p>
-                <span className="text-muted-foreground">Category</span>
-                <br />
-                {event.categoryName || event.category || "Experience"}
-              </p>
-              <p>
-                <span className="text-muted-foreground">Type</span>
-                <br />
-                {event.typeName || event.type || "Event"}
-              </p>
-              {Number(event.ratingCount) > 0 && (
-                <p>
-                  <span className="text-muted-foreground">Rating</span>
-                  <br />
-                  <span className="text-primary" aria-hidden="true">{ratingStars(event.ratingAverage)}</span>{" "}
-                  {Number(event.ratingAverage).toFixed(1)} / 5 ({event.ratingCount} {Number(event.ratingCount) === 1 ? "rating" : "ratings"})
-                </p>
-              )}
-              <p>
-                <span className="text-muted-foreground">Date and time</span>
-                <br />
-                {eventDateTimeLabel(event)}
-              </p>
-              <p>
-                <span className="text-muted-foreground">Price</span>
-                <br />
-                {event.fee > 0
-                  ? `${event.fee} ${event.currency || "SEK"}`
-                  : "Free"}
-              </p>
-              <p>
-                <span className="text-muted-foreground">Location</span>
-                <br />
-                {eventLocationText(event)}
-              </p>
-            </div>
-            <section className="mt-8 max-w-2xl border-t border-border pt-7">
-              <h2 className="font-display text-2xl font-semibold">Location</h2>
-              {event.locationType === "online" ? <p className="mt-3 text-muted-foreground">Online event</p> : <>
-                {event.locationType === "venue" && event.venue?.name && <p className="mt-3 font-medium">{event.venue.name}</p>}
-                <p className="mt-2 whitespace-pre-line text-muted-foreground">{locationLines(eventLocation(event), { exact: event.locationVisibility !== "private" }).join("\n") || "Location to be announced"}</p>
-                <MapLocation location={eventLocation(event)} label={event.venue?.name || event.title} hidden={event.locationVisibility === "private" || event.venue?.locationVisibility === "private" || event.venue?.locationVisibility === "private_until_booking"} />
-                {event.locationType === "venue" && event.venue?.id && <Link className="mt-4 inline-block text-sm text-primary underline" to={event.venue.slug ? `/venues/slug/${event.venue.slug}` : `/venues/${event.venue.id}`}>View venue</Link>}
-              </>}
-            </section>
             {token && Number(event.myRating) > 0 && !canRate && (
               <section className="mt-8 border border-border p-5">
                 <h2 className="font-display text-2xl font-semibold">Your rating</h2>
@@ -1341,7 +1247,7 @@ export default function EventDetailPage() {
               </section>
             )}
             {
-              <section className="mt-12">
+              <section className="mt-10 rounded-2xl border border-border/70 p-5 sm:p-7">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                   <h2 className="font-display text-3xl font-semibold">Participants</h2>
                   {canManageEvents && <TicketScanner eventId={event.id} eventTitle={event.title} token={token} onCheckIn={({ participant }) => {
@@ -1455,28 +1361,8 @@ export default function EventDetailPage() {
                     No participants yet.
                   </p>
                 )}
-                {canWithdraw && (
-                  <div className="mt-5 flex flex-wrap items-center justify-between gap-4 border border-border bg-secondary/30 p-4">
-                    <div>
-                      <p className="font-medium">You’re participating in this event</p>
-                      <p className="mt-1 text-sm text-muted-foreground">Need to change your plans?</p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={withdraw}
-                      className="min-h-10 border border-destructive px-4 text-xs uppercase tracking-widest text-destructive"
-                    >
-                      Withdraw
-                    </button>
-                  </div>
-                )}
               </section>
             }
-            {!canManageEvents && (
-              <div className="mt-8 flex flex-wrap gap-3">
-                {!currentUserParticipates && (event.pricingType === "paid" || Number(event.fee || 0) > 0 ? <Link to={`/events/${event.id}/tickets`} className="inline-flex min-h-12 items-center bg-primary px-7 text-sm uppercase tracking-widest text-primary-foreground">Buy tickets</Link> : <button onClick={register} className="min-h-12 bg-primary px-7 text-sm uppercase tracking-widest text-primary-foreground">Register</button>)}
-              </div>
-            )}
             <div className="mt-5">
               <Link
                 to={`/report?entityType=event&entityId=${encodeURIComponent(event.id)}&contentUrl=${encodeURIComponent(window.location.href)}`}

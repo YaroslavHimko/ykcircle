@@ -15,6 +15,7 @@ const eventLocationLabel = (event) => {
 const priceLabel = (event) => Number(event.fee) > 0 ? `${event.fee} ${event.currency || 'SEK'}` : 'Free';
 
 export default function EventPreviewCard({ event, children }) {
+  const content = React.Children.toArray(children);
   const image = eventMediaUrl(event);
   const organizer = event.brandName || event.groupName || event.managerName;
   if (image) eventImageRenderDebug({ component: 'HomeEventCard', event });
@@ -34,6 +35,6 @@ export default function EventPreviewCard({ event, children }) {
       {(event.shortDescription || event.description) && <p className="mt-4 line-clamp-2 text-sm leading-relaxed text-muted-foreground">{event.shortDescription || event.description}</p>}
     </div>
     </Link>
-    {children && <div className="border-t border-border/60 p-5 pt-4">{children}</div>}
+    {content.length > 0 && <div className="border-t border-border/60 p-5 pt-4">{content}</div>}
   </article>;
 }

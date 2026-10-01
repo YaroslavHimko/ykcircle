@@ -4,7 +4,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import SiteChrome from '@/components/SiteChrome';
 import ConfirmationDialog from '@/components/ConfirmationDialog';
 import { apiAssetUrl, apiFetch } from '@/lib/api';
-import { deviceTimezone } from '@/lib/time';
+import { ArrowUpRight, Building2, Camera, ChevronDown, CreditCard, Mail, ShieldCheck } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 
 const profilePictureUrl = (value) => {
   if (!value) return '';
@@ -20,6 +21,29 @@ export default function ProfilePage() {
   const [user, setUser] = useState(storedUser);
   const [error, setError] = useState('');
   const [savingPreference, setSavingPreference] = useState(false);
+  const [emailPreferences, setEmailPreferences] = useState(null);
+  const [emailError, setEmailError] = useState('');
+  const [emailNotice, setEmailNotice] = useState('');
+  const [savingEmail, setSavingEmail] = useState(false);
+  useEffect(() => {
+    if (!token) return;
+    let active = true;
+    apiFetch('/api/auth/profile/email-preferences', { headers: { Authorization: 'Bearer ' + token } }).then(async response => {
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Unable to load email preferences.');
+      if (active) setEmailPreferences(data);
+    }).catch(failure => { if (active) setEmailError(failure.message); });
+    return () => { active = false; };
+  }, [token]);
+  const updateEmailPreference = async (key, value) => {
+    setSavingEmail(true); setEmailError(''); setEmailNotice('');
+    try {
+      const response = await apiFetch('/api/auth/profile/email-preferences', { method: 'PATCH', headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify({ [key]: value }) });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Unable to update email preferences.');
+      setEmailPreferences(data); setEmailNotice('Email preferences saved.');
+    } catch (failure) { setEmailError(failure.message); } finally { setSavingEmail(false); }
+  };
   const [uploading, setUploading] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -41,7 +65,7 @@ export default function ProfilePage() {
     try {
       const response = await apiFetch('/api/auth/profile/marketing-preferences', { method: 'PATCH', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ marketingConsent }) });
       const data = await response.json(); if (!response.ok) throw new Error(data.error || 'Unable to update marketing preferences.');
-      setUser((current) => ({ ...current, marketingConsent: data.marketingConsent }));
+      setUser((current) => { const next = { ...current, marketingConsent: data.marketingConsent }; localStorage.setItem('authUser', JSON.stringify(next)); return next; }); setEmailNotice('Email preferences saved.');
     } catch (requestError) { setError(requestError.message); } finally { setSavingPreference(false); }
   };
   const updateTimezonePreference = async (timezoneDisplayMode, preferredTimezone = null) => {
@@ -83,12 +107,36 @@ export default function ProfilePage() {
     } catch (requestError) { setError(requestError.message); setDeleting(false); }
   };
   if (!user) return null;
-  return <SiteChrome><Helmet><title>My profile | YKCircle</title><meta name="robots" content="noindex" /></Helmet><section className="mx-auto max-w-[56rem] px-5 pb-24 pt-10 sm:px-8 sm:pt-14"><div className="flex flex-wrap items-end justify-between gap-5"><div className="flex items-center gap-4"><label className="cursor-pointer" title="Change profile picture">{user.profilePicture ? <img src={user.profilePicture} alt="" className="h-20 w-20 rounded-full object-cover" /> : <span className="flex h-20 w-20 items-center justify-center rounded-full bg-secondary text-2xl">{user.name?.charAt(0)}</span>}<input type="file" accept="image/jpeg,image/png,image/gif,image/webp" onChange={uploadPicture} disabled={uploading} className="sr-only" /></label><div><p className="text-[0.7rem] uppercase tracking-[0.35em] text-primary">Member profile</p><h1 className="mt-2 font-display text-5xl font-black leading-[0.95]">{user.name}</h1><p className="mt-1 text-xs text-muted-foreground">{uploading ? 'Uploading picture…' : 'Select your picture to change it'}</p></div></div><button onClick={logout} className="border border-border px-5 py-3 text-sm uppercase tracking-widest">Log out</button></div><div className="mt-7 flex flex-wrap gap-3"><Link to="/profile/subscriptions" className="inline-flex min-h-11 items-center border border-border px-5 py-2 text-sm">My subscriptions</Link></div><div className="mt-10 grid gap-4 border-y border-border py-6 text-sm sm:grid-cols-2"><p><span className="text-muted-foreground">Email</span><br />{user.email}</p><p><span className="text-muted-foreground">Marketing updates</span><br /><label className="mt-2 flex items-center gap-3"><input type="checkbox" checked={Boolean(user.marketingConsent)} disabled={savingPreference} onChange={(event) => updateMarketing(event.target.checked)} />Receive optional YKCircle news</label></p></div>{error && <p role="alert" className="mt-5 text-destructive">{error}</p>}<details className="mt-10 rounded-xl border border-border p-5 sm:p-6">
-      <summary className="min-h-11 cursor-pointer text-sm font-medium">Organizations and payments</summary>
-      <p className="mt-2 text-sm text-muted-foreground">Manage an organization, business details, or payment settings when you need them.</p>
-      <div className="mt-4 flex flex-wrap gap-3">
-        <Link to="/account/organizations" className="inline-flex min-h-11 items-center rounded-lg border border-border px-5 py-2 text-sm">Organizations</Link>
-        <Link to="/account/payments" className="inline-flex min-h-11 items-center rounded-lg border border-border px-5 py-2 text-sm">Payments &amp; business</Link>
-      </div>
-    </details><section className="mt-12 border border-border p-6"><h2 className="font-display text-3xl font-semibold">Privacy and account</h2><p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">Download a machine-readable copy of the personal data available in your account, or permanently delete your account and eligible content.</p><div className="mt-6 flex flex-wrap gap-3"><button disabled={exporting} onClick={downloadExport} className="min-h-11 border border-border px-5 text-sm disabled:opacity-50">{exporting ? 'Preparing export…' : 'Download my data'}</button><button onClick={() => setConfirmingDelete(true)} className="min-h-11 border border-destructive px-5 text-sm text-destructive">Delete account</button></div></section></section>{confirmingDelete && <ConfirmationDialog title="Delete your account?" description="This permanently removes your account and eligible content. Confirm with your password." confirmLabel="Delete account" destructive busy={deleting} onCancel={() => { setConfirmingDelete(false); setDeletePassword(''); }} onConfirm={deleteAccount}><input autoFocus required type="password" value={deletePassword} onChange={(event) => setDeletePassword(event.target.value)} placeholder="Current password" aria-label="Current password" className="w-full border border-border bg-background p-3" /></ConfirmationDialog>}</SiteChrome>;
+  const emailChoices = [
+    ['eventInvitations', 'Event invitations', 'Invitations sent to you by event organizers.'],
+    ['groupInvitations', 'Group invitations', 'Invitations to join private groups.'],
+    ['groupEventAnnouncements', 'New events from your groups', 'Announcements when a group you belong to publishes an event.'],
+  ];
+  return <SiteChrome><Helmet><title>My profile | YKCircle</title><meta name="robots" content="noindex" /></Helmet>
+    <section className="mx-auto max-w-4xl px-5 pb-24 pt-10 sm:px-8 sm:pt-14">
+      <header className="flex flex-wrap items-center justify-between gap-6">
+        <div className="flex min-w-0 items-center gap-5"><label className="group relative shrink-0 cursor-pointer rounded-full focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-4" title="Change profile picture">
+          {user.profilePicture ? <img src={user.profilePicture} alt="" className="h-20 w-20 rounded-full object-cover sm:h-24 sm:w-24" /> : <span className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 text-3xl font-medium text-primary sm:h-24 sm:w-24">{user.name?.charAt(0)}</span>}
+          <span className="absolute -bottom-1 -right-1 rounded-full border-4 border-background bg-secondary p-2"><Camera className="h-4 w-4" aria-hidden="true" /></span><input aria-label="Change profile picture" type="file" accept="image/jpeg,image/png,image/gif,image/webp" onChange={uploadPicture} disabled={uploading} className="sr-only" />
+        </label><div className="min-w-0"><p className="text-xs font-medium uppercase tracking-widest text-primary">Your account</p><h1 className="mt-2 break-words text-3xl font-semibold tracking-tight sm:text-4xl">{user.name}</h1><p className="mt-2 break-all text-sm text-muted-foreground">{user.email}</p>{uploading && <p role="status" className="mt-1 text-xs text-muted-foreground">Uploading picture…</p>}</div></div>
+        <button onClick={logout} className="min-h-11 rounded-xl border border-border px-5 text-sm font-medium hover:bg-secondary/50">Log out</button>
+      </header>
+      {error && <p role="alert" className="mt-6 rounded-xl bg-destructive/5 p-4 text-sm text-destructive">{error}</p>}
+      <section className="mt-10 overflow-hidden rounded-2xl border border-border/70" aria-labelledby="email-preferences-title">
+        <div className="flex items-start gap-3 border-b border-border/70 bg-secondary/20 p-5 sm:p-6"><Mail className="mt-1 h-5 w-5 shrink-0 text-primary" aria-hidden="true" /><div><h2 id="email-preferences-title" className="text-xl font-semibold">Emails, your way</h2><p className="mt-2 text-sm leading-relaxed text-muted-foreground">Choose what arrives in your inbox. You can still find your invitations and events on YKCircle.</p></div></div>
+        <div className="divide-y divide-border/60 px-5 sm:px-6">
+          {emailChoices.map(([key, title, description]) => <div key={key} className="flex items-center justify-between gap-5 py-5"><label htmlFor={key} className="cursor-pointer"><span className="block text-sm font-medium">{title}</span><span className="mt-1 block text-sm leading-relaxed text-muted-foreground">{description}</span></label><Switch id={key} checked={emailPreferences?.[key] ?? true} disabled={!emailPreferences || savingEmail} onCheckedChange={value => updateEmailPreference(key, value)} /></div>)}
+          <div className="flex items-center justify-between gap-5 py-5"><label htmlFor="marketing-emails" className="cursor-pointer"><span className="block text-sm font-medium">YKCircle news and offers</span><span className="mt-1 block text-sm text-muted-foreground">Occasional product news, ideas, and promotions.</span></label><Switch id="marketing-emails" checked={Boolean(user.marketingConsent)} disabled={savingPreference} onCheckedChange={updateMarketing} /></div>
+        </div>
+        <div className="border-t border-border/70 bg-secondary/20 px-5 py-4 sm:px-6"><p className="flex items-start gap-2 text-xs leading-relaxed text-muted-foreground"><ShieldCheck className="h-4 w-4 shrink-0" aria-hidden="true" />Account security, receipts, and essential registration updates are always sent.</p>{!emailPreferences && !emailError && <p role="status" className="mt-2 text-sm">Loading preferences…</p>}{emailError && <p role="alert" className="mt-2 text-sm text-destructive">{emailError}</p>}{emailNotice && <p role="status" className="mt-2 text-sm text-primary">{emailNotice}</p>}</div>
+      </section>
+      <Link to="/profile/subscriptions" className="mt-5 flex min-h-20 items-center justify-between gap-4 rounded-2xl border border-border/70 p-5 transition-colors hover:bg-secondary/30 sm:p-6"><div><h2 className="font-semibold">Your publishing plans</h2><p className="mt-1 text-sm text-muted-foreground">Article space and event publishing subscriptions.</p></div><ArrowUpRight className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" /></Link>
+      <details className="group mt-5 overflow-hidden rounded-2xl border border-border/70">
+        <summary className="flex cursor-pointer list-none items-center gap-4 p-5 transition-colors hover:bg-secondary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:p-6 [&::-webkit-details-marker]:hidden"><span className="rounded-xl bg-secondary/60 p-3"><Building2 className="h-5 w-5 text-muted-foreground" aria-hidden="true" /></span><span className="flex-1"><span className="block font-semibold">Organizations & payments</span><span className="mt-1 block text-sm text-muted-foreground">For when you organize, host, or do business.</span></span><ChevronDown className="h-5 w-5 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" aria-hidden="true" /></summary>
+        <div className="grid gap-3 border-t border-border/70 bg-secondary/15 p-5 sm:grid-cols-2 sm:p-6">
+          {[['/account/organizations', 'Organizations', 'Manage your teams and organization details.', Building2], ['/account/payments', 'Payments & business', 'Billing details, invoices, and payment settings.', CreditCard]].map(([to, title, description, Icon]) => <Link key={to} to={to} className="group/link rounded-xl border border-border/70 bg-background p-5 transition-colors hover:border-primary/40"><div className="flex items-center justify-between"><Icon className="h-5 w-5 text-primary" aria-hidden="true" /><ArrowUpRight className="h-4 w-4 text-muted-foreground group-hover/link:text-primary" aria-hidden="true" /></div><h3 className="mt-4 text-sm font-semibold">{title}</h3><p className="mt-2 text-sm leading-relaxed text-muted-foreground">{description}</p></Link>)}
+        </div>
+      </details>
+      <section className="mt-10 border-t border-border/70 pt-7"><h2 className="text-lg font-semibold">Privacy and account</h2><p className="mt-2 text-sm leading-relaxed text-muted-foreground">Download a copy of your personal data or manage your account.</p><div className="mt-4 flex flex-wrap gap-3"><button disabled={exporting} onClick={downloadExport} className="min-h-11 rounded-xl border border-border px-5 text-sm disabled:opacity-50">{exporting ? 'Preparing export…' : 'Download my data'}</button><button onClick={() => setConfirmingDelete(true)} className="min-h-11 rounded-xl px-5 text-sm text-destructive hover:bg-destructive/5">Delete account</button></div></section>
+    </section>{confirmingDelete && <ConfirmationDialog title="Delete your account?" description="This permanently removes your account and eligible content. Confirm with your password." confirmLabel="Delete account" destructive busy={deleting} onCancel={() => { setConfirmingDelete(false); setDeletePassword(''); }} onConfirm={deleteAccount}><input autoFocus required type="password" value={deletePassword} onChange={(event) => setDeletePassword(event.target.value)} placeholder="Current password" aria-label="Current password" className="w-full border border-border bg-background p-3" /></ConfirmationDialog>}</SiteChrome>;
 }

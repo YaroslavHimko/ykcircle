@@ -1228,14 +1228,7 @@ export default function EventsPage({
                         Delete
                       </button>
                     </div>
-                  ) : (
-                    <Link
-                      to={`/events/${event.id}`}
-                      className="inline-flex min-h-10 items-center bg-primary px-4 text-sm text-primary-foreground"
-                    >
-                      View
-                    </Link>
-                  )}
+                  ) : null}
                 </EventPreviewCard>
               ))
             )}
