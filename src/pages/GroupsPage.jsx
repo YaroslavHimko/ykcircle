@@ -12,18 +12,7 @@ import { apiAssetUrl, apiFetch } from "@/lib/api";
 import { eventImageRenderDebug, eventMediaUrl } from "@/lib/media";
 
 const managementRoles = ["organizer", "manager", "admin"];
-const testGroupPresets = [
-  ["Sunday Board-Game Circle", "A friendly Stockholm group for relaxed board games, pastries and meeting new people.", "Public"],
-  ["Stockholm Photo Walks", "Explore new streets with a camera or phone, swap ideas and share your favourite shots.", "Public"],
-  ["Beginner Runners by the Water", "A no-drop running group for gentle 5 km routes and post-run coffee.", "Public"],
-  ["Swedish Fika Conversations", "Practise everyday Swedish in a patient, welcoming group over coffee.", "Public"],
-  ["Weekend Hikes Near Stockholm", "Plan accessible day hikes, pack a lunch and discover trails together.", "Public"],
-  ["Acoustic Evening Jam", "An informal group for singers and instrumentalists who enjoy relaxed acoustic sessions.", "Private"],
-  ["Creative Co-working Club", "Meet for quiet focus sessions, small goals and supportive accountability.", "Public"],
-  ["Neighbourhood Cooking Club", "Share easy recipes, seasonal dinners and new food ideas with local people.", "Private"],
-  ["Park Yoga and Stretching", "A calm outdoor movement group for gentle weekend sessions in the park.", "Public"],
-  ["New in Stockholm Socials", "Low-pressure meetups for people who want to make real connections in the city.", "Public"],
-];
+
 const asList = (data, key = "groups") =>
   Array.isArray(data) ? data : data?.[key] || [];
 // coverImageUrl carries a signed token for a private group's cover, so it
@@ -78,7 +67,7 @@ function GroupCard({ group, action, managementView = false }) {
   </DiscoveryCard>;
 }
 
-function GroupForm({ initial, onCancel, onSave, saving, showTestPresets = false }) {
+function GroupForm({ initial, onCancel, onSave, saving }) {
   const [form, setForm] = useState({
     name: initial?.name || "",
     description: initial?.description || "",
@@ -98,13 +87,6 @@ function GroupForm({ initial, onCancel, onSave, saving, showTestPresets = false 
       ...current,
       [event.target.name]: event.target.value,
     }));
-  const applyTestPreset = (event) => {
-    const preset = testGroupPresets[Number(event.target.value)];
-    if (!preset) return;
-    const [name, description, visibility] = preset;
-    setForm({ name, description, visibility });
-    setImage(null);
-  };
   return (
     <form
       id="group-editor"
@@ -114,16 +96,6 @@ function GroupForm({ initial, onCancel, onSave, saving, showTestPresets = false 
       }}
       className="mt-6 grid gap-4 border-y border-border py-6"
     >
-      {!initial && showTestPresets && (
-        <label className="border border-primary/30 bg-primary/5 p-4 text-sm">
-          Testing preset
-          <select defaultValue="" onChange={applyTestPreset} className="mt-2 min-h-11 w-full border border-border bg-background px-3">
-            <option value="" disabled>Choose one of 10 sample groups</option>
-            {testGroupPresets.map(([name], index) => <option key={name} value={index}>{index + 1}. {name}</option>)}
-          </select>
-          <span className="mt-1 block text-xs text-muted-foreground">Populates the group name, description and visibility. Add a picture if you want one.</span>
-        </label>
-      )}
       <label className="text-sm">
         Group name
         <input
@@ -356,7 +328,6 @@ export default function GroupsPage({
   const managementView = new URLSearchParams(location.search).get("manage") === "1";
   const token = localStorage.getItem("authToken");
   const user = JSON.parse(localStorage.getItem("authUser") || "null");
-  const isAdministrator = user?.role === "admin";
   const canManage = Boolean(token && managementRoles.includes(user?.role));
   const canManageOwnGroups = Boolean(token);
   const headers = token ? { Authorization: `Bearer ${token}` } : {};
@@ -997,7 +968,6 @@ export default function GroupsPage({
             onSave={saveGroup}
             onCancel={() => setCreating(false)}
             saving={saving}
-            showTestPresets={isAdministrator}
           />
         )}
         {editing && (

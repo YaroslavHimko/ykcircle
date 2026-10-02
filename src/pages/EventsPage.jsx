@@ -157,25 +157,9 @@ function VenueBookingPicker({ venues, venueId, onVenueChange, selectedDate, onDa
   </div>;
 }
 
-const testEventPresets = [
-  ["Sunrise walk at Djurgården","Start the day with a relaxed waterside walk and coffee.","Join a friendly sunrise walk through Djurgården. We will keep an easy pace, stop for photos and finish with coffee together.","Rosendal Garden","Rosendalsvägen 38, 115 21 Stockholm","2030-06-08T08:00","2030-06-08T10:00","free","0","physical","public","none"],
-  ["Beginner bouldering social","Learn the basics and meet other climbers.","A welcoming indoor bouldering session for complete beginners. An instructor will cover safety and basic techniques before open social climbing.","Klättercentret Telefonplan","Tellusgången 22, 126 26 Hägersten","2030-06-12T18:30","2030-06-12T21:00","paid","180","physical","public","none"],
-  ["Midsummer picnic planning","Make new plans over snacks in the park.","Bring a small picnic item to share and help build a friendly Midsummer plan with new people in Stockholm.","Tantolunden","Tantolunden, 118 42 Stockholm","2030-06-15T14:00","2030-06-15T17:00","free","0","physical","public","weekly"],
-  ["Stockholm street-photo walk","Find better frames with a small creative group.","Explore Södermalm with a camera or phone, swap composition tips and select a few favourite photos together afterwards.","Mariatorget","Mariatorget, 118 48 Stockholm","2030-06-18T17:30","2030-06-18T20:00","free","0","physical","public","none"],
-  ["Sunday board-game brunch","Easy games, pastries and new people.","A low-pressure Sunday brunch with modern board games. New players are especially welcome and rules will be explained.","Alphaspel","Östgötagatan 33, 116 25 Stockholm","2030-06-23T11:00","2030-06-23T14:00","paid","90","physical","public","none"],
-  ["Swedish fika conversation club","Practice Swedish in a relaxed small group.","Build confidence speaking Swedish through guided conversation prompts, café chat and a little help from fellow learners.","Kulturhuset Stadsteatern","Sergels torg, 111 57 Stockholm","2030-06-25T18:00","2030-06-25T19:30","free","0","physical","public","weekly"],
-  ["Kayak taster on Lake Mälaren","Try kayaking with a supportive crew.","A beginner-friendly kayak taster with equipment, safety briefing and a calm route close to shore.","Långholmens Kajak","Långholmsmuren 21, 117 33 Stockholm","2030-06-29T10:00","2030-06-29T12:30","paid","350","physical","public","none"],
-  ["Remote co-working sprint","Focus together from wherever you are.","Join a structured online co-working session with short introductions, two focus blocks and a friendly check-out.","Online via video call","A joining link will be sent after registration.","2030-07-02T09:00","2030-07-02T11:30","free","0","online","private","weekly"],
-  ["Evening run by the water","A social 5 km at a conversational pace.","Run a relaxed route around Kungsholmen, with a no-drop pace and an optional cool-down drink afterwards.","Rålambshovsparken","Smedsuddsvägen, 112 35 Stockholm","2030-07-05T18:30","2030-07-05T19:45","free","0","physical","public","none"],
-  ["Ceramics introduction workshop","Make a small piece from clay and unwind.","Learn simple hand-building techniques in a calm studio session. Your finished piece will be glazed and fired by the studio.","Stockholm Ceramic Studio","Sankt Eriksgatan 39, 112 34 Stockholm","2030-07-09T18:00","2030-07-09T20:30","paid","420","physical","public","none"],
-];
+
 const toInputDate = (value, timezone = deviceTimezone()) => localDateTimeForZone(value, timezone);
-const todayAtPresetTime = (value) => {
-  const today = new Date();
-  const pad = (number) => String(number).padStart(2, "0");
-  const time = String(value || "09:00").slice(11, 16) || "09:00";
-  return `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}T${time}`;
-};
+
 const eventDateTimeLabel = (event) => {
   if (!event?.startsAt) return "Date to be announced";
   const formatter = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" });
@@ -210,7 +194,6 @@ export default function EventsPage({
   const canManageAllEvents = Boolean(
     user && ["manager", "admin"].includes(user.role),
   );
-  const isAdministrator = user?.role === "admin";
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [mine, setMine] = useState([]);
@@ -343,34 +326,6 @@ export default function EventsPage({
       ...current,
       [event.target.name]: event.target.value,
     }));
-  const applyTestPreset = (event) => {
-    const presetIndex = Number(event.target.value);
-    if (!Number.isInteger(presetIndex) || !testEventPresets[presetIndex]) return;
-    const [
-      title, shortDescription, description, location, address, startsAt, endsAt,
-      pricingType, fee,
-      rawLocationType, locationVisibility,
-      recurrenceFrequency,
-    ] = testEventPresets[presetIndex];
-    setForm((current) => ({
-      ...current,
-      title, shortDescription, description, location, address, addressLine1: address, formattedAddress: address, latitude: "59.3293", longitude: "18.0686", startsAt: todayAtPresetTime(startsAt), endsAt: todayAtPresetTime(endsAt),
-      locationType: rawLocationType === "physical" ? "custom" : rawLocationType, locationVisibility, pricingType, fee,
-      recurrenceFrequency,
-      recurrenceInterval: "1",
-      recurrenceCount: recurrenceFrequency === "none" ? "2" : "4",
-      country: "Sweden",
-      city: "Stockholm",
-      timezone: current.timezone || deviceTimezone(),
-      currency: "SEK",
-      registrationType: "yaroko",
-      visibility: "Public",
-      categoryId: categories.length ? String(categories[presetIndex % categories.length].id) : "",
-      typeId: types.length ? String(types[presetIndex % types.length].id) : "",
-    }));
-    setErrors({});
-    setMessage("Test event details loaded. Add a cover image if needed, then save the draft.");
-  };
   const apply = (event) => {
     setDraftId(event.id);
     setForm((current) => ({
@@ -915,24 +870,6 @@ export default function EventsPage({
               onSubmit={save}
               className="mt-8 grid gap-4 sm:grid-cols-2"
             >
-              {creationPage && isAdministrator && (
-                <label className="border border-primary/30 bg-primary/5 p-4 text-sm sm:col-span-2">
-                  Testing preset
-                  <select
-                    defaultValue=""
-                    onChange={applyTestPreset}
-                    className="mt-2 min-h-11 w-full border border-border bg-background px-3"
-                  >
-                    <option value="" disabled>Choose one of 10 sample events</option>
-                    {testEventPresets.map(([title], index) => (
-                      <option key={title} value={index}>{index + 1}. {title}</option>
-                    ))}
-                  </select>
-                  <span className="mt-1 block text-xs text-muted-foreground">
-                    Populates all event details. Cover images must still be selected from your device.
-                  </span>
-                </label>
-              )}
               {input("title", "Title", "text", true)}
               {creationPage && managedGroups.length > 0 && (
                 <label className="block text-sm">
