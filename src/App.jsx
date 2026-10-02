@@ -1,3 +1,5 @@
+import SiteChrome from './components/SiteChrome';
+import { useProductConfiguration } from './lib/product-configuration';
 import SubscriptionsPage from './pages/SubscriptionsPage';
 import ConfigurationPage from './pages/ConfigurationPage';
 import React from 'react';
@@ -92,6 +94,14 @@ function CreateEventRoute() {
     return <EventsPage key="new-event" managementOnly creationPage />;
 }
 
+function PaidFeatureRoute({ children, feature }) {
+    const product = useProductConfiguration();
+    const enabled = feature ? product[feature] : product.subscriptionsEnabled || product.paidEventsEnabled || product.paidVenuesEnabled || product.paidServicesEnabled;
+    if (product.loading) return <SiteChrome><p className="mx-auto max-w-3xl px-5 py-20">Loading...</p></SiteChrome>;
+    if (!enabled) return <SiteChrome><section className="mx-auto max-w-3xl px-5 py-20"><h1 className="text-3xl font-semibold">Free early access</h1><p className="mt-4">This feature is not available during free early access.</p></section></SiteChrome>;
+    return children;
+}
+
 function App() {
     return (
         <Router>
@@ -116,7 +126,8 @@ function App() {
                 <Route path="/tickets-refunds" element={<LegalDocumentsPage documentSlug="tickets-refunds" />} />
                 <Route path="/paid-services" element={<LegalDocumentsPage documentSlug="paid-services" />} />
                 <Route path="/marketplace-transparency" element={<LegalDocumentsPage documentSlug="marketplace-transparency" />} />
-                <Route path="/company" element={<CompanyInformationPage />} />
+                <Route path="/company" element={<Navigate to="/operator" replace />} />
+                <Route path="/operator" element={<CompanyInformationPage />} />
                 <Route path="/subprocessors" element={<SubprocessorsPage />} />
                 <Route path="/login" element={<AuthPage mode="login" />} />
                 <Route path="/register" element={<AuthPage mode="register" />} />
@@ -125,36 +136,36 @@ function App() {
                 <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                 <Route path="/reset-password" element={<ResetPasswordPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
-                <Route path="/profile/subscriptions" element={<SubscriptionsPage />} />
-                <Route path="/subscribe" element={<SubscriptionsPage />} />
+                <Route path="/profile/subscriptions" element={<PaidFeatureRoute feature="subscriptionsEnabled"><SubscriptionsPage /></PaidFeatureRoute>} />
+                <Route path="/subscribe" element={<PaidFeatureRoute feature="subscriptionsEnabled"><SubscriptionsPage /></PaidFeatureRoute>} />
                 <Route path="/admin/configuration" element={<ConfigurationPage />} />
                 <Route path="/admin/contact-messages" element={<AdminContactMessagesPage />} />
                 <Route path="/admin/users" element={<UserRolesPage />} />
                 <Route path="/admin/reports" element={<AdminReportsPage />} />
-                <Route path="/admin/platform-billing" element={<PlatformAdminPage />} />
-                <Route path="/account/payments" element={<BillingPage />} />
-                <Route path="/account/payments/:area" element={<BillingPage />} />
-                <Route path="/account/organizations" element={<OrganizationsPage />} />
-                <Route path="/account/billing" element={<LegacyBillingRedirect />} />
-                <Route path="/account/plans" element={<LegacyBillingRedirect section="platform" />} />
-                <Route path="/account/venue-billing" element={<LegacyBillingRedirect section="venues" />} />
-                <Route path="/account/billing-profiles" element={<LegacyBillingRedirect section="profiles" />} />
-                <Route path="/billing/payment-account/refresh" element={<PaymentAccountReturnPage refresh />} />
-                <Route path="/billing/payment-account/complete" element={<PaymentAccountReturnPage />} />
-                <Route path="/account/platform-billing" element={<LegacyBillingRedirect section="platform" />} />
-                <Route path="/account/tickets" element={<TicketsPage />} />
-                <Route path="/tickets/success" element={<TicketsPage success />} />
-                <Route path="/tickets/:id" element={<TicketOrderPage />} />
+                <Route path="/admin/platform-billing" element={<PaidFeatureRoute><PlatformAdminPage /></PaidFeatureRoute>} />
+                <Route path="/account/payments" element={<PaidFeatureRoute><BillingPage /></PaidFeatureRoute>} />
+                <Route path="/account/payments/:area" element={<PaidFeatureRoute><BillingPage /></PaidFeatureRoute>} />
+                <Route path="/account/organizations" element={<PaidFeatureRoute><OrganizationsPage /></PaidFeatureRoute>} />
+                <Route path="/account/billing" element={<PaidFeatureRoute><LegacyBillingRedirect /></PaidFeatureRoute>} />
+                <Route path="/account/plans" element={<PaidFeatureRoute><LegacyBillingRedirect section="platform" /></PaidFeatureRoute>} />
+                <Route path="/account/venue-billing" element={<PaidFeatureRoute><LegacyBillingRedirect section="venues" /></PaidFeatureRoute>} />
+                <Route path="/account/billing-profiles" element={<PaidFeatureRoute><LegacyBillingRedirect section="profiles" /></PaidFeatureRoute>} />
+                <Route path="/billing/payment-account/refresh" element={<PaidFeatureRoute><PaymentAccountReturnPage refresh /></PaidFeatureRoute>} />
+                <Route path="/billing/payment-account/complete" element={<PaidFeatureRoute><PaymentAccountReturnPage /></PaidFeatureRoute>} />
+                <Route path="/account/platform-billing" element={<PaidFeatureRoute><LegacyBillingRedirect section="platform" /></PaidFeatureRoute>} />
+                <Route path="/account/tickets" element={<PaidFeatureRoute feature="paidEventsEnabled"><TicketsPage /></PaidFeatureRoute>} />
+                <Route path="/tickets/success" element={<PaidFeatureRoute feature="paidEventsEnabled"><TicketsPage success /></PaidFeatureRoute>} />
+                <Route path="/tickets/:id" element={<PaidFeatureRoute feature="paidEventsEnabled"><TicketOrderPage /></PaidFeatureRoute>} />
                 <Route path="/profile/venues" element={<MyVenuesPage />} />
                 <Route path="/profile/saved-venues" element={<SavedVenuesPage />} />
                 <Route path="/profile/venues/new" element={<VenueEditorPage />} />
                 <Route path="/profile/venues/:id/edit" element={<VenueEditorPage />} />
                 <Route path="/profile/venues/:id/bookings" element={<VenueBookingsPage />} />
-                <Route path="/profile/venues/:id/billing" element={<VenueBillingPage />} />
+                <Route path="/profile/venues/:id/billing" element={<PaidFeatureRoute><VenueBillingPage /></PaidFeatureRoute>} />
                 <Route path="/profile/venues/:id/calendar" element={<VenueCalendarPage />} />
-                <Route path="/profile/invoices" element={<LegacyBillingRedirect section="invoices" />} />
-                <Route path="/account/invoices" element={<LegacyBillingRedirect section="invoices" />} />
-                <Route path="/invoices/:invoiceId" element={<InvoiceDetailPage />} />
+                <Route path="/profile/invoices" element={<PaidFeatureRoute><LegacyBillingRedirect section="invoices" /></PaidFeatureRoute>} />
+                <Route path="/account/invoices" element={<PaidFeatureRoute><LegacyBillingRedirect section="invoices" /></PaidFeatureRoute>} />
+                <Route path="/invoices/:invoiceId" element={<PaidFeatureRoute><InvoiceDetailPage /></PaidFeatureRoute>} />
                 <Route path="/venues" element={<VenuesDiscoveryPage />} />
                 <Route path="/venues/slug/:slug" element={<VenueDetailPage />} />
                 <Route path="/venues/:id/availability" element={<OrganizerAvailabilityPage />} />
@@ -168,7 +179,7 @@ function App() {
                 <Route path="/profile/events/:id/edit" element={<EventsPage key="edit-event" managementOnly editPage />} />
                 <Route path="/events/:id" element={<EventDetailPage />} />
                 <Route path="/events/:id/check-in" element={<EventCheckInPage />} />
-                <Route path="/events/:id/tickets" element={<TicketCheckoutPage />} />
+                <Route path="/events/:id/tickets" element={<PaidFeatureRoute feature="paidEventsEnabled"><TicketCheckoutPage /></PaidFeatureRoute>} />
                 <Route path="/groups" element={<GroupsPage />} />
                 <Route path="/groups/:id" element={<GroupsPage detailPage />} />
                 <Route path="/profile/groups/:id" element={<GroupsPage managementOnly focusedManagement />} />

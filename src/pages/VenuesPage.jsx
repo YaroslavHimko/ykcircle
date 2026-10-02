@@ -1,3 +1,4 @@
+import { useProductConfiguration } from '@/lib/product-configuration';
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Helmet } from "react-helmet";
 import { Link, useParams } from "react-router-dom";
@@ -16,6 +17,7 @@ const errorText = (data, fallback) => [data?.error || data?.message, data?.field
 const bookingStart = (booking) => booking.event?.startsAt || booking.startsAt || booking.startAt || booking.starts_at || null;
 
 export function MyVenuesPage() {
+  const product = useProductConfiguration();
   const user = JSON.parse(localStorage.getItem("authUser") || "null"); const isAdmin = user?.role === "admin"; const isManager = user?.role === "manager"; const endpoint = "/api/venues/mine"; const dashboardTitle = "My venues";
   const [venues,setVenues]=useState([]); const [error,setError]=useState(""); const [emptyMessage,setEmptyMessage]=useState(""); const [loading,setLoading]=useState(true); const loadVersion=useRef(0); const load=useCallback(async()=>{const version=++loadVersion.current;setLoading(true);setError("");try{const r=await apiFetch(endpoint,{headers:auth()});const d=await r.json();if(version!==loadVersion.current)return;if(r.status===404){setVenues([]);setEmptyMessage(errorText(d,"No venues found."));return;}if(!r.ok)throw new Error(errorText(d,"Unable to load venues."));setVenues(list(d,"venues").map(normalizeVenue).filter((venue)=>venue.id!=null));setEmptyMessage("");}catch(e){if(version===loadVersion.current)setError(e.message);}finally{if(version===loadVersion.current)setLoading(false);}},[endpoint]); useEffect(()=>{load();},[load]);
   const remove=async id=>{if(!window.confirm("Delete this venue?"))return; try {const r=await apiFetch(`/api/venues/${id}`,{method:"DELETE",headers:auth()});const d=r.status===204?null:await r.json().catch(()=>({}));if(!r.ok)throw new Error(errorText(d,"Unable to delete venue."));load();}catch(e){setError(e.message);}};
@@ -48,7 +50,7 @@ export function MyVenuesPage() {
               <div className="min-w-0 p-5">
                 <div className="flex justify-between gap-3"><h2 className="font-display text-2xl font-semibold">{v.name}</h2><div className="flex flex-wrap items-center gap-2"><ModerationStatus status={moderationStatus} /><Status status={active ? "active" : "inactive"}/></div></div>
                 <dl className="mt-4 grid gap-2 text-sm"><div><dt className="inline text-muted-foreground">Business: </dt><dd className="inline">{v.businessName || "Not supplied"}</dd></div><div><dt className="inline text-muted-foreground">Owner: </dt><dd className="inline">{ownerName}</dd></div><div><dt className="inline text-muted-foreground">Location: </dt><dd className="inline">{[v.location, v.address, v.city, v.country].filter(Boolean).join(", ") || "Not supplied"}</dd></div><div><dt className="inline text-muted-foreground">Timezone: </dt><dd className="inline">{v.timezone || "Not supplied"}</dd></div></dl>
-                <div className="mt-5 flex flex-wrap gap-2 text-sm"><Link className="border border-border px-4 py-2" to={`/venues/${v.id}`}>Venue details</Link><Link className="border border-border px-4 py-2" to={`/profile/venues/${v.id}/edit`}>Edit & availability</Link><Link className="border border-border px-4 py-2" to={`/profile/venues/${v.id}/bookings`}>Booking list</Link><Link className="border border-border px-4 py-2" to={`/account/billing?section=invoices&venueId=${encodeURIComponent(v.id)}`}>Invoices</Link>{isAdmin && moderationStatus !== "approved" && <button type="button" onClick={() => publish(v)} className="bg-primary px-4 py-2 text-primary-foreground">Approve</button>}{!isAdmin && ["draft", "rejected"].includes(moderationStatus) && <button type="button" onClick={() => submitForReview(v)} className="bg-primary px-4 py-2 text-primary-foreground">Submit for review</button>}{!isAdmin && moderationStatus === "pending" && <span className="px-4 py-2 text-muted-foreground">Awaiting review</span>}{(isAdmin || isManager) && <button type="button" onClick={() => toggleActive(v)} className="border border-border px-4 py-2">{active ? "Deactivate" : "Activate"}</button>}<button type="button" onClick={() => remove(v.id)} className="border border-destructive px-4 py-2 text-destructive">Delete</button></div>
+                <div className="mt-5 flex flex-wrap gap-2 text-sm"><Link className="border border-border px-4 py-2" to={`/venues/${v.id}`}>Venue details</Link><Link className="border border-border px-4 py-2" to={`/profile/venues/${v.id}/edit`}>Edit & availability</Link><Link className="border border-border px-4 py-2" to={`/profile/venues/${v.id}/bookings`}>Booking list</Link>{product.paidVenuesEnabled && <Link className="border border-border px-4 py-2" to={`/account/billing?section=invoices&venueId=${encodeURIComponent(v.id)}`}>Invoices</Link>}{isAdmin && moderationStatus !== "approved" && <button type="button" onClick={() => publish(v)} className="bg-primary px-4 py-2 text-primary-foreground">Approve</button>}{!isAdmin && ["draft", "rejected"].includes(moderationStatus) && <button type="button" onClick={() => submitForReview(v)} className="bg-primary px-4 py-2 text-primary-foreground">Submit for review</button>}{!isAdmin && moderationStatus === "pending" && <span className="px-4 py-2 text-muted-foreground">Awaiting review</span>}{(isAdmin || isManager) && <button type="button" onClick={() => toggleActive(v)} className="border border-border px-4 py-2">{active ? "Deactivate" : "Activate"}</button>}<button type="button" onClick={() => remove(v.id)} className="border border-destructive px-4 py-2 text-destructive">Delete</button></div>
               </div>
             </div>
           </article>;
@@ -60,6 +62,7 @@ export function MyVenuesPage() {
 }
 
 export function VenueBookingsPage() {
+  const product = useProductConfiguration();
   const { id } = useParams();
   const [bookings, setBookings] = useState([]);
   const [inquiries, setInquiries] = useState([]);
@@ -135,7 +138,7 @@ export function VenueBookingsPage() {
 
   return <Shell title="Venue requests">
     <Link to="/profile/venues" className="text-sm text-primary underline">Back to my venues</Link>
-    <Link to={`/account/payments/venues?venueId=${id}&edit=1&returnTo=${encodeURIComponent(window.location.pathname)}`} className="ml-4 text-sm text-primary underline">Venue payments</Link>
+    {product.paidVenuesEnabled && <Link to={`/account/payments/venues?venueId=${id}&edit=1&returnTo=${encodeURIComponent(window.location.pathname)}`} className="ml-4 text-sm text-primary underline">Venue payments</Link>}
     <h1 className="mt-5 font-display text-4xl font-bold">Venue requests</h1>
     <p className="mt-3 max-w-2xl text-muted-foreground">Direct venue inquiries and event bookings are separate request types. Both are shown below.</p>
     {error && <Error text={error} />}
@@ -169,8 +172,8 @@ export function VenueBookingsPage() {
           <button onClick={() => openReview(booking, "confirmed")} className="bg-primary px-4 py-2 text-sm text-primary-foreground">Confirm</button>
           <button onClick={() => openReview(booking, "declined")} className="border border-border px-4 py-2 text-sm">Decline</button>
         </div>}
-        {booking.invoiceId && <Link to={`/invoices/${booking.invoiceId}`} className="mt-4 inline-block text-sm text-primary underline">View invoice {booking.invoiceNumber}</Link>}
-        {booking.invoiceMode === "external" && booking.status === "confirmed" && <ExternalInvoiceEditor booking={booking} onSaved={load} onError={setNotification} />}
+        {product.paidVenuesEnabled && booking.invoiceId && <Link to={`/invoices/${booking.invoiceId}`} className="mt-4 inline-block text-sm text-primary underline">View invoice {booking.invoiceNumber}</Link>}
+        {product.paidVenuesEnabled && booking.invoiceMode === "external" && booking.status === "confirmed" && <ExternalInvoiceEditor booking={booking} onSaved={load} onError={setNotification} />}
         <VenueBookingConversation bookingId={booking.id} />
       </div>)}
       {!bookings.length && <p className="text-sm text-muted-foreground">No event bookings yet.</p>}
@@ -185,7 +188,7 @@ export function VenueBookingsPage() {
         <div className="mt-6 flex flex-wrap justify-end gap-3"><button type="button" onClick={() => setReviewing(null)} className="border border-border px-4 py-2 text-sm">Cancel</button><button className={reviewing.status === "confirmed" ? "bg-primary px-4 py-2 text-sm text-primary-foreground" : "border border-destructive px-4 py-2 text-sm text-destructive"}>{reviewing.status === "confirmed" ? "Confirm booking" : "Decline booking"}</button></div>
       </form>
     </div>}
-    {notification && <p role="alert" className="fixed bottom-6 left-5 z-[60] max-w-md border border-destructive/30 bg-background px-4 py-3 text-sm text-destructive shadow-lg sm:left-auto sm:right-6">{notification}{billingSetupBlocked && <> <Link to={`/account/payments/venues?venueId=${id}&edit=1&returnTo=${encodeURIComponent(window.location.pathname)}`} className="font-medium underline">Complete Venue payment setup</Link></>}</p>}
+    {notification && <p role="alert" className="fixed bottom-6 left-5 z-[60] max-w-md border border-destructive/30 bg-background px-4 py-3 text-sm text-destructive shadow-lg sm:left-auto sm:right-6">{notification}{billingSetupBlocked && <> {product.paidVenuesEnabled && <Link to={`/account/payments/venues?venueId=${id}&edit=1&returnTo=${encodeURIComponent(window.location.pathname)}`} className="font-medium underline">Complete Venue payment setup</Link>}</>}</p>}
   </Shell>;
 }
 

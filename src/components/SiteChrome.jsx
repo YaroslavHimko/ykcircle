@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { Instagram, Send, Youtube, UserRound, LogOut } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
+import { useProductConfiguration } from '@/lib/product-configuration';
 import CookieSettings, { openCookieSettings } from '@/components/CookieSettings';
 
 const baseNav = [
@@ -13,6 +14,7 @@ const baseNav = [
 const menuLinkClass = 'flex min-h-11 items-center rounded-lg px-3 py-2.5 text-sm transition-colors hover:bg-secondary/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary';
 
 export function Header() {
+    const product = useProductConfiguration();
     const [profileOpen, setProfileOpen] = useState(false);
     const profileMenuRef = useRef(null);
     const profileButtonRef = useRef(null);
@@ -77,7 +79,7 @@ export function Header() {
                             <p className="break-words px-3 py-2 text-sm font-medium">{user.name}</p>
                             <p className="px-3 pb-1 pt-2 text-xs text-muted-foreground">Your account</p>
                             {accountLink('/profile', 'View profile')}
-                            {accountLink('/account/tickets', 'My tickets')}
+                            {product.paidEventsEnabled && accountLink('/account/tickets', 'My tickets')}
                         </> : <>
                             <p className="px-3 pb-1 pt-2 text-xs text-muted-foreground">Your account</p>
                             {accountLink('/login', 'Log in')}
@@ -108,10 +110,10 @@ export function Footer() {
         { slug: 'terms', title: 'Terms' },
         { slug: 'privacy', title: 'Privacy' },
         { slug: 'cookies', title: 'Cookies' },
-        { slug: 'paid-services', title: 'Paid Services' },
+        { slug: 'community-guidelines', title: 'Community Guidelines' },
     ];
     const additionalLegalDocuments = legalDocuments.filter((document) =>
-        document?.slug &&
+        ["terms","privacy","community-guidelines","cookies"].includes(document?.slug) &&
         !defaultLegalDocuments.some((defaultDocument) => defaultDocument.slug === document.slug),
     );
 
@@ -173,8 +175,8 @@ export function Footer() {
                             {defaultLegalDocuments.map((document) => <Link key={document.slug} className="hover:text-primary" to={`/${document.slug}`}>{document.title}</Link>)}
                             {additionalLegalDocuments.map((document) => <Link key={document.slug} className="hover:text-primary" to={`/${document.slug}`}>{document.title}</Link>)}
                             <Link className="hover:text-primary" to="/legal">All documents</Link>
-                            <Link className="hover:text-primary" to="/company">Company information</Link>
-                            <Link className="hover:text-primary" to="/subprocessors">Subprocessors</Link>
+                            <Link className="hover:text-primary" to="/operator">Operator information</Link>
+                            <Link className="hover:text-primary" to="/subprocessors">Service providers</Link>
                             <button type="button" onClick={openCookieSettings} className="hover:text-primary">Cookie settings</button>
                         </div>
                     </div>

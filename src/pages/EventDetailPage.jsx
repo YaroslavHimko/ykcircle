@@ -1,5 +1,6 @@
 import BusinessIdentitySelector from '@/components/billing/BusinessIdentitySelector';
 import PaymentAccounts from '@/components/billing/PaymentAccounts';
+import { useProductConfiguration } from '@/lib/product-configuration';
 import React, { useEffect, useRef, useState } from "react";
 import { Helmet } from "react-helmet";
 import { Link, useParams, useSearchParams } from "react-router-dom";
@@ -213,7 +214,13 @@ const confirmPayment = () =>
     document.body.appendChild(overlay);
   });
 
+function FoodChoices({ choices }) {
+  if (!Array.isArray(choices) || !choices.length) return null;
+  return <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs"><span className="text-muted-foreground">Food:</span>{choices.map(option => <span key={option} className="rounded-full bg-secondary px-2.5 py-1">{option}</span>)}</div>;
+}
+
 export default function EventDetailPage() {
+  const product = useProductConfiguration();
   const { id } = useParams();
   const [searchParams] = useSearchParams();
   const manageView = searchParams.get("manage") === "1";
@@ -263,6 +270,7 @@ export default function EventDetailPage() {
   const [invitationMessage, setInvitationMessage] = useState("");
   const [resendingInvitationId, setResendingInvitationId] = useState(null);
   const [pendingRegistration, setPendingRegistration] = useState(false);
+  const [selectedFoodOptions, setSelectedFoodOptions] = useState([]);
   const [registrations, setRegistrations] = useState([]);
   const [ownRegistration, setOwnRegistration] = useState(null);
   const [statuses, setStatuses] = useState([]);
@@ -792,6 +800,7 @@ export default function EventDetailPage() {
       return;
     }
     setConfirmationMessage("Are you sure you want to register for this event?");
+    setSelectedFoodOptions([]);
     setPendingRegistration(true);
     setShowConfirmation(true);
   };
@@ -808,7 +817,8 @@ export default function EventDetailPage() {
     try {
       const response = await apiFetch(`/api/events/${id}/registrations`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ selectedFoodOptions }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Unable to register for event.");
@@ -1208,8 +1218,8 @@ export default function EventDetailPage() {
                 <h2 className="font-display text-2xl font-semibold">Venue booking</h2>
                 {venueBooking ? <>
                   <p className="mt-2 text-sm">Status: <span className="capitalize text-primary">{venueBooking.status}</span>{venueBooking.ownerNote && ` — ${venueBooking.ownerNote}`}</p>
-                  {venueBooking.invoiceId && <p className="mt-3 text-sm">Invoice: <Link to={`/invoices/${venueBooking.invoiceId}`} className="text-primary underline">{venueBooking.invoiceNumber || `#${venueBooking.invoiceId}`}</Link> · {venueBooking.invoiceStatus || venueBooking.paymentStatus}</p>}
-                  {venueBooking.externalInvoiceId && <p className="mt-3 text-sm">The Venue manages this invoice externally. Status: {venueBooking.externalInvoiceStatus || venueBooking.paymentStatus}.{venueBooking.externalInvoiceUrl && <> <a href={venueBooking.externalInvoiceUrl} target="_blank" rel="noreferrer" className="text-primary underline">Open invoice</a></>}</p>}
+                  {product.paidVenuesEnabled && venueBooking.invoiceId && <p className="mt-3 text-sm">Invoice: <Link to={`/invoices/${venueBooking.invoiceId}`} className="text-primary underline">{venueBooking.invoiceNumber || `#${venueBooking.invoiceId}`}</Link> · {venueBooking.invoiceStatus || venueBooking.paymentStatus}</p>}
+                  {product.paidVenuesEnabled && venueBooking.externalInvoiceId && <p className="mt-3 text-sm">The Venue manages this invoice externally. Status: {venueBooking.externalInvoiceStatus || venueBooking.paymentStatus}.{venueBooking.externalInvoiceUrl && <> <a href={venueBooking.externalInvoiceUrl} target="_blank" rel="noreferrer" className="text-primary underline">Open invoice</a></>}</p>}
                    {persistedBookingTime && <><p className="mt-4 text-sm font-medium text-primary">Current booking</p><SelectedBookingTimeGrid schedule={bookingSchedule} value={persistedBookingTime} /></>}
                    {bookingSchedule.loading && <p role="status" className="mt-3 text-sm text-muted-foreground">Loading venue availability…</p>}
                    {bookingSchedule.timezone && <p className="mt-3 text-xs text-muted-foreground">Venue time: {bookingSchedule.timezone}</p>}
@@ -1271,6 +1281,7 @@ export default function EventDetailPage() {
                           <ParticipantAvatar person={participant} />
                           <p className="font-medium">{participant.name}</p>
                         </div>
+                        {canManageEvents && <FoodChoices choices={participant.selectedFoodOptions} />}
                         {canManageEvents && participant.email && (
                           <p className="mt-2 text-sm text-muted-foreground">
                             {participant.email}
@@ -1482,6 +1493,7 @@ export default function EventDetailPage() {
                       >
                         <div>
                           <p className="font-medium">{registration.name}</p>
+                          <FoodChoices choices={registration.selectedFoodOptions} />
                           <p className="text-sm text-muted-foreground">
                             {registration.email}
                           </p>
@@ -1571,7 +1583,7 @@ export default function EventDetailPage() {
           role="dialog"
           aria-modal="true"
         >
-          <div className="relative w-full max-w-md bg-background p-8 shadow-xl">
+          <div className="relative max-h-[90dvh] w-full max-w-md overflow-y-auto bg-background p-8 shadow-xl">
             <button type="button" onClick={closeConfirmation} disabled={confirmationBusy} aria-label="Close confirmation" className="absolute right-4 top-4 inline-flex h-10 w-10 items-center justify-center text-muted-foreground hover:text-foreground disabled:opacity-50"><X className="h-5 w-5" aria-hidden="true" /></button>
             <h2 className="pr-8 font-display text-3xl font-semibold">
               {pendingWithdrawal
@@ -1585,7 +1597,7 @@ export default function EventDetailPage() {
                       : "You are registered"}
             </h2>
             <p className="mt-4 text-muted-foreground">{confirmationMessage}</p>
-            {pendingRegistration && Array.isArray(event?.foodOptions) && event.foodOptions.length > 0 && <div className="mt-5 border border-border bg-secondary/20 p-4"><p className="text-sm font-medium">Food options at this event</p><ul className="mt-2 list-inside list-disc space-y-1 text-sm text-muted-foreground">{event.foodOptions.map((option, index) => <li key={`${option}-${index}`}>{option}</li>)}</ul></div>}
+            {pendingRegistration && Array.isArray(event?.foodOptions) && event.foodOptions.length > 0 && <fieldset disabled={confirmationBusy} className="mt-5 rounded-xl border border-border bg-secondary/20 p-4"><legend className="px-1 text-sm font-medium">Food options (optional)</legend><p className="text-sm text-muted-foreground">Choose any options you would like. Your choices will be shared with the event organizer.</p><div className="mt-3 space-y-2">{[...new Set(event.foodOptions)].map(option => <label key={option} className="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg px-2 py-2 hover:bg-secondary/50"><input type="checkbox" checked={selectedFoodOptions.includes(option)} onChange={e => setSelectedFoodOptions(current => e.target.checked ? [...current, option] : current.filter(value => value !== option))} className="h-4 w-4 shrink-0 accent-primary" /><span className="break-words text-sm">{option}</span></label>)}</div></fieldset>}
             <div className="mt-7 flex flex-wrap gap-3">
               <button type="button" disabled={confirmationBusy} onClick={pendingWithdrawal ? confirmWithdrawal : pendingRegistration ? confirmRegistration : closeConfirmation} className="min-h-12 bg-primary px-7 text-sm uppercase tracking-widest text-primary-foreground disabled:opacity-50">
                 {confirmationBusy ? "Please wait…" : pendingWithdrawal ? "Confirm withdrawal" : pendingRegistration ? "Confirm registration" : "Got it"}

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { Link, useNavigate } from 'react-router-dom';
 import SiteChrome from '@/components/SiteChrome';
+import { useProductConfiguration } from '@/lib/product-configuration';
 import ConfirmationDialog from '@/components/ConfirmationDialog';
 import { apiAssetUrl, apiFetch } from '@/lib/api';
 import { ArrowUpRight, Building2, Camera, ChevronDown, CreditCard, Mail, ShieldCheck } from 'lucide-react';
@@ -15,6 +16,8 @@ const profilePictureUrl = (value) => {
 };
 
 export default function ProfilePage() {
+  const product = useProductConfiguration();
+  const paidFeatures = product.subscriptionsEnabled || product.paidEventsEnabled || product.paidVenuesEnabled || product.paidServicesEnabled;
   const navigate = useNavigate();
   const token = localStorage.getItem('authToken');
   const storedUser = JSON.parse(localStorage.getItem('authUser') || 'null');
@@ -130,13 +133,13 @@ export default function ProfilePage() {
         </div>
         <div className="border-t border-border/70 bg-secondary/20 px-5 py-4 sm:px-6"><p className="flex items-start gap-2 text-xs leading-relaxed text-muted-foreground"><ShieldCheck className="h-4 w-4 shrink-0" aria-hidden="true" />Account security, receipts, and essential registration updates are always sent.</p>{!emailPreferences && !emailError && <p role="status" className="mt-2 text-sm">Loading preferences…</p>}{emailError && <p role="alert" className="mt-2 text-sm text-destructive">{emailError}</p>}{emailNotice && <p role="status" className="mt-2 text-sm text-primary">{emailNotice}</p>}</div>
       </section>
-      <Link to="/profile/subscriptions" className="mt-5 flex min-h-20 items-center justify-between gap-4 rounded-2xl border border-border/70 p-5 transition-colors hover:bg-secondary/30 sm:p-6"><div><h2 className="font-semibold">Your publishing plans</h2><p className="mt-1 text-sm text-muted-foreground">Article space and event publishing subscriptions.</p></div><ArrowUpRight className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" /></Link>
-      <details className="group mt-5 overflow-hidden rounded-2xl border border-border/70">
+      {product.subscriptionsEnabled && <Link to="/profile/subscriptions" className="mt-5 flex min-h-20 items-center justify-between gap-4 rounded-2xl border border-border/70 p-5 transition-colors hover:bg-secondary/30 sm:p-6"><div><h2 className="font-semibold">Your publishing plans</h2><p className="mt-1 text-sm text-muted-foreground">Article space and event publishing subscriptions.</p></div><ArrowUpRight className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" /></Link>}
+      {paidFeatures && <details className="group mt-5 overflow-hidden rounded-2xl border border-border/70">
         <summary className="flex cursor-pointer list-none items-center gap-4 p-5 transition-colors hover:bg-secondary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:p-6 [&::-webkit-details-marker]:hidden"><span className="rounded-xl bg-secondary/60 p-3"><Building2 className="h-5 w-5 text-muted-foreground" aria-hidden="true" /></span><span className="flex-1"><span className="block font-semibold">Organizations & payments</span><span className="mt-1 block text-sm text-muted-foreground">For when you organize, host, or do business.</span></span><ChevronDown className="h-5 w-5 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" aria-hidden="true" /></summary>
         <div className="grid gap-3 border-t border-border/70 bg-secondary/15 p-5 sm:grid-cols-2 sm:p-6">
           {[['/account/organizations', 'Organizations', 'Manage your teams and organization details.', Building2], ['/account/payments', 'Payments & business', 'Billing details, invoices, and payment settings.', CreditCard]].map(([to, title, description, Icon]) => <Link key={to} to={to} className="group/link rounded-xl border border-border/70 bg-background p-5 transition-colors hover:border-primary/40"><div className="flex items-center justify-between"><Icon className="h-5 w-5 text-primary" aria-hidden="true" /><ArrowUpRight className="h-4 w-4 text-muted-foreground group-hover/link:text-primary" aria-hidden="true" /></div><h3 className="mt-4 text-sm font-semibold">{title}</h3><p className="mt-2 text-sm leading-relaxed text-muted-foreground">{description}</p></Link>)}
         </div>
-      </details>
+      </details>}
       <section className="mt-10 border-t border-border/70 pt-7"><h2 className="text-lg font-semibold">Privacy and account</h2><p className="mt-2 text-sm leading-relaxed text-muted-foreground">Download a copy of your personal data or manage your account.</p><div className="mt-4 flex flex-wrap gap-3"><button disabled={exporting} onClick={downloadExport} className="min-h-11 rounded-xl border border-border px-5 text-sm disabled:opacity-50">{exporting ? 'Preparing export…' : 'Download my data'}</button><button onClick={() => setConfirmingDelete(true)} className="min-h-11 rounded-xl px-5 text-sm text-destructive hover:bg-destructive/5">Delete account</button></div></section>
     </section>{confirmingDelete && <ConfirmationDialog title="Delete your account?" description="This permanently removes your account and eligible content. Confirm with your password." confirmLabel="Delete account" destructive busy={deleting} onCancel={() => { setConfirmingDelete(false); setDeletePassword(''); }} onConfirm={deleteAccount}><input autoFocus required type="password" value={deletePassword} onChange={(event) => setDeletePassword(event.target.value)} placeholder="Current password" aria-label="Current password" className="w-full border border-border bg-background p-3" /></ConfirmationDialog>}</SiteChrome>;
 }
