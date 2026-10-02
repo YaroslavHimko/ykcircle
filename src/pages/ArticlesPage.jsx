@@ -2,6 +2,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Archive, ArrowLeft, FilePlus2, ImagePlus, Send, Trash2 } from 'lucide-react';
+import DiscoveryCard from '@/components/DiscoveryCard';
+import { BookOpen, CalendarDays, UserRound } from 'lucide-react';
 import SiteChrome from '@/components/SiteChrome';
 import DirectoryActions from '@/components/DirectoryActions';
 import ConfirmationDialog from '@/components/ConfirmationDialog';
@@ -37,22 +39,16 @@ function StatusBadge({
 }) {
   return <span className={`border px-2 py-1 text-xs uppercase tracking-wider ${status === 'published' ? 'border-primary text-primary' : status === 'removed' ? 'border-destructive text-destructive' : 'border-border text-muted-foreground'}`}>{status}</span>;
 }
-function ArticleCard({
-  article,
-  editable = false
-}) {
+function ArticleCard({ article, editable = false }) {
   const href = editable ? `/profile/articles/${article.id}/edit` : `/articles/${article.slug}`;
-  return <article className="group flex h-full flex-col overflow-hidden border border-border bg-background transition-colors hover:border-primary">
-    <Link to={href} className="block">
-      {article.coverImage ? <img src={articleImageUrl(article.coverImage)} alt={article.coverAltText || ''} className="aspect-[16/9] w-full object-cover" /> : <div className="aspect-[16/9] bg-secondary/60" />}
-    </Link>
-    <div className="flex flex-1 flex-col p-5">
-      <div className="flex flex-wrap items-center justify-between gap-2 text-xs uppercase tracking-[0.2em] text-primary"><span>{article.categoryName || 'YKCircle guide'}</span>{editable && <StatusBadge status={article.status} />}</div>
-      <h2 className="mt-3 font-display text-2xl font-semibold leading-tight"><Link to={href} className="group-hover:text-primary">{article.title}</Link></h2>
-      <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{article.excerpt}</p>
-      <div className="mt-auto pt-5 text-xs text-muted-foreground">{articleDate(article.publishedAt || article.updatedAt)} · {article.authorName}</div>
+  return <DiscoveryCard href={href} image={articleImageUrl(article.coverImage)} imageAlt={article.coverAltText || ''} icon={BookOpen}
+    badge={editable ? <StatusBadge status={article.status} /> : 'Free to read'} eyebrow={article.categoryName || 'YKCircle journal'} title={article.title}>
+    <p className="mt-3 line-clamp-2 text-sm leading-relaxed text-muted-foreground">{article.excerpt}</p>
+    <div className="mt-auto space-y-2 pt-5 text-sm text-muted-foreground">
+      {article.authorName && <p className="flex items-center gap-2"><UserRound aria-hidden="true" className="h-4 w-4 shrink-0" />{article.authorName}</p>}
+      <p className="flex items-center gap-2"><CalendarDays aria-hidden="true" className="h-4 w-4 shrink-0" />{articleDate(article.publishedAt || article.updatedAt)}</p>
     </div>
-  </article>;
+  </DiscoveryCard>;
 }
 function PublicListing({
   categorySlug = ''
@@ -158,7 +154,7 @@ function PublicArticle() {
       image: articleImageUrl(article.coverImage)
     } : {})
   };
-  return <SiteChrome><Helmet><title>{article.title} | YKCircle</title><meta name="description" content={article.excerpt} /><link rel="canonical" href={canonical} /><meta property="og:title" content={`${article.title} | YKCircle`} /><meta property="og:description" content={article.excerpt} />{article.coverImage && <meta property="og:image" content={articleImageUrl(article.coverImage)} />}{!isPublic && <meta name="robots" content="noindex" />}<script type="application/ld+json">{JSON.stringify(structuredData)}</script></Helmet><article className="mx-auto max-w-4xl px-5 pb-24 pt-10 sm:px-8 sm:pt-14"><Link to={article.categorySlug ? `/articles/category/${article.categorySlug}` : '/articles'} className="inline-flex items-center gap-2 text-sm text-primary"><ArrowLeft className="h-4 w-4" />{article.categoryName || 'All articles'}</Link><header className="mt-8 border-b border-border pb-8"><p className="text-xs uppercase tracking-[0.25em] text-primary">{article.categoryName || 'YKCircle journal'}</p><h1 className="mt-4 font-display text-5xl font-black leading-[0.95] sm:text-6xl">{article.title}</h1><p className="mt-6 max-w-3xl text-lg leading-relaxed text-muted-foreground">{article.excerpt}</p><div className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground"><span>By {article.authorName}</span><span>{articleDate(article.publishedAt || article.updatedAt)}</span></div>{article.tags?.length > 0 && <div className="mt-5 flex flex-wrap gap-2">{article.tags.map(tag => <Link key={tag} to={`/articles?tag=${encodeURIComponent(tag)}`} className="border border-border px-3 py-1 text-xs text-muted-foreground hover:border-primary hover:text-primary">{tag}</Link>)}</div>}</header>{article.coverImage && <figure className="my-10"><img src={articleImageUrl(article.coverImage)} alt={article.coverAltText || ''} className="max-h-[38rem] w-full object-cover" /></figure>}<ArticleContent body={article.body} className="text-[1.05rem]" /></article></SiteChrome>;
+  return <SiteChrome><Helmet><title>{article.title} | YKCircle</title><meta name="description" content={article.excerpt} /><link rel="canonical" href={canonical} /><meta property="og:title" content={`${article.title} | YKCircle`} /><meta property="og:description" content={article.excerpt} />{article.coverImage && <meta property="og:image" content={articleImageUrl(article.coverImage)} />}{!isPublic && <meta name="robots" content="noindex" />}<script type="application/ld+json">{JSON.stringify(structuredData)}</script></Helmet><article className="mx-auto max-w-4xl px-5 pb-24 pt-10 sm:px-8 sm:pt-14"><Link to={article.categorySlug ? `/articles/category/${article.categorySlug}` : '/articles'} className="inline-flex items-center gap-2 text-sm text-primary"><ArrowLeft className="h-4 w-4" />{article.categoryName || 'All articles'}</Link><header className="mt-8 rounded-2xl border border-border/70 bg-secondary/20 p-6 sm:p-10"><p className="text-xs uppercase tracking-[0.25em] text-primary">{article.categoryName || 'YKCircle journal'}</p><h1 className="mt-4 break-words font-display text-4xl font-bold leading-tight tracking-tight sm:text-5xl">{article.title}</h1><p className="mt-6 max-w-3xl text-lg leading-relaxed text-muted-foreground">{article.excerpt}</p><div className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground"><span>By {article.authorName}</span><span>{articleDate(article.publishedAt || article.updatedAt)}</span></div>{article.tags?.length > 0 && <div className="mt-5 flex flex-wrap gap-2">{article.tags.map(tag => <Link key={tag} to={`/articles?tag=${encodeURIComponent(tag)}`} className="rounded-full border border-border bg-background px-3 py-1.5 text-xs text-muted-foreground hover:border-primary hover:text-primary">{tag}</Link>)}</div>}</header>{article.coverImage && <figure className="my-8 overflow-hidden rounded-2xl bg-secondary/60"><img src={articleImageUrl(article.coverImage)} alt={article.coverAltText || ''} className="max-h-[38rem] w-full object-cover" /></figure>}<div className="mx-auto mt-10 max-w-[65ch]"><ArticleContent body={article.body} className="break-words text-[1.05rem] leading-8" /></div><footer className="mt-12 flex flex-wrap items-center justify-between gap-4 border-t border-border pt-6 text-sm text-muted-foreground"><span>{article.authorName && `Written by ${article.authorName}`}</span><Link to="/articles" className="inline-flex min-h-11 items-center gap-2 rounded-full border border-border px-4 text-primary"><ArrowLeft aria-hidden="true" className="h-4 w-4" />Explore more articles</Link></footer></article></SiteChrome>;
 }
 function ArticleEditor({
   article,
@@ -273,6 +269,7 @@ function ArticleEditor({
 }
 function ArticleAccessPanel({ access }) {
   if (!access) return null;
+  if (!access.subscriptionsEnabled) return <section className="mb-8 rounded-xl border border-border/70 bg-secondary/20 p-5"><h2 className="font-semibold">Your article space</h2><p className="mt-2 text-sm text-muted-foreground">Publishing is free during early access. Share your stories with the community.</p></section>;
   return <div className="mx-auto mb-6 mt-6 max-w-[76rem] border border-border bg-secondary/20 p-5">
     <h2 className="font-semibold">Article space</h2>
     <p className="mt-2 text-sm text-muted-foreground">{access.remaining} of {access.monthlyLimit} new articles available this month. Resets {articleDate(access.resetsAt)} (UTC). Drafts are free; archiving does not restore a space.</p>
@@ -518,7 +515,7 @@ function EditorialWorkspace({
       }
     }
   });
-  if (!permitted) return <SiteChrome><Helmet><title>Article workspace | YKCircle</title><meta name="robots" content="noindex" /></Helmet><section className="mx-auto max-w-3xl px-5 pb-24 pt-10 sm:px-8 sm:pt-14"><h1 className="font-display text-5xl font-black">Log in to write articles.</h1><p className="mt-5 text-muted-foreground">Everyone can prepare drafts. Publishing requires an article space subscription.</p>{!user && <Link to="/login?from=%2Fprofile%2Farticles" className="mt-7 inline-flex min-h-11 items-center bg-primary px-5 text-sm text-primary-foreground">Log in</Link>}</section></SiteChrome>;
+  if (!permitted) return <SiteChrome><Helmet><title>Article workspace | YKCircle</title><meta name="robots" content="noindex" /></Helmet><section className="mx-auto max-w-3xl px-5 pb-24 pt-10 sm:px-8 sm:pt-14"><h1 className="font-display text-5xl font-black">Log in to write articles.</h1><p className="mt-5 text-muted-foreground">Log in to create drafts and share stories with the community.</p>{!user && <Link to="/login?from=%2Fprofile%2Farticles" className="mt-7 inline-flex min-h-11 items-center bg-primary px-5 text-sm text-primary-foreground">Log in</Link>}</section></SiteChrome>;
   if (view === 'list') return <SiteChrome><Helmet><title>Manage articles | YKCircle</title><meta name="robots" content="noindex" /></Helmet><section className="mx-auto max-w-[76rem] px-5 pb-24 pt-10 sm:px-8 sm:pt-14"><div className="flex flex-wrap items-end justify-between gap-5"><div><p className="text-xs uppercase tracking-[0.3em] text-primary">Editorial workspace</p><h1 className="mt-3 font-display text-5xl font-black">Articles</h1><p className="mt-5 max-w-2xl text-muted-foreground">Create drafts, edit your articles, and publish when they are ready for readers.</p></div><Link to="/profile/articles/new" className="inline-flex min-h-11 items-center gap-2 bg-primary px-5 text-sm text-primary-foreground"><FilePlus2 className="h-4 w-4" />New article</Link></div>{error && <p role="alert" className="mt-6 text-destructive">{error}</p>}<div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{loading ? <p className="text-muted-foreground">Loading articles…</p> : articles.map(article => <ArticleCard key={article.id} article={article} editable />)}{!loading && articles.length === 0 && <div className="border border-border p-6 text-muted-foreground">No articles yet. Create your first draft to begin.</div>}</div></section></SiteChrome>;
   const editorArticle = current || (view === 'new' ? newArticle : null);
   return <SiteChrome><Helmet><title>{view === 'new' ? 'New article' : 'Edit article'} | YKCircle</title><meta name="robots" content="noindex" /></Helmet><section className="px-5 pb-24 pt-10 sm:px-8 sm:pt-14"><ArticleAccessPanel access={articleAccess} />{loading && view === 'edit' ? <p className="mx-auto max-w-3xl text-muted-foreground">Loading article…</p> : editorArticle && <ArticleEditor article={editorArticle} categories={categories} role={user.role} saving={saving} errors={errors} onSave={persist} onPublish={form => persist(form, true)} onStatus={changeStatus} onUploadCover={uploadCover} onUploadMedia={uploadMedia} onDeleteMedia={deleteMedia} />}{error && <p role="alert" className="fixed bottom-6 right-6 z-50 max-w-md border border-destructive/30 bg-background px-4 py-3 text-sm text-destructive shadow-lg">{error}</p>}{notice && <p role="status" className="fixed bottom-6 right-6 z-50 max-w-md border border-primary/30 bg-background px-4 py-3 text-sm shadow-lg">{notice}</p>}</section>{confirmation && <ConfirmationDialog title={confirmation.title} description={confirmation.description} confirmLabel={confirmation.label} destructive={confirmation.destructive} busy={saving} onCancel={() => setConfirmation(null)} onConfirm={confirmation.action} />}</SiteChrome>;

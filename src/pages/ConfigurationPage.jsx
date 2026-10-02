@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { SubscriptionShell, subscriptionRequest as request, buttonClass, fieldClass, dateLabel } from './SubscriptionsPage';
 
 const switches = [
-  ['subscriptionsEnabled', 'Require organizer subscriptions', 'An active subscription or granted access is required to publish. Drafts remain available.'],
+  ['subscriptionsEnabled', 'Require publishing subscriptions', 'Require subscriptions for event and article publishing. Leave off for free early access. Drafts remain available.'],
+  ['paidServicesEnabled', 'Enable paid platform services', 'Allow one-off purchases such as featured listings. Leave off for free early access.'],
   ['paidEventsEnabled', 'Enable paid events', 'Organizers can create paid events and sell tickets after completing their payment setup.'],
   ['paidVenuesEnabled', 'Enable paid venues', 'Venue owners can set rates and charge for new bookings.'],
 ];

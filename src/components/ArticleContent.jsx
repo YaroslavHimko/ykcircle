@@ -18,7 +18,7 @@ function InlineText({ value }) {
 function MarkdownImage({ line }) {
   const match = line.match(/^!\[([^\]]*)\]\(([^\s)]+)(?:\s+"([^"]*)")?\)$/);
   if (!match) return null;
-  return <figure className="my-8"><img src={articleImageUrl(match[2])} alt={match[1]} className="max-h-[34rem] w-full object-cover" />{match[3] && <figcaption className="mt-2 text-sm text-muted-foreground">{match[3]}</figcaption>}</figure>;
+  return <figure className="my-8 rounded-xl"><img src={articleImageUrl(match[2])} alt={match[1]} className="max-h-[34rem] w-full object-cover" />{match[3] && <figcaption className="mt-2 text-sm text-muted-foreground">{match[3]}</figcaption>}</figure>;
 }
 
 function youtubeVideoId(value) {
@@ -39,7 +39,7 @@ function youtubeVideoId(value) {
 function YouTubeFrame({ videoId }) {
   const [enabled, setEnabled] = React.useState(false);
   if (!enabled) return <figure className="my-8 max-w-xl border border-border bg-secondary/30 p-6"><p className="font-medium">YouTube video</p><p className="mt-2 text-sm leading-relaxed text-muted-foreground">This video is hosted by YouTube. Loading it may allow YouTube to process your device and connection data.</p><button type="button" onClick={() => setEnabled(true)} className="mt-4 min-h-10 border border-border px-4 text-sm">Load YouTube video</button></figure>;
-  return <figure className="my-8 w-full max-w-xl overflow-hidden border border-border bg-black shadow-sm">
+  return <figure className="my-8 w-full max-w-xl overflow-hidden rounded-xl border border-border bg-black shadow-sm">
     <div className="aspect-video">
       <iframe
         className="h-full w-full"

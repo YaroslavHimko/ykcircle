@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { Helmet } from "react-helmet";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { Users } from "lucide-react";
+import EventPreviewCard from '@/components/EventPreviewCard';
+import DiscoveryCard from '@/components/DiscoveryCard';
 import SiteChrome from "@/components/SiteChrome";
 import DirectoryActions from '@/components/DirectoryActions';
 import ConfirmationDialog from "@/components/ConfirmationDialog";
@@ -67,42 +69,13 @@ function GroupImage({ group, className = "" }) {
 }
 
 function GroupCard({ group, action, managementView = false }) {
-  return (
-    <article className="overflow-hidden border border-border bg-background shadow-sm">
-      <GroupImage group={group} className="aspect-[16/7] w-full" />
-      <div className="p-5">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-primary">
-              {group.visibility} group
-            </p>
-            <h2 className="mt-2 font-display text-3xl font-semibold">
-              <Link className="hover:text-primary" to={`/groups/${group.id}${managementView ? "?manage=1" : ""}`}>
-                {group.name}
-              </Link>
-            </h2>
-          </div>
-          <span className="inline-flex shrink-0 items-center gap-1 text-sm text-muted-foreground">
-            <Users className="h-4 w-4" /> {group.memberCount || 0}
-          </span>
-        </div>
-        {group.description && (
-          <p className="mt-4 line-clamp-3 text-sm leading-relaxed text-muted-foreground">
-            {group.description}
-          </p>
-        )}
-        <p className="mt-4 text-sm text-muted-foreground">
-          Organized by {group.organizerName || "YKCircle"}
-        </p>
-        {Number(group.ratedEventCount) > 0 && (
-          <p className="mt-2 text-sm text-muted-foreground">
-            <span className="text-primary" aria-hidden="true">{ratingStars(group.ratingAverage)}</span>{" "}{Number(group.ratingAverage).toFixed(1)} / 5 from {group.ratedEventCount} rated {Number(group.ratedEventCount) === 1 ? "event" : "events"}
-          </p>
-        )}
-        {action && <div className="mt-5">{action}</div>}
-      </div>
-    </article>
-  );
+  return <DiscoveryCard href={`/groups/${group.id}${managementView ? '?manage=1' : ''}`} image={imageUrl(groupImageValue(group), 'group-covers')} icon={Users}
+    badge={`${group.visibility || 'Public'} group`} title={group.name} footer={action}>
+    <p className="mt-2 text-sm text-muted-foreground">Organized by {group.organizerName || 'YKCircle'}</p>
+    <p className="mt-4 flex items-center gap-2 text-sm text-muted-foreground"><Users aria-hidden="true" className="h-4 w-4 shrink-0" />{group.memberCount || 0} {Number(group.memberCount) === 1 ? 'member' : 'members'}</p>
+    {group.description && <p className="mt-4 line-clamp-2 text-sm leading-relaxed text-muted-foreground">{group.description}</p>}
+    {Number(group.ratedEventCount) > 0 && <p className="mt-auto pt-4 text-sm text-muted-foreground"><span className="text-primary" aria-hidden="true">{ratingStars(group.ratingAverage)}</span>{' '}{Number(group.ratingAverage).toFixed(1)} / 5 from {group.ratedEventCount} rated {Number(group.ratedEventCount) === 1 ? 'event' : 'events'}</p>}
+  </DiscoveryCard>;
 }
 
 function GroupForm({ initial, onCancel, onSave, saving, showTestPresets = false }) {
@@ -202,7 +175,7 @@ function GroupForm({ initial, onCancel, onSave, saving, showTestPresets = false 
       <div className="flex flex-wrap gap-3">
         <button
           disabled={saving}
-          className="min-h-11 bg-primary px-5 text-sm text-primary-foreground disabled:opacity-50"
+          className="min-h-11 rounded-full bg-primary px-6 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
         >
           {saving ? "Saving…" : initial ? "Save group" : "Create group"}
         </button>
@@ -280,7 +253,7 @@ function MemberManagement({
         />
         <button
           disabled={loading}
-          className="min-h-11 bg-primary px-5 text-sm text-primary-foreground disabled:opacity-50"
+          className="min-h-11 rounded-full bg-primary px-6 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
         >
           {loading ? "Sending…" : group.visibility === "Private" ? "Send invitation" : "Add member"}
         </button>
@@ -824,14 +797,14 @@ export default function GroupsPage({
                 <Link to={managementView ? "/profile/groups" : "/groups"} className="text-sm text-primary">
                   ← {managementView ? "Manage groups" : "All groups"}
                 </Link>
-                <div className="mt-6 overflow-hidden border-y border-border">
-                  <GroupImage group={group} className="aspect-[16/6] w-full" />
-                  <div className="flex flex-wrap items-start justify-between gap-6 py-8">
+                <div className="mt-6 overflow-hidden rounded-2xl border border-border/70 bg-background shadow-sm">
+                  <div className="relative"><GroupImage group={group} className="aspect-[16/10] w-full sm:aspect-[16/6]" /><span className="absolute right-4 top-4 rounded-full bg-background/95 px-4 py-2 text-sm font-medium shadow-sm">{group.visibility} group</span></div>
+                  <div className="flex flex-wrap items-start justify-between gap-6 p-6 sm:p-8">
                     <div>
                       <p className="text-xs uppercase tracking-[0.25em] text-primary">
                         {group.visibility} group
                       </p>
-                      <h1 className="mt-3 font-display text-5xl font-black">
+                      <h1 className="mt-3 break-words font-display text-4xl font-bold leading-tight tracking-tight sm:text-5xl">
                         {group.name}
                       </h1>
                       <p className="mt-4 max-w-2xl whitespace-pre-wrap leading-relaxed text-muted-foreground">
@@ -868,7 +841,7 @@ export default function GroupsPage({
                           <button
                             disabled={saving}
                             onClick={toggleMembership}
-                            className="min-h-11 bg-primary px-5 text-sm text-primary-foreground disabled:opacity-50"
+                            className="min-h-11 rounded-full bg-primary px-6 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
                           >
                             {group.isMember ? "Leave group" : "Join group"}
                           </button>
@@ -884,31 +857,9 @@ export default function GroupsPage({
                   <div className="mt-5 grid gap-5 sm:grid-cols-2">
                     {upcomingEvents.length ? (
                       upcomingEvents.map((event) => (
-                        <Link
-                          key={event.id}
-                          to={`/events/${event.id}`}
-                          className="overflow-hidden border border-border bg-background hover:border-primary"
-                        >
-                          <EventImage event={event} component="GroupEventCard" className="aspect-[16/8] w-full object-cover" />
-                          <div className="relative z-20 p-5">
-                            <p className="text-xs uppercase tracking-[0.2em] text-primary">
-                              {event.startsAt
-                                ? new Date(event.startsAt).toLocaleString()
-                                : "Date to be announced"}
-                            </p>
-                            <h3 className="mt-2 font-display text-2xl">
-                              {event.title}
-                            </h3>
-                            <p className="mt-2 text-sm text-muted-foreground">
-                              {event.shortDescription || event.description}
-                            </p>
-                            {Number(event.ratingCount) > 0 && (
-                              <p className="mt-3 text-sm text-muted-foreground">
-                                <span className="text-primary" aria-hidden="true">{ratingStars(event.ratingAverage)}</span>{" "}{Number(event.ratingAverage).toFixed(1)} / 5 ({event.ratingCount} {Number(event.ratingCount) === 1 ? "rating" : "ratings"})
-                              </p>
-                            )}
-                          </div>
-                        </Link>
+                        <EventPreviewCard key={event.id} event={event}>
+                          {Number(event.ratingCount) > 0 && <p className="text-sm text-muted-foreground"><span className="text-primary" aria-hidden="true">{ratingStars(event.ratingAverage)}</span>{' '}{Number(event.ratingAverage).toFixed(1)} / 5 ({event.ratingCount} {Number(event.ratingCount) === 1 ? 'rating' : 'ratings'})</p>}
+                        </EventPreviewCard>
                       ))
                     ) : (
                       <p className="text-muted-foreground">
@@ -922,7 +873,7 @@ export default function GroupsPage({
                     <h2 className="font-display text-3xl font-semibold">Archived</h2>
                     <div className="mt-5 grid gap-5 sm:grid-cols-2">
                       {archivedEvents.map((event) => (
-                        <article key={event.id} className="relative overflow-hidden border border-border bg-secondary/40 opacity-75">
+                        <article key={event.id} className="relative overflow-hidden rounded-xl border border-border bg-secondary/40 opacity-75">
                           <div className="pointer-events-none absolute inset-0 z-10 bg-white/35" aria-hidden="true" />
                           <EventImage event={event} component="GroupArchivedEventCard" className="aspect-[16/8] w-full object-cover grayscale" />
                           <div className="relative z-20 p-5">
