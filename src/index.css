@@ -10,7 +10,7 @@
   }
 
   .directory-filter:not(:disabled):hover {
-    @apply border-primary/50 bg-primary/10;
+    @apply bg-primary/5;
   }
 }
 
