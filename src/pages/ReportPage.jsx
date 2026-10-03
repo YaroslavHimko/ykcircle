@@ -73,7 +73,6 @@ export default function ReportPage() {
         <p className="text-xs uppercase tracking-[0.3em] text-primary">Safety</p>
         <h1 className="mt-3 font-display text-5xl font-black">Report content</h1>
         <p className="mt-5 max-w-2xl leading-relaxed text-muted-foreground">Use this form to report content you believe breaches our rules or may be illegal. You can submit a report without signing in.</p>
-        <p className="mt-5 border border-amber-500/50 bg-amber-500/10 p-4 text-sm leading-relaxed">This reporting flow and the related legal documents are draft templates in development. No real data is provided yet, and the legal materials still require Swedish legal review before launch.</p>
 
         {reference ? (
           <div className="mt-10 border border-primary bg-primary/5 p-6" role="status">
