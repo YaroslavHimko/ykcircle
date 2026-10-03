@@ -1,6 +1,6 @@
 import path from 'node:path';
 import react from '@vitejs/plugin-react';
-import { createLogger, defineConfig } from 'vite';
+import { createLogger, defineConfig, loadEnv } from 'vite';
 import inlineEditPlugin from './plugins/visual-editor/vite-plugin-react-inline-editor.js';
 import editModeDevPlugin from './plugins/visual-editor/vite-plugin-edit-mode.js';
 import selectionModePlugin from './plugins/selection-mode/vite-plugin-selection-mode.js';
@@ -374,8 +374,14 @@ logger.error = (msg, options) => {
 	loggerError(msg, options);
 }
 
-export default defineConfig({
+export default defineConfig(({ mode }) => {
+	// Publish only this public URL, never the rest of the server environment.
+	// VITE_API_URL remains the explicit frontend override.
+	const env = loadEnv(mode, process.cwd(), ['VITE_API_URL', 'API_URL']);
+	const publicApiUrl = env.VITE_API_URL?.trim() || env.API_URL?.trim() || '';
+	return {
 	define: {
+		'import.meta.env.VITE_API_URL': JSON.stringify(publicApiUrl),
 		'import.meta.env.VITE_HERO_IMAGE_VERSION': JSON.stringify(heroImageHash),
 	},
 	optimizeDeps: {
@@ -424,4 +430,5 @@ export default defineConfig({
 			}
 		}
 	}
+	};
 });

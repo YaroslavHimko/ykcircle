@@ -4,3 +4,5 @@ server/config.local.js
 .env
 BACKEND_REBRANDING_STAGE_0_1.md
 .env.example
+DEPLOYMENT.md
+.env.example
