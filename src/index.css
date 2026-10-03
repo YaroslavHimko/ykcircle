@@ -4,6 +4,16 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer components {
+  .directory-filter {
+    @apply transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2;
+  }
+
+  .directory-filter:not(:disabled):hover {
+    @apply border-primary/50 bg-primary/10;
+  }
+}
+
 .google-place-autocomplete gmp-place-autocomplete {
   display: block;
   width: 100%;

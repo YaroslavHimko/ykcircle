@@ -120,12 +120,12 @@ function VenueCardSkeleton() {
   return <div className="overflow-hidden rounded-xl border border-border/70 p-5"><Skeleton className="-mx-5 -mt-5 h-48 rounded-none" /><Skeleton className="mt-5 h-7 w-2/3" /><Skeleton className="mt-3 h-4 w-1/2" /><Skeleton className="mt-6 h-5 w-1/3" /></div>;
 }
 
-function FilterSelect({ label, value, onChange, options, placeholder }) {
+function FilterSelect({ label, value, onChange, options, placeholder, className = "" }) {
   if (label === "Price unit") {
     const chargeType = ["day", "evening"].includes(value) ? "daily" : "hourly";
-    return <label className="block text-sm font-medium">Charge for bookings<select value={chargeType} onChange={(event) => onChange(event.target.value === "daily" ? "day" : "hour")} className={inputClass}><option value="hourly">Per hour</option><option value="daily">Per day / evening</option></select><span className="mt-1 block text-xs font-normal text-muted-foreground">{chargeType === "daily" ? "Guests reserve the whole day; the invoice has one day charge." : "Guests select full one-hour slots; invoices are calculated from booked hours."}</span></label>;
+    return <label className="block text-sm font-medium">Charge for bookings<select value={chargeType} onChange={(event) => onChange(event.target.value === "daily" ? "day" : "hour")} className={`${inputClass} ${className}`}><option value="hourly">Per hour</option><option value="daily">Per day / evening</option></select><span className="mt-1 block text-xs font-normal text-muted-foreground">{chargeType === "daily" ? "Guests reserve the whole day; the invoice has one day charge." : "Guests select full one-hour slots; invoices are calculated from booked hours."}</span></label>;
   }
-  return <label className="block text-sm font-medium">{label}<select value={value} onChange={(event) => onChange(event.target.value)} className={inputClass}><option value="">{placeholder}</option>{options.map((item) => <option key={item.slug || item.id || item} value={item.slug || item}>{item.name || humanize(item.slug || item)}</option>)}</select></label>;
+  return <label className="block text-sm font-medium">{label}<select value={value} onChange={(event) => onChange(event.target.value)} className={`${inputClass} ${className}`}><option value="">{placeholder}</option>{options.map((item) => <option key={item.slug || item.id || item} value={item.slug || item}>{item.name || humanize(item.slug || item)}</option>)}</select></label>;
 }
 
 export function VenuesDiscoveryPage({ city: routeCity = "", venueType: routeVenueType = "" }) {
@@ -201,15 +201,15 @@ export function VenuesDiscoveryPage({ city: routeCity = "", venueType: routeVenu
     </section>}
     {token && <h2 className="mt-12 font-display text-3xl font-semibold">Browse venues</h2>}
     <form onSubmit={(event) => { event.preventDefault(); load(); }} className="mt-9 grid gap-3 border border-border bg-secondary/20 p-4 sm:grid-cols-2 lg:grid-cols-4">
-      <label className="block text-sm font-medium">Location<input value={filters.city} onChange={(event) => setFilter("city")(event.target.value)} placeholder="City or area" className={inputClass} /></label>
-      <FilterSelect label="Venue type" value={filters.venueType} onChange={setFilter("venueType")} options={taxonomy.value.venueTypes} placeholder="Any type" />
-      <FilterSelect label="Suitable for" value={filters.eventType} onChange={setFilter("eventType")} options={taxonomy.value.eventTypes} placeholder="Any event" />
-      <FilterSelect label="Amenity" value={filters.amenity} onChange={setFilter("amenity")} options={taxonomy.value.amenities} placeholder="Any amenity" />
-      <label className="block text-sm font-medium">Minimum guests<input type="number" min="1" value={filters.minCapacity} onChange={(event) => setFilter("minCapacity")(event.target.value)} className={inputClass} /></label>
-      <label className="block text-sm font-medium">Maximum guests<input type="number" min="1" value={filters.maxCapacity} onChange={(event) => setFilter("maxCapacity")(event.target.value)} className={inputClass} /></label>
-      <label className="block text-sm font-medium">Maximum price (SEK)<input type="number" min="0" value={filters.maxPrice} onChange={(event) => setFilter("maxPrice")(event.target.value)} className={inputClass} /></label>
-      <label className="flex min-h-11 items-end gap-2 pb-1 text-sm font-medium"><input type="checkbox" checked={filters.verified} onChange={(event) => setFilter("verified")(event.target.checked)} /> Verified venues only</label>
-      <div className="flex items-end"><button className="min-h-11 w-full bg-primary px-4 text-sm font-medium text-primary-foreground">Search venues</button></div>
+      <label className="block text-sm font-medium">Location<input value={filters.city} onChange={(event) => setFilter("city")(event.target.value)} placeholder="City or area" className={`${inputClass} directory-filter`} /></label>
+      <FilterSelect className="directory-filter" label="Venue type" value={filters.venueType} onChange={setFilter("venueType")} options={taxonomy.value.venueTypes} placeholder="Any type" />
+      <FilterSelect className="directory-filter" label="Suitable for" value={filters.eventType} onChange={setFilter("eventType")} options={taxonomy.value.eventTypes} placeholder="Any event" />
+      <FilterSelect className="directory-filter" label="Amenity" value={filters.amenity} onChange={setFilter("amenity")} options={taxonomy.value.amenities} placeholder="Any amenity" />
+      <label className="block text-sm font-medium">Minimum guests<input type="number" min="1" value={filters.minCapacity} onChange={(event) => setFilter("minCapacity")(event.target.value)} className={`${inputClass} directory-filter`} /></label>
+      <label className="block text-sm font-medium">Maximum guests<input type="number" min="1" value={filters.maxCapacity} onChange={(event) => setFilter("maxCapacity")(event.target.value)} className={`${inputClass} directory-filter`} /></label>
+      <label className="block text-sm font-medium">Maximum price (SEK)<input type="number" min="0" value={filters.maxPrice} onChange={(event) => setFilter("maxPrice")(event.target.value)} className={`${inputClass} directory-filter`} /></label>
+      <label className="directory-filter flex min-h-11 cursor-pointer items-center gap-2 rounded-sm px-2 text-sm font-medium focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2"><input type="checkbox" className="accent-primary" checked={filters.verified} onChange={(event) => setFilter("verified")(event.target.checked)} /> Verified venues only</label>
+      <div className="flex items-end"><button className="min-h-11 w-full bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">Search venues</button></div>
       {taxonomy.error && <p className="sm:col-span-2 lg:col-span-4 text-sm text-muted-foreground">Filters are unavailable right now; you can still search by location.</p>}
     </form>
     {state.error ? <ErrorState error={state.error} retry={load} /> : state.loading || (token && (saved.loading || owned.loading)) ? <div className="mt-9 grid gap-5 md:grid-cols-2 lg:grid-cols-3">{[1, 2, 3, 4, 5, 6].map((item) => <VenueCardSkeleton key={item} />)}</div> : otherVenues.length ? <div className="mt-9 grid gap-5 md:grid-cols-2 lg:grid-cols-3">{otherVenues.map((venue) => <VenueCard key={venue.id} venue={venue} />)}</div> : <p className="mt-9 border border-border p-6 text-muted-foreground">{state.venues.length ? "All matching venues are shown in My Venues or Saved Venues above." : "No venues found for these filters."}</p>}

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Helmet } from 'react-helmet';
 import { Link } from 'react-router-dom';
-import { Compass, Languages, Trophy, Code2, Youtube } from 'lucide-react';
+import { Compass, Languages, Trophy, Code2 } from 'lucide-react';
 import SiteChrome from '@/components/SiteChrome';
 
 const TENNIS = '/images/tennis-game.png';
@@ -111,25 +111,7 @@ const JoinPage = () => (
 
         <section className="mx-auto max-w-[72rem] px-5 pb-24 sm:px-8"><div className="border border-primary/30 bg-secondary/40 px-8 py-12 text-center sm:px-12"><p className="text-[0.7rem] uppercase tracking-[0.3em] text-primary">Stay in the loop</p><h2 className="mt-4 font-display text-3xl font-semibold sm:text-4xl">Join the community before it opens</h2><p className="mx-auto mt-4 max-w-xl leading-relaxed text-muted-foreground">Create your account to follow new services, share what you are looking for, and be among the first to hear when bookings begin.</p><Link to="/register" className="mt-8 inline-flex min-h-[48px] items-center bg-primary px-7 text-sm font-medium uppercase tracking-widest text-primary-foreground transition-transform active:scale-[0.98]">Register now</Link></div></section>
 
-        <section className="bg-[hsl(var(--ink))] text-[hsl(40_28%_90%)]">
-            <div className="mx-auto max-w-[56rem] px-5 py-20 text-center sm:px-8">
-                <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">
-                    Until then, the channel is the front door
-                </h2>
-                <p className="mx-auto mt-4 max-w-xl leading-relaxed text-[hsl(40_20%_76%)]">
-                    A booking and contact flow will live here soon. For now, subscribe on YouTube — every new city,
-                    guide and announcement goes out there first.
-                </p>
-                <a
-                    href="https://www.youtube.com/@YaroHimko"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="mt-8 inline-flex min-h-[48px] items-center gap-3 bg-primary px-7 text-sm font-medium uppercase tracking-widest text-primary-foreground transition-transform active:scale-[0.98]"
-                >
-                    <Youtube className="h-4 w-4" /> Subscribe on YouTube
-                </a>
-            </div>
-        </section>
+        {/* Channel promotion is hidden until dedicated YKCircle channels are ready. */}
     </SiteChrome>
 );
 

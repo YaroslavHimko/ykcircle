@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
-import { Instagram, Send, Youtube, UserRound, LogOut } from 'lucide-react';
+import { UserRound, LogOut } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
 import { useProductConfiguration } from '@/lib/product-configuration';
 import CookieSettings, { openCookieSettings } from '@/components/CookieSettings';
@@ -132,24 +132,7 @@ export function Footer() {
                     <p className="mt-3 max-w-sm text-sm leading-relaxed text-[hsl(40_20%_78%)]">
                         Find people for the things you want to do, make a plan together, and discover the places that make it happen.
                     </p>
-                    <div className="mt-5 flex gap-3">
-                        {[
-                            { href: 'https://www.instagram.com/yaroHimko', Icon: Instagram, label: 'Instagram' },
-                            { href: 'https://t.me/yaroslavHimko', Icon: Send, label: 'Telegram' },
-                            { href: 'https://www.youtube.com/@yaroHimko', Icon: Youtube, label: 'YouTube' },
-                        ].map(({ href, Icon, label }) => (
-                            <a
-                                key={label}
-                                href={href}
-                                target="_blank"
-                                rel="noreferrer"
-                                aria-label={label}
-                                className="inline-flex h-11 w-11 items-center justify-center border border-white/15 transition-colors hover:border-primary hover:text-primary"
-                            >
-                                <Icon className="h-4 w-4" strokeWidth={1.75} />
-                            </a>
-                        ))}
-                    </div>
+                    {/* Social links are hidden until dedicated YKCircle channels are ready. */}
                 </div>
 
                 <div className="text-sm">

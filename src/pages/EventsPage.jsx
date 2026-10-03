@@ -824,7 +824,7 @@ export default function EventsPage({
             <button
               type="button"
               onClick={() => setSearchParams({})}
-              className={`min-h-10 border px-4 text-sm ${!selectedCategory ? "border-primary text-primary" : "border-border"}`}
+              className={`directory-filter min-h-10 border px-4 text-sm ${!selectedCategory ? "border-primary text-primary" : "border-border"}`}
             >
               All categories
             </button>
@@ -833,7 +833,7 @@ export default function EventsPage({
                 key={category.id}
                 type="button"
                 onClick={() => setSearchParams({ category: category.slug })}
-                className={`min-h-10 border px-4 text-sm ${selectedCategory === category.slug ? "border-primary text-primary" : "border-border"}`}
+                className={`directory-filter min-h-10 border px-4 text-sm ${selectedCategory === category.slug ? "border-primary text-primary" : "border-border"}`}
               >
                 {category.name}
               </button>
