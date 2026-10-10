@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 
 export default function DiscoveryCard({ href, image, imageAlt = '', icon: Icon, badge, eyebrow, title, children, footer }) {
-  return <article className="group flex h-full min-w-0 flex-col overflow-hidden rounded-xl border border-border/70 bg-background transition-shadow hover:shadow-md">
+  return <article className="discovery-card group flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-border/70 bg-background">
     <Link to={href} className="flex flex-1 flex-col focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary">
       <div className="relative aspect-[16/10] overflow-hidden bg-secondary/60">
         {image ? <img src={image} alt={imageAlt} loading="lazy" className="h-full w-full object-cover transition-transform duration-300 motion-safe:group-hover:scale-105" /> : <div className="flex h-full items-center justify-center bg-gradient-to-br from-primary/10 to-secondary text-muted-foreground/40"><Icon aria-hidden="true" className="h-12 w-12" strokeWidth={1} /></div>}

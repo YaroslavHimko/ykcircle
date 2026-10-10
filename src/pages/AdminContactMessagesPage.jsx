@@ -35,7 +35,7 @@ export default function AdminContactMessagesPage() {
       {loading && <p className="mt-8 text-muted-foreground">Loading messages…</p>}
       {error && <p role="alert" className="mt-8 text-destructive">{error}</p>}
       {!loading && !error && messages.length === 0 && <p className="mt-8 text-muted-foreground">No contact messages yet.</p>}
-      <div className="mt-8 space-y-4">{messages.map((message) => <article key={message.id} className="min-w-0 border border-border p-5 sm:p-6">
+      <div className="mt-8 space-y-4">{messages.map((message) => <article key={message.id} className="rounded-2xl min-w-0 border border-border p-5 sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0"><h2 className="font-display text-xl font-semibold">{message.name}</h2><a href={`mailto:${message.email}`} className="break-all text-sm text-primary underline">{message.email}</a></div>
           <span className="border border-border px-3 py-1 text-xs">{message.category}</span>

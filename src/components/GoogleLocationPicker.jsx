@@ -26,7 +26,7 @@ const notePlacesRequest = () => {
 class PickerErrorBoundary extends React.Component {
   state = { failed: false };
   static getDerivedStateFromError() { return { failed: true }; }
-  render() { return this.state.failed ? <p className="border border-border bg-secondary/30 p-4 text-sm text-muted-foreground">Map search is unavailable. You can still add a location after maps are configured.</p> : this.props.children; }
+  render() { return this.state.failed ? <p className="rounded-2xl border border-border bg-secondary/30 p-4 text-sm text-muted-foreground">Map search is unavailable. You can still add a location after maps are configured.</p> : this.props.children; }
 }
 
 function LocationSearchSession({ onSelect, placeholder, onClose }) {
@@ -138,9 +138,9 @@ function LocationSearchSession({ onSelect, placeholder, onClose }) {
     }
   };
 
-  if (status === "consent") return <div className="border border-border bg-secondary/30 p-4 text-sm text-muted-foreground"><MapPinned className="mb-2 h-5 w-5 text-primary" />Map search is disabled based on your privacy preferences. <button type="button" onClick={openCookieSettings} className="text-primary underline">Enable map</button></div>;
-  if (status === "unavailable") return <p className="border border-border bg-secondary/30 p-4 text-sm text-muted-foreground">Map search is unavailable because maps are disabled or no browser key was supplied by the backend.</p>;
-  if (status === "error") return <p className="border border-border bg-secondary/30 p-4 text-sm text-muted-foreground">Google Maps could not initialise. Check that Maps JavaScript API and Places API (New) are enabled for this browser key.</p>;
+  if (status === "consent") return <div className="rounded-2xl border border-border bg-secondary/30 p-4 text-sm text-muted-foreground"><MapPinned className="mb-2 h-5 w-5 text-primary" />Map search is disabled based on your privacy preferences. <button type="button" onClick={openCookieSettings} className="text-primary underline">Enable map</button></div>;
+  if (status === "unavailable") return <p className="rounded-2xl border border-border bg-secondary/30 p-4 text-sm text-muted-foreground">Map search is unavailable because maps are disabled or no browser key was supplied by the backend.</p>;
+  if (status === "error") return <p className="rounded-2xl border border-border bg-secondary/30 p-4 text-sm text-muted-foreground">Google Maps could not initialise. Check that Maps JavaScript API and Places API (New) are enabled for this browser key.</p>;
 
   return <div className="overflow-hidden border border-border">
     <div className="border-b border-border p-3">
@@ -162,7 +162,7 @@ function LocationSearchSession({ onSelect, placeholder, onClose }) {
 
 function GoogleLocationPickerView({ onSelect, placeholder = "Search for an address" }) {
   const [open, setOpen] = useState(false);
-  if (!open) return <button type="button" onClick={() => setOpen(true)} className="inline-flex min-h-11 items-center gap-2 border border-primary bg-primary px-4 text-sm font-medium text-primary-foreground"><MapPinned className="h-4 w-4" />Search address on map</button>;
+  if (!open) return <button type="button" onClick={() => setOpen(true)} className="ui-action inline-flex min-h-11 items-center gap-2 border border-primary bg-primary px-4 text-sm font-medium text-primary-foreground"><MapPinned className="h-4 w-4" />Search address on map</button>;
   return <LocationSearchSession onSelect={onSelect} placeholder={placeholder} onClose={() => setOpen(false)} />;
 }
 

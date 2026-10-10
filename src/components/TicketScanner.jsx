@@ -126,13 +126,13 @@ function ScannerSession({ eventId, token, onCheckIn }) {
     <div className="flex flex-wrap gap-3">{camera === 'off' ? <button type="button" onClick={startCamera} className={button}><Camera className="h-4 w-4" />Start camera</button> : <button type="button" onClick={stopCamera} className={button}>{camera === 'starting' ? 'Cancel camera' : 'Stop camera'}</button>}</div>
     {cameraError && <p role="alert" className="text-sm text-muted-foreground">{cameraError}</p>}
     {working && <p role="status" className="text-sm text-muted-foreground">Checking ticket and saving attendance…</p>}
-    {result && <div role="status" className={`border p-4 ${result.alreadyCheckedIn ? 'border-amber-600 bg-amber-500/10' : 'border-green-600 bg-green-500/10'}`}>
+    {result && <div role="status" className={`rounded-2xl border p-4 ${result.alreadyCheckedIn ? 'border-amber-600 bg-amber-500/10' : 'border-green-600 bg-green-500/10'}`}>
       <p className="flex items-center gap-2 font-semibold">{result.alreadyCheckedIn ? <AlertCircle className="h-5 w-5 text-amber-700" /> : <CheckCircle2 className="h-5 w-5 text-green-700" />}{result.alreadyCheckedIn ? 'Already checked in' : 'Checked in — attended'}</p>
       <p className="mt-2 font-medium">{result.participant?.name || 'Ticket holder'}</p>
       <p className="mt-1 text-sm text-muted-foreground">{result.alreadyCheckedIn ? 'This ticket has already been used. Do not admit it again.' : 'This ticket’s participant is now marked as attended.'}</p>
       {result.testMode && <p className="mt-2 text-sm font-semibold text-amber-700">Test ticket</p>}
     </div>}
-    {error && <p role="alert" className="border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">{error}</p>}
+    {error && <p role="alert" className="rounded-2xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">{error}</p>}
     {(result || error) && <button type="button" onClick={nextTicket} disabled={working} className={`${button} border-primary bg-primary text-primary-foreground`}><ScanLine className="h-4 w-4" />Scan next ticket</button>}
     <form className="border-t border-border pt-4" onSubmit={(event) => { event.preventDefault(); checkIn(code); }}>
       <label htmlFor="ticket-check-in-code" className="text-sm font-medium">Enter or paste ticket code</label>

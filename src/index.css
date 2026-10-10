@@ -5,8 +5,40 @@
 @tailwind utilities;
 
 @layer components {
+  /* Use the same control shape for native buttons and link-based actions. */
+  .ui-action {
+    @apply rounded-lg transition-[background-color,border-color,color,box-shadow] duration-200 ease-out;
+  }
+
+  .ui-action:focus-visible {
+    @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-background;
+  }
+
+  .ui-action:disabled,
+  .ui-action[aria-disabled="true"] {
+    @apply cursor-not-allowed;
+  }
+
+  @media (hover: hover) {
+    .ui-action:not(:disabled):not([aria-disabled="true"]):hover {
+      box-shadow: var(--shadow-soft);
+    }
+  }
+
+  .discovery-card {
+    box-shadow: var(--shadow-soft);
+    transition: border-color 200ms ease-out, box-shadow 200ms ease-out;
+  }
+
+  @media (hover: hover) {
+    .discovery-card:hover {
+      border-color: hsl(var(--primary) / 0.25);
+      box-shadow: var(--shadow-hover);
+    }
+  }
+
   .directory-filter {
-    @apply transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2;
+    @apply rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2;
   }
 
   .directory-filter:not(:disabled):hover {
@@ -40,8 +72,47 @@
     --border: 28 14% 82%;
     --input: 28 14% 82%;
     --ring: 18 78% 46%;
-    --radius: 0.25rem;
+    --radius: 0.75rem;
+    --shadow-soft: 0 4px 20px -8px hsl(var(--ink) / 0.12);
+    --shadow-hover: 0 12px 32px -12px hsl(var(--ink) / 0.18);
     --ink: 25 24% 9%;
+  }
+}
+
+/* Base defaults reach legacy native controls; explicit utilities still win.
+   Leave checkboxes, radio buttons, switches, and range tracks native. */
+@layer base {
+  :where(button, [role="button"], input[type="submit"], input[type="reset"], input[type="button"]) {
+    border-radius: var(--radius);
+    transition-property: color, background-color, border-color, box-shadow;
+    transition-duration: 200ms;
+    transition-timing-function: ease-out;
+  }
+
+  :where(a, button, [role="button"]):focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 3px;
+  }
+
+  :where(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="hidden"]), select, textarea) {
+    border-radius: calc(var(--radius) - 2px);
+    transition: border-color 200ms ease-out, box-shadow 200ms ease-out;
+  }
+
+  :where(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="hidden"]), select, textarea):focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+
+  input::file-selector-button {
+    margin-inline-end: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    border: 0;
+    border-radius: calc(var(--radius) - 4px);
+    background: hsl(var(--secondary));
+    color: hsl(var(--secondary-foreground));
+    font: inherit;
+    cursor: pointer;
   }
 }
 
@@ -84,7 +155,7 @@ input, select, textarea {
   inset: 0;
   pointer-events: none;
   z-index: 60;
-  opacity: 0.045;
+  opacity: 0.022;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 

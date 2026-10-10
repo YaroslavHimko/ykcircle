@@ -61,7 +61,7 @@ export function Header() {
     const accountLink = (to, label) => <Link to={to} onClick={() => setProfileOpen(false)} className={menuLinkClass}>{label}</Link>;
 
     return (
-        <header className="relative z-50 w-full border-b border-border/60 bg-background/90">
+        <header className="relative z-50 w-full border-b border-border/50 bg-background/95 backdrop-blur-md">
             <div className="mx-auto flex max-w-[90rem] items-center gap-6 px-5 py-4 sm:px-8 lg:gap-10">
                 <Link to="/" aria-label="YKCircle home" className="flex shrink-0 items-center gap-2 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-4">
                     <img src="/logo.png" alt="" className="h-8 w-8 rounded-full object-cover" />
@@ -74,7 +74,7 @@ export function Header() {
                     <button ref={profileButtonRef} type="button" aria-label={profileOpen ? 'Close navigation and profile menu' : 'Open navigation and profile menu'} aria-expanded={profileOpen} aria-controls="profile-navigation" onClick={() => setProfileOpen(value => !value)} className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-primary/60 bg-background/70 text-primary backdrop-blur-md transition-colors hover:border-primary hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-4">
                         <UserRound aria-hidden="true" className="h-5 w-5" strokeWidth={1.75} />
                     </button>
-                    {profileOpen && <div id="profile-navigation" className="absolute right-0 top-[calc(100%+0.75rem)] z-50 max-h-[calc(100dvh-7rem)] w-72 max-w-[calc(100vw-2.5rem)] overflow-y-auto overscroll-contain rounded-xl border border-border bg-background p-2 shadow-xl">
+                    {profileOpen && <div id="profile-navigation" className="absolute right-0 top-[calc(100%+0.75rem)] z-50 max-h-[calc(100dvh-7rem)] w-72 max-w-[calc(100vw-2.5rem)] overflow-y-auto overscroll-contain rounded-2xl border border-border bg-background p-2 shadow-xl">
                         {user ? <>
                             <p className="break-words px-3 py-2 text-sm font-medium">{user.name}</p>
                             <p className="px-3 pb-1 pt-2 text-xs text-muted-foreground">Your account</p>

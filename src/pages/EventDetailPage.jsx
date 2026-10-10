@@ -54,7 +54,7 @@ function LegacySelectedBookingTimeGrid({ schedule, value }) {
   const height = hours.length * hourHeight;
   const start = value?.start;
   const end = value?.end;
-  return <div className="mt-5 overflow-auto border border-border bg-background" style={{ maxHeight: "30rem" }}><div className="min-w-[19rem]"><div className="grid grid-cols-[4.5rem_1fr] border-b border-border bg-secondary/30"><div className="border-r border-border" /><div className="px-3 py-2 text-sm font-medium">Selected venue time</div></div><div className="grid grid-cols-[4.5rem_1fr]"><div className="relative border-r border-border" style={{ height }}>{hours.map((hour) => <span key={hour} className="absolute right-2 -translate-y-2 text-xs text-muted-foreground" style={{ top: (hour - 7) * hourHeight }}>{toTime(hour * 60)}</span>)}</div><div className="relative" style={{ height }}>{hours.map((hour) => <span key={hour} className="absolute left-0 right-0 border-b border-border/80" style={{ top: (hour - 7) * hourHeight }} />)}{hours.slice(0, -1).map((hour) => <span key={`half-${hour}`} className="absolute left-0 right-0 border-b border-dashed border-border/50" style={{ top: (hour - 6.5) * hourHeight }} />)}{unavailable.map((slot, index) => { const slotStart = toMinutes(slot.startTime || slot.start); const slotEnd = toMinutes(slot.endTime || slot.end); const top = Math.max(0, ((slotStart / 60) - 7) * hourHeight); const bottom = Math.min(height, ((slotEnd / 60) - 7) * hourHeight); return bottom <= top ? null : <div key={`unavailable-${slotStart}-${index}`} className="absolute left-2 right-2 z-[1] border border-slate-500/50 bg-slate-500/20 p-2 text-xs text-muted-foreground" style={{ top: top + 2, height: Math.max(24, bottom - top - 4) }}>Unavailable {toTime(slotStart)}–{toTime(slotEnd)}</div>; })}{slots.map((slot, index) => { const slotStart = toMinutes(slot.startTime || slot.start); const slotEnd = toMinutes(slot.endTime || slot.end); const top = Math.max(0, ((slotStart / 60) - 7) * hourHeight); const bottom = Math.min(height, ((slotEnd / 60) - 7) * hourHeight); return bottom <= top ? null : <div key={`${slotStart}-${index}`} className="absolute left-2 right-2 z-[2] border border-accent/50 bg-accent/10 p-2 text-xs text-muted-foreground" style={{ top: top + 2, height: Math.max(24, bottom - top - 4) }}>Available {toTime(slotStart)}–{toTime(slotEnd)}</div>; })}{Number.isFinite(start) && Number.isFinite(end) && end > start && <div className="pointer-events-none absolute left-3 right-3 z-10 border-2 border-primary bg-primary/25 p-2 text-xs font-semibold text-primary shadow-sm" style={{ top: Math.max(0, ((start / 60) - 7) * hourHeight) + 2, height: Math.max(28, ((end - start) / 60) * hourHeight - 4) }}>Selected: {toTime(start)}–{toTime(end)}</div>}</div></div></div></div>;
+  return <div className="mt-5 overflow-auto border border-border bg-background" style={{ maxHeight: "30rem" }}><div className="min-w-[19rem]"><div className="grid grid-cols-[4.5rem_1fr] border-b border-border bg-secondary/30"><div className="border-r border-border" /><div className="px-3 py-2 text-sm font-medium">Selected venue time</div></div><div className="grid grid-cols-[4.5rem_1fr]"><div className="relative border-r border-border" style={{ height }}>{hours.map((hour) => <span key={hour} className="absolute right-2 -translate-y-2 text-xs text-muted-foreground" style={{ top: (hour - 7) * hourHeight }}>{toTime(hour * 60)}</span>)}</div><div className="relative" style={{ height }}>{hours.map((hour) => <span key={hour} className="absolute left-0 right-0 border-b border-border/80" style={{ top: (hour - 7) * hourHeight }} />)}{hours.slice(0, -1).map((hour) => <span key={`half-${hour}`} className="absolute left-0 right-0 border-b border-dashed border-border/50" style={{ top: (hour - 6.5) * hourHeight }} />)}{unavailable.map((slot, index) => { const slotStart = toMinutes(slot.startTime || slot.start); const slotEnd = toMinutes(slot.endTime || slot.end); const top = Math.max(0, ((slotStart / 60) - 7) * hourHeight); const bottom = Math.min(height, ((slotEnd / 60) - 7) * hourHeight); return bottom <= top ? null : <div key={`unavailable-${slotStart}-${index}`} className="rounded-2xl absolute left-2 right-2 z-[1] border border-slate-500/50 bg-slate-500/20 p-2 text-xs text-muted-foreground" style={{ top: top + 2, height: Math.max(24, bottom - top - 4) }}>Unavailable {toTime(slotStart)}–{toTime(slotEnd)}</div>; })}{slots.map((slot, index) => { const slotStart = toMinutes(slot.startTime || slot.start); const slotEnd = toMinutes(slot.endTime || slot.end); const top = Math.max(0, ((slotStart / 60) - 7) * hourHeight); const bottom = Math.min(height, ((slotEnd / 60) - 7) * hourHeight); return bottom <= top ? null : <div key={`${slotStart}-${index}`} className="rounded-2xl absolute left-2 right-2 z-[2] border border-accent/50 bg-accent/10 p-2 text-xs text-muted-foreground" style={{ top: top + 2, height: Math.max(24, bottom - top - 4) }}>Available {toTime(slotStart)}–{toTime(slotEnd)}</div>; })}{Number.isFinite(start) && Number.isFinite(end) && end > start && <div className="pointer-events-none absolute left-3 right-3 z-10 border-2 border-primary bg-primary/25 p-2 text-xs font-semibold text-primary shadow-sm" style={{ top: Math.max(0, ((start / 60) - 7) * hourHeight) + 2, height: Math.max(28, ((end - start) / 60) * hourHeight - 4) }}>Selected: {toTime(start)}–{toTime(end)}</div>}</div></div></div></div>;
 }
 
 function SelectedBookingTimeGrid({ schedule, value }) {
@@ -72,7 +72,7 @@ function SelectedBookingTimeGrid({ schedule, value }) {
     const start = toMinutes(slot.startTime || slot.start); const end = toMinutes(slot.endTime || slot.end); const range = position(start, end); const blockHeight = Math.max(0, range.bottom - range.top - 4);
     if (!blockHeight) return null;
     const label = `${isUnavailable ? "Unavailable" : "Available"} ${toTime(start)}-${toTime(end)}`;
-    return <div key={`${isUnavailable ? "unavailable" : "available"}-${start}-${index}`} title={label} className={`absolute left-2 right-2 overflow-hidden border p-2 text-xs ${isUnavailable ? "z-20 border-slate-500 bg-slate-500 text-white" : "z-10 border-accent/50 bg-accent/10 text-muted-foreground"}`} style={{ top: range.top + 2, height: blockHeight }}><span className="block truncate">{label}</span></div>;
+    return <div key={`${isUnavailable ? "unavailable" : "available"}-${start}-${index}`} title={label} className={`rounded-2xl absolute left-2 right-2 overflow-hidden border p-2 text-xs ${isUnavailable ? "z-20 border-slate-500 bg-slate-500 text-white" : "z-10 border-accent/50 bg-accent/10 text-muted-foreground"}`} style={{ top: range.top + 2, height: blockHeight }}><span className="block truncate">{label}</span></div>;
   };
   return <div className="mt-5 overflow-auto border border-border bg-background" style={{ maxHeight: "30rem" }}><div className="min-w-[19rem]"><div className="grid grid-cols-[4.5rem_1fr] border-b border-border bg-secondary/30"><div className="border-r border-border" /><div className="px-3 py-2 text-sm font-medium">Selected venue time</div></div><div className="grid grid-cols-[4.5rem_1fr]"><div className="relative border-r border-border" style={{ height }}>{hours.map((hour) => <span key={hour} className="absolute right-2 -translate-y-2 text-xs text-muted-foreground" style={{ top: (hour - 7) * hourHeight }}>{toTime(hour * 60)}</span>)}</div><div className="relative" style={{ height }}>{hours.map((hour) => <span key={hour} className="absolute left-0 right-0 border-b border-border/80" style={{ top: (hour - 7) * hourHeight }} />)}{hours.slice(0, -1).map((hour) => <span key={`half-${hour}`} className="absolute left-0 right-0 border-b border-dashed border-border/50" style={{ top: (hour - 6.5) * hourHeight }} />)}{unavailable.map((slot, index) => block(slot, index, true))}{slots.map((slot, index) => block(slot, index, false))}{Number.isFinite(value?.start) && Number.isFinite(value?.end) && value.end > value.start && selectedHeight > 0 && <div className={`pointer-events-none absolute left-3 right-3 z-30 overflow-hidden border-2 border-primary bg-primary font-semibold text-primary-foreground shadow-sm ${selectedHeight < 42 ? "flex items-center px-2 text-xs" : "p-2 text-xs"}`} style={{ top: selected.top + 2, height: selectedHeight }}><span className="truncate">Selected: {toTime(value.start)}-{toTime(value.end)}</span></div>}</div></div></div></div>;
 }
@@ -104,7 +104,7 @@ function VenueBookingTimeSelector({ schedule, value, onChange, billingProfiles =
   return <div className="mt-4">
     <p className="text-sm font-medium">Available intervals</p>
     {schedule.loading ? <p role="status" className="mt-2 text-sm text-muted-foreground">Loading availability…</p> : schedule.error ? <p role="alert" className="mt-2 text-sm text-destructive">{schedule.error}</p> : (schedule.slots?.length || schedule.unavailableSlots?.length || schedule.unavailableIntervals?.length) ? <>
-      <div className="mt-3 flex flex-wrap gap-2">{schedule.slots.map((slot, index) => <button key={`${slot.startTime || slot.start}-${index}`} type="button" onClick={() => selectInterval(slot)} className={`border px-3 py-2 text-sm ${interval === slot ? "border-primary bg-primary text-primary-foreground" : "border-accent/50 bg-accent/10"}`}>{String(slot.startTime || slot.start).slice(0, 5)}–{String(slot.endTime || slot.end).slice(0, 5)}</button>)}</div>
+      <div className="mt-3 flex flex-wrap gap-2">{schedule.slots.map((slot, index) => <button key={`${slot.startTime || slot.start}-${index}`} type="button" onClick={() => selectInterval(slot)} className={`ui-action border px-3 py-2 text-sm ${interval === slot ? "border-primary bg-primary text-primary-foreground" : "border-accent/50 bg-accent/10"}`}>{String(slot.startTime || slot.start).slice(0, 5)}–{String(slot.endTime || slot.end).slice(0, 5)}</button>)}</div>
       <SelectedBookingTimeGrid schedule={schedule} value={interval ? { start, end } : null} />
       {interval && <div className="mt-4 grid gap-3 sm:grid-cols-2"><label className="text-sm font-medium">Start<select value={start} onChange={(event) => updateStart(event.target.value)} className="mt-1 min-h-11 w-full border border-border bg-background px-3">{startOptions.map((option) => <option key={option} value={option}>{toTime(option)}</option>)}</select></label><label className="text-sm font-medium">End<select value={end} onChange={(event) => onChange({ ...value, end: Number(event.target.value) })} className="mt-1 min-h-11 w-full border border-border bg-background px-3">{endOptions.map((option) => <option key={option} value={option}>{toTime(option)}</option>)}</select></label></div>}
       {interval && <div className="mt-4"><BusinessIdentitySelector context="venue_buyer" profiles={billingProfiles} value={buyerBillingProfileId} onChange={onBuyerBillingProfileChange} /><p className="text-xs text-muted-foreground">Required only when the Venue charges.</p></div>}
@@ -141,7 +141,7 @@ function PaidEventFinancialConsole({ eventId, token, currency, billingProfiles, 
   };
   const save = async () => { setState((current) => ({ ...current, saving: true, error: "", notice: "" })); try { const response = await apiFetch(`/api/events/${eventId}/payment-settings`, { method: "PUT", headers: { ...headers, "Content-Type": "application/json" }, body: JSON.stringify({ ...settings, currency }) }); const data = await response.json(); if (!response.ok) throw new Error(data.error || "Unable to save ticket payment setup."); setSettings((current) => ({ ...current, ...data, refundPolicy: data.refundPolicy || { text: "" } })); setState((current) => ({ ...current, saving: false, notice: "Seller payment settings saved." })); sessionStorage.removeItem("ticket-event-draft:" + eventId); await load(); } catch (error) { setState((current) => ({ ...current, saving: false, error: error.message })); } };
   const addTicket = async (event) => { event.preventDefault(); setState((current) => ({ ...current, saving: true, error: "", notice: "" })); try { const response = await apiFetch(`/api/events/${eventId}/ticket-types`, { method: "POST", headers: { ...headers, "Content-Type": "application/json" }, body: JSON.stringify({ ...ticket, price: Number(ticket.price), quantityAvailable: ticket.quantityAvailable === "" ? null : Number(ticket.quantityAvailable), currency }) }); const data = await response.json(); if (!response.ok) throw new Error(data.error || "Unable to add ticket type."); setTicket({ name: "General admission", description: "", price: "", quantityAvailable: "" }); setState((current) => ({ ...current, saving: false, notice: "Ticket type added." })); setTicketRevision((current) => current + 1); } catch (error) { setState((current) => ({ ...current, saving: false, error: error.message })); } };
-  return <section className="mt-5 max-w-2xl border border-border p-5"><h2 className="font-display text-2xl font-semibold">Start selling tickets</h2><p className="mt-2 text-sm text-muted-foreground">Choose who is selling these tickets, then set up ticket payments. Free Events do not need this setup.</p><EventTicketTypes eventId={eventId} token={token} revision={ticketRevision} />{state.loading ? <p className="mt-4 text-sm text-muted-foreground">Checking ticket payments…</p> : <><div className="mt-4"><BusinessIdentitySelector context="ticket_seller" profiles={billingProfiles} value={settings.sellerBillingProfileId} onChange={changeSeller} onCreated={onProfileCreated} /></div>{settings.sellerBillingProfileId && billingProfiles.find((item) => String(item.id) === String(settings.sellerBillingProfileId)) && <PaymentAccounts profile={billingProfiles.find((item) => String(item.id) === String(settings.sellerBillingProfileId))} returnTo={window.location.pathname + window.location.search} beforeConnect={() => sessionStorage.setItem('ticket-event-draft:' + eventId, JSON.stringify(settings))} onUpdated={() => changeSeller(settings.sellerBillingProfileId)} />}{accounts.length > 1 && <label className="mt-4 block text-sm">Stripe connection<select value={settings.paymentAccountId} onChange={(event) => setSettings((current) => ({ ...current, paymentAccountId: event.target.value }))} className="mt-2 min-h-11 w-full border border-border bg-background px-3">{accounts.map((account, index) => <option key={account.id} value={account.id}>Stripe {index + 1} · {account.chargesEnabled && account.onboardingStatus === 'ready' ? 'Ready' : 'Setup incomplete'}</option>)}</select></label>}<label className="mt-4 block text-sm font-medium">Seller capacity<select value={settings.sellerCapacity} onChange={(event) => setSettings((current) => ({ ...current, sellerCapacity: event.target.value }))} className="mt-2 min-h-11 w-full border border-border bg-background px-3"><option value="">Choose capacity</option><option value="trader">Trader / business</option><option value="private">Private seller</option></select></label><label className="mt-4 block text-sm font-medium">Refund policy<textarea value={settings.refundPolicy?.text || ""} onChange={(event) => setSettings((current) => ({ ...current, refundPolicy: { text: event.target.value } }))} placeholder="Explain when refunds are available." className="mt-2 min-h-20 w-full border border-border bg-background px-3 py-2" /></label><label className="mt-4 flex gap-2 text-sm"><input type="checkbox" checked={Boolean(settings.paymentsEnabled)} onChange={(event) => setSettings((current) => ({ ...current, paymentsEnabled: event.target.checked }))} />Enable payments</label><label className="mt-2 flex gap-2 text-sm"><input type="checkbox" checked={Boolean(settings.ticketSalesEnabled)} onChange={(event) => setSettings((current) => ({ ...current, ticketSalesEnabled: event.target.checked }))} />Open ticket sales</label><button type="button" disabled={state.saving} onClick={save} className="mt-4 bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-60">Save payment setup</button>{readiness && <p className="mt-3 text-sm text-muted-foreground">{readiness.ticketSalesReady ? "Ready to sell tickets" : !readiness.sellerProfileComplete ? "Business details required" : !readiness.paymentAccountReady ? "Complete ticket payment setup" : "Save your seller and ticket sales settings to start selling."}</p>}{readiness?.ticketSalesReady && <form onSubmit={addTicket} className="mt-7 border-t border-border pt-5"><h3 className="font-display text-xl font-semibold">Add ticket type</h3><div className="mt-3 grid gap-3 sm:grid-cols-2"><input required value={ticket.name} onChange={(event) => setTicket((current) => ({ ...current, name: event.target.value }))} placeholder="Ticket name" className="min-h-11 border border-border bg-background px-3" /><input required min="0" step="0.01" type="number" value={ticket.price} onChange={(event) => setTicket((current) => ({ ...current, price: event.target.value }))} placeholder="Price" className="min-h-11 border border-border bg-background px-3" /><input value={ticket.quantityAvailable} onChange={(event) => setTicket((current) => ({ ...current, quantityAvailable: event.target.value }))} min="1" type="number" placeholder="Quantity (optional)" className="min-h-11 border border-border bg-background px-3" /><input value={ticket.description} onChange={(event) => setTicket((current) => ({ ...current, description: event.target.value }))} placeholder="Description" className="min-h-11 border border-border bg-background px-3" /></div><button disabled={state.saving} className="mt-3 border border-border px-4 py-2 text-sm">Add ticket type</button><Link to={`/events/${eventId}/tickets`} className="ml-4 text-sm text-primary underline">Open buyer checkout</Link></form>}{state.error && <p role="alert" className="mt-4 text-sm text-destructive">{state.error}</p>}{state.notice && <p className="mt-4 text-sm text-primary">{state.notice}</p>}</>}</section>;
+  return <section className="rounded-2xl mt-5 max-w-2xl border border-border p-5"><h2 className="font-display text-2xl font-semibold">Start selling tickets</h2><p className="mt-2 text-sm text-muted-foreground">Choose who is selling these tickets, then set up ticket payments. Free Events do not need this setup.</p><EventTicketTypes eventId={eventId} token={token} revision={ticketRevision} />{state.loading ? <p className="mt-4 text-sm text-muted-foreground">Checking ticket payments…</p> : <><div className="mt-4"><BusinessIdentitySelector context="ticket_seller" profiles={billingProfiles} value={settings.sellerBillingProfileId} onChange={changeSeller} onCreated={onProfileCreated} /></div>{settings.sellerBillingProfileId && billingProfiles.find((item) => String(item.id) === String(settings.sellerBillingProfileId)) && <PaymentAccounts profile={billingProfiles.find((item) => String(item.id) === String(settings.sellerBillingProfileId))} returnTo={window.location.pathname + window.location.search} beforeConnect={() => sessionStorage.setItem('ticket-event-draft:' + eventId, JSON.stringify(settings))} onUpdated={() => changeSeller(settings.sellerBillingProfileId)} />}{accounts.length > 1 && <label className="mt-4 block text-sm">Stripe connection<select value={settings.paymentAccountId} onChange={(event) => setSettings((current) => ({ ...current, paymentAccountId: event.target.value }))} className="mt-2 min-h-11 w-full border border-border bg-background px-3">{accounts.map((account, index) => <option key={account.id} value={account.id}>Stripe {index + 1} · {account.chargesEnabled && account.onboardingStatus === 'ready' ? 'Ready' : 'Setup incomplete'}</option>)}</select></label>}<label className="mt-4 block text-sm font-medium">Seller capacity<select value={settings.sellerCapacity} onChange={(event) => setSettings((current) => ({ ...current, sellerCapacity: event.target.value }))} className="mt-2 min-h-11 w-full border border-border bg-background px-3"><option value="">Choose capacity</option><option value="trader">Trader / business</option><option value="private">Private seller</option></select></label><label className="mt-4 block text-sm font-medium">Refund policy<textarea value={settings.refundPolicy?.text || ""} onChange={(event) => setSettings((current) => ({ ...current, refundPolicy: { text: event.target.value } }))} placeholder="Explain when refunds are available." className="mt-2 min-h-20 w-full border border-border bg-background px-3 py-2" /></label><label className="mt-4 flex gap-2 text-sm"><input type="checkbox" checked={Boolean(settings.paymentsEnabled)} onChange={(event) => setSettings((current) => ({ ...current, paymentsEnabled: event.target.checked }))} />Enable payments</label><label className="mt-2 flex gap-2 text-sm"><input type="checkbox" checked={Boolean(settings.ticketSalesEnabled)} onChange={(event) => setSettings((current) => ({ ...current, ticketSalesEnabled: event.target.checked }))} />Open ticket sales</label><button type="button" disabled={state.saving} onClick={save} className="ui-action mt-4 bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-60">Save payment setup</button>{readiness && <p className="mt-3 text-sm text-muted-foreground">{readiness.ticketSalesReady ? "Ready to sell tickets" : !readiness.sellerProfileComplete ? "Business details required" : !readiness.paymentAccountReady ? "Complete ticket payment setup" : "Save your seller and ticket sales settings to start selling."}</p>}{readiness?.ticketSalesReady && <form onSubmit={addTicket} className="mt-7 border-t border-border pt-5"><h3 className="font-display text-xl font-semibold">Add ticket type</h3><div className="mt-3 grid gap-3 sm:grid-cols-2"><input required value={ticket.name} onChange={(event) => setTicket((current) => ({ ...current, name: event.target.value }))} placeholder="Ticket name" className="min-h-11 border border-border bg-background px-3" /><input required min="0" step="0.01" type="number" value={ticket.price} onChange={(event) => setTicket((current) => ({ ...current, price: event.target.value }))} placeholder="Price" className="min-h-11 border border-border bg-background px-3" /><input value={ticket.quantityAvailable} onChange={(event) => setTicket((current) => ({ ...current, quantityAvailable: event.target.value }))} min="1" type="number" placeholder="Quantity (optional)" className="min-h-11 border border-border bg-background px-3" /><input value={ticket.description} onChange={(event) => setTicket((current) => ({ ...current, description: event.target.value }))} placeholder="Description" className="min-h-11 border border-border bg-background px-3" /></div><button disabled={state.saving} className="ui-action mt-3 border border-border px-4 py-2 text-sm">Add ticket type</button><Link to={`/events/${eventId}/tickets`} className="ml-4 text-sm text-primary underline">Open buyer checkout</Link></form>}{state.error && <p role="alert" className="mt-4 text-sm text-destructive">{state.error}</p>}{state.notice && <p className="mt-4 text-sm text-primary">{state.notice}</p>}</>}</section>;
 }
 
 const eventCover = eventMediaUrl;
@@ -202,7 +202,7 @@ const confirmPayment = () =>
     overlay.setAttribute("role", "dialog");
     overlay.setAttribute("aria-modal", "true");
     overlay.innerHTML =
-      '<div class="w-full max-w-md bg-background p-8 shadow-xl"><h2 class="font-display text-3xl font-semibold">Confirm payment</h2><p class="mt-4 text-muted-foreground">Mark this participant as Paid?</p><div class="mt-7 flex justify-end gap-3"><button data-action="cancel" class="min-h-10 border border-border px-4 text-xs uppercase tracking-widest">Cancel</button><button data-action="confirm" class="min-h-10 bg-primary px-4 text-xs uppercase tracking-widest text-primary-foreground">Mark as Paid</button></div></div>';
+      '<div class="w-full max-w-md rounded-2xl bg-background p-8 shadow-xl"><h2 class="font-display text-3xl font-semibold">Confirm payment</h2><p class="mt-4 text-muted-foreground">Mark this participant as Paid?</p><div class="mt-7 flex justify-end gap-3"><button data-action="cancel" class="min-h-10 border border-border px-4 text-xs uppercase tracking-widest">Cancel</button><button data-action="confirm" class="min-h-10 bg-primary px-4 text-xs uppercase tracking-widest text-primary-foreground">Mark as Paid</button></div></div>';
     const close = (result) => {
       overlay.remove();
       resolve(result);
@@ -1180,11 +1180,11 @@ export default function EventDetailPage() {
           <>
             <EventExperience key={event.id} event={event} location={eventLocation(event)} locationText={venueBooking?.status === "confirmed" ? (venueBooking.venue?.name || venueBooking.venueName || event.venue?.name || eventLocationText(event)) : eventLocationText(event)} dateLabel={eventDateTimeLabel(event)} canManage={canManageEvents} participates={currentUserParticipates} registrationStatus={registrationStatus} canWithdraw={canWithdraw} onRegister={register} onWithdraw={withdraw} />
             {canManageEvents && ["Published", "Completed"].includes(event.status) && (
-              <section className="mt-8 max-w-2xl border border-border p-5">
+              <section className="rounded-2xl mt-8 max-w-2xl border border-border p-5">
                 <h2 className="font-display text-2xl font-semibold">Finish event and follow up</h2>
                 {event.status === "Published" ? <>
                   <p className="mt-2 text-sm text-muted-foreground">After the scheduled end, mark the event finished to prepare attendance-based emails. For events without an end time, this is available after the start.</p>
-                  <button type="button" onClick={finishEvent} disabled={finishingEvent || !event.startsAt || new Date(event.endsAt || event.startsAt).getTime() > Date.now()} className="mt-4 min-h-10 bg-primary px-4 text-sm text-primary-foreground disabled:opacity-50">{finishingEvent ? "Finishing…" : "Mark as finished"}</button>
+                  <button type="button" onClick={finishEvent} disabled={finishingEvent || !event.startsAt || new Date(event.endsAt || event.startsAt).getTime() > Date.now()} className="ui-action mt-4 min-h-10 bg-primary px-4 text-sm text-primary-foreground disabled:opacity-50">{finishingEvent ? "Finishing…" : "Mark as finished"}</button>
                 </> : <>
                   <p className="mt-2 text-sm text-muted-foreground">Only people marked Attended or No Show receive a follow-up. Check attendance before sending; each message is locked once sending starts.</p>
                   {followups?.attendance?.unmarked > 0 && <p className="mt-3 text-sm text-amber-700">{followups.attendance.unmarked} participant{followups.attendance.unmarked === 1 ? " is" : "s are"} still unmarked and will receive no email.</p>}
@@ -1202,8 +1202,8 @@ export default function EventDetailPage() {
                       <label className="mt-4 block text-sm">Subject<input value={draft.subject} disabled={locked || Boolean(followupBusy)} maxLength={180} onChange={(e) => setFollowupDrafts((current) => ({ ...current, [audience]: { ...current[audience], subject: e.target.value } }))} className="mt-1 min-h-10 w-full border border-border bg-background px-3 disabled:opacity-60" /></label>
                       <label className="mt-3 block text-sm">Your message<textarea value={draft.body} disabled={locked || Boolean(followupBusy)} maxLength={5000} rows={5} onChange={(e) => setFollowupDrafts((current) => ({ ...current, [audience]: { ...current[audience], body: e.target.value } }))} className="mt-1 w-full border border-border bg-background px-3 py-2 disabled:opacity-60" /></label>
                       <div className="mt-3 flex flex-wrap gap-2">
-                        <button type="button" onClick={() => saveFollowup(audience)} disabled={locked || Boolean(followupBusy) || !draft.subject.trim() || !draft.body.trim() || !dirty} className="min-h-10 border border-border px-4 text-sm disabled:opacity-50">Save message</button>
-                        <button type="button" onClick={() => sendFollowup(audience)} disabled={Boolean(followupBusy) || dirty || remaining === 0} className="min-h-10 bg-primary px-4 text-sm text-primary-foreground disabled:opacity-50">{followupBusy === audience ? "Working…" : `Send to ${title.toLowerCase()}`}</button>
+                        <button type="button" onClick={() => saveFollowup(audience)} disabled={locked || Boolean(followupBusy) || !draft.subject.trim() || !draft.body.trim() || !dirty} className="ui-action min-h-10 border border-border px-4 text-sm disabled:opacity-50">Save message</button>
+                        <button type="button" onClick={() => sendFollowup(audience)} disabled={Boolean(followupBusy) || dirty || remaining === 0} className="ui-action min-h-10 bg-primary px-4 text-sm text-primary-foreground disabled:opacity-50">{followupBusy === audience ? "Working…" : `Send to ${title.toLowerCase()}`}</button>
                       </div>
                       {remaining > 25 && <p className="mt-2 text-xs text-muted-foreground">Up to 25 emails are sent per click. Use this button again for the remaining recipients.</p>}
                     </div>;
@@ -1214,7 +1214,7 @@ export default function EventDetailPage() {
               </section>
             )}
             {canManageEvents && (
-              <section className="mt-8 max-w-2xl border border-border p-5">
+              <section className="rounded-2xl mt-8 max-w-2xl border border-border p-5">
                 <h2 className="font-display text-2xl font-semibold">Venue booking</h2>
                 {venueBooking ? <>
                   <p className="mt-2 text-sm">Status: <span className="capitalize text-primary">{venueBooking.status}</span>{venueBooking.ownerNote && ` — ${venueBooking.ownerNote}`}</p>
@@ -1223,14 +1223,14 @@ export default function EventDetailPage() {
                    {persistedBookingTime && <><p className="mt-4 text-sm font-medium text-primary">Current booking</p><SelectedBookingTimeGrid schedule={bookingSchedule} value={persistedBookingTime} /></>}
                    {bookingSchedule.loading && <p role="status" className="mt-3 text-sm text-muted-foreground">Loading venue availability…</p>}
                    {bookingSchedule.timezone && <p className="mt-3 text-xs text-muted-foreground">Venue time: {bookingSchedule.timezone}</p>}
-                   {venueBooking.status === "requested" && <div className="mt-4 border-t border-border pt-4"><BusinessIdentitySelector context="venue_buyer" profiles={billingProfiles} value={buyerBillingProfileId} onChange={setBuyerBillingProfileId} onCreated={(saved) => setBillingProfiles((current) => [...current.filter((item) => item.id !== saved.id), saved])} /><button type="button" disabled={bookingSaving || !buyerBillingProfileId} onClick={updateVenueBookingBuyer} className="mt-3 bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-60">{bookingSaving ? "Saving…" : "Update booking buyer"}</button></div>}
-                   {["requested", "pending", "confirmed"].includes(venueBooking.status) && <button type="button" disabled={bookingSaving} onClick={cancelVenueBooking} className="mt-4 border border-border px-4 py-2 text-sm disabled:opacity-60">Cancel booking request</button>}
+                   {venueBooking.status === "requested" && <div className="mt-4 border-t border-border pt-4"><BusinessIdentitySelector context="venue_buyer" profiles={billingProfiles} value={buyerBillingProfileId} onChange={setBuyerBillingProfileId} onCreated={(saved) => setBillingProfiles((current) => [...current.filter((item) => item.id !== saved.id), saved])} /><button type="button" disabled={bookingSaving || !buyerBillingProfileId} onClick={updateVenueBookingBuyer} className="ui-action mt-3 bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-60">{bookingSaving ? "Saving…" : "Update booking buyer"}</button></div>}
+                   {["requested", "pending", "confirmed"].includes(venueBooking.status) && <button type="button" disabled={bookingSaving} onClick={cancelVenueBooking} className="ui-action mt-4 border border-border px-4 py-2 text-sm disabled:opacity-60">Cancel booking request</button>}
                 </> : <>
                   <p className="mt-2 text-sm text-muted-foreground">Choose a venue, then select a bookable start and end time. The request remains subject to the backend confirmation check.</p>
                   <label className="mt-4 block text-sm font-medium">Venue<select value={selectedVenueId} onChange={(event) => setSelectedVenueId(event.target.value)} className="mt-2 min-h-11 w-full border border-border bg-background px-3"><option value="">Choose a venue</option>{venues.map((venue) => <option key={venue.id} value={venue.id}>{venue.name}{venue.city ? ` — ${venue.city}` : ""}</option>)}</select></label>
                   {selectedVenueId && <VenueBookingTimeSelector schedule={bookingSchedule} value={bookingTime} onChange={setBookingTime} billingProfiles={billingProfiles} buyerBillingProfileId={buyerBillingProfileId} onBuyerBillingProfileChange={setBuyerBillingProfileId} />}
                   {bookingSchedule.timezone && <p className="mt-3 text-xs text-muted-foreground">Venue time: {bookingSchedule.timezone}</p>}
-                  <button type="button" disabled={bookingSaving || !bookingTime} onClick={requestVenueBooking} className="mt-4 bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-60">Request booking</button>
+                  <button type="button" disabled={bookingSaving || !bookingTime} onClick={requestVenueBooking} className="ui-action mt-4 bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-60">Request booking</button>
                 </>}
               </section>
             )}
@@ -1238,18 +1238,18 @@ export default function EventDetailPage() {
             {canManageEvents && (event.pricingType === "paid" || Number(event.fee || 0) > 0) && <PaidEventFinancialConsole onProfileCreated={(saved) => setBillingProfiles((current) => [...current.filter((item) => item.id !== saved.id), saved])} eventId={event.id} token={token} currency={event.currency || "SEK"} billingProfiles={billingProfiles} />}
             {canManageEvents && venueBooking?.id && <div className="mt-5 max-w-2xl"><VenueBookingConversation bookingId={venueBooking.id} /></div>}
             {token && Number(event.myRating) > 0 && !canRate && (
-              <section className="mt-8 border border-border p-5">
+              <section className="rounded-2xl mt-8 border border-border p-5">
                 <h2 className="font-display text-2xl font-semibold">Your rating</h2>
                 <p className="mt-2 text-sm text-muted-foreground"><span className="text-primary" aria-hidden="true">{ratingStars(event.myRating)}</span> You rated this event {event.myRating} / 5.</p>
               </section>
             )}
             {canRate && (
-              <section className="mt-8 border border-border p-5">
+              <section className="rounded-2xl mt-8 border border-border p-5">
                 <h2 className="font-display text-2xl font-semibold">Rate this event</h2>
                 <p className="mt-2 text-sm text-muted-foreground">Your rating is visible in the event and group averages. You can change it later.</p>
                 <div className="mt-4 flex flex-wrap gap-2" role="group" aria-label="Choose a rating from one to five">
                   {[1, 2, 3, 4, 5].map((rating) => (
-                    <button key={rating} type="button" disabled={ratingSaving} onClick={() => saveRating(rating)} aria-label={`${rating} stars`} aria-pressed={Number(event.myRating) === rating} className={`min-h-11 min-w-11 border px-3 text-sm disabled:opacity-50 ${Number(event.myRating) === rating ? "border-primary bg-primary text-primary-foreground" : "border-border text-primary"}`}>
+                    <button key={rating} type="button" disabled={ratingSaving} onClick={() => saveRating(rating)} aria-label={`${rating} stars`} aria-pressed={Number(event.myRating) === rating} className={`ui-action min-h-11 min-w-11 border px-3 text-sm disabled:opacity-50 ${Number(event.myRating) === rating ? "border-primary bg-primary text-primary-foreground" : "border-border text-primary"}`}>
                       {ratingStars(rating)}
                     </button>
                   ))}
@@ -1275,7 +1275,7 @@ export default function EventDetailPage() {
                       return (
                       <div
                         key={participant.id}
-                        className={`border p-4 ${isYou ? "border-primary ring-1 ring-primary/30" : "border-border"}`}
+                        className={`rounded-2xl border p-4 ${isYou ? "border-primary ring-1 ring-primary/30" : "border-border"}`}
                       >
                         <div className="flex items-center gap-3">
                           <ParticipantAvatar person={participant} />
@@ -1315,7 +1315,7 @@ export default function EventDetailPage() {
                                 <button
                                   type="button"
                                   onClick={() => markParticipantPaid(participant.id)}
-                                  className="inline-flex min-h-9 items-center justify-center border border-primary px-3 text-xs uppercase tracking-widest text-primary"
+                                  className="ui-action inline-flex min-h-9 items-center justify-center border border-primary px-3 text-xs uppercase tracking-widest text-primary"
                                 >
                                   Mark as Paid
                                 </button>
@@ -1346,7 +1346,7 @@ export default function EventDetailPage() {
                                     "Attended",
                                   )
                                 }
-                                className="min-h-9 border border-green-600 px-3 text-xs uppercase tracking-widest text-green-700"
+                                className="ui-action min-h-9 border border-green-600 px-3 text-xs uppercase tracking-widest text-green-700"
                               >
                                 Attended
                               </button>
@@ -1357,7 +1357,7 @@ export default function EventDetailPage() {
                                     "No Show",
                                   )
                                 }
-                                className="min-h-9 border border-red-600 px-3 text-xs uppercase tracking-widest text-red-700"
+                                className="ui-action min-h-9 border border-red-600 px-3 text-xs uppercase tracking-widest text-red-700"
                               >
                                 No Show
                               </button>
@@ -1377,7 +1377,7 @@ export default function EventDetailPage() {
             <div className="mt-5">
               <Link
                 to={`/report?entityType=event&entityId=${encodeURIComponent(event.id)}&contentUrl=${encodeURIComponent(window.location.href)}`}
-                className="inline-flex min-h-10 items-center border border-border px-4 text-xs uppercase tracking-widest text-muted-foreground hover:border-destructive hover:text-destructive"
+                className="ui-action inline-flex min-h-10 items-center border border-border px-4 text-xs uppercase tracking-widest text-muted-foreground hover:border-destructive hover:text-destructive"
               >
                 Report event
               </Link>
@@ -1417,7 +1417,7 @@ export default function EventDetailPage() {
                     }
                     className="min-h-12 border border-border bg-background px-4"
                   />
-                  <button className="min-h-12 bg-primary px-5 text-sm uppercase tracking-widest text-primary-foreground">
+                  <button className="ui-action min-h-12 bg-primary px-5 text-sm uppercase tracking-widest text-primary-foreground">
                     Send invitation
                   </button>
                 </form>
@@ -1466,7 +1466,7 @@ export default function EventDetailPage() {
                             type="button"
                             onClick={() => resendInvitation(invitationRecord.id)}
                             disabled={resendingInvitationId === invitationRecord.id}
-                            className="inline-flex min-h-10 items-center justify-center border border-primary px-3 text-xs uppercase tracking-widest text-primary disabled:opacity-50"
+                            className="ui-action inline-flex min-h-10 items-center justify-center border border-primary px-3 text-xs uppercase tracking-widest text-primary disabled:opacity-50"
                           >
                             {resendingInvitationId === invitationRecord.id
                               ? "Resending…"
@@ -1516,7 +1516,7 @@ export default function EventDetailPage() {
                                   onClick={() =>
                                     markRegistrationPaid(registration.id)
                                   }
-                                  className="inline-flex min-h-9 items-center justify-center border border-primary px-3 text-xs text-primary"
+                                  className="ui-action inline-flex min-h-9 items-center justify-center border border-primary px-3 text-xs text-primary"
                                 >
                                   Mark as Paid
                                 </button>
@@ -1530,7 +1530,7 @@ export default function EventDetailPage() {
                               updateStatus(registration.id, "Confirmed")
                             }
                             disabled={registration.status === "Confirmed"}
-                            className="min-h-10 bg-primary px-3 text-xs uppercase tracking-widest text-primary-foreground disabled:opacity-50"
+                            className="ui-action min-h-10 bg-primary px-3 text-xs uppercase tracking-widest text-primary-foreground disabled:opacity-50"
                           >
                             Confirm
                           </button>
@@ -1539,7 +1539,7 @@ export default function EventDetailPage() {
                               updateStatus(registration.id, "Declined")
                             }
                             disabled={registration.status === "Declined"}
-                            className="min-h-10 border border-destructive px-3 text-xs uppercase tracking-widest text-destructive disabled:opacity-50"
+                            className="ui-action min-h-10 border border-destructive px-3 text-xs uppercase tracking-widest text-destructive disabled:opacity-50"
                           >
                             Decline
                           </button>
@@ -1559,7 +1559,7 @@ export default function EventDetailPage() {
           role="dialog"
           aria-modal="true"
         >
-          <div className="w-full max-w-md bg-background p-8 shadow-xl">
+          <div className="rounded-2xl w-full max-w-md bg-background p-8 shadow-xl">
             <h2 className="font-display text-3xl font-semibold">
               {invitationSent ? "Invitation sent" : "Confirm invitation"}
             </h2>
@@ -1570,7 +1570,7 @@ export default function EventDetailPage() {
                   ? () => setShowInvitationConfirmation(false)
                   : confirmInvitation
               }
-              className="mt-7 min-h-12 bg-primary px-7 text-sm uppercase tracking-widest text-primary-foreground"
+              className="ui-action mt-7 min-h-12 bg-primary px-7 text-sm uppercase tracking-widest text-primary-foreground"
             >
               {invitationSent ? "Done" : "Send invitation"}
             </button>
@@ -1583,7 +1583,7 @@ export default function EventDetailPage() {
           role="dialog"
           aria-modal="true"
         >
-          <div className="relative max-h-[90dvh] w-full max-w-md overflow-y-auto bg-background p-8 shadow-xl">
+          <div className="rounded-2xl relative max-h-[90dvh] w-full max-w-md overflow-y-auto bg-background p-8 shadow-xl">
             <button type="button" onClick={closeConfirmation} disabled={confirmationBusy} aria-label="Close confirmation" className="absolute right-4 top-4 inline-flex h-10 w-10 items-center justify-center text-muted-foreground hover:text-foreground disabled:opacity-50"><X className="h-5 w-5" aria-hidden="true" /></button>
             <h2 className="pr-8 font-display text-3xl font-semibold">
               {pendingWithdrawal
@@ -1599,10 +1599,10 @@ export default function EventDetailPage() {
             <p className="mt-4 text-muted-foreground">{confirmationMessage}</p>
             {pendingRegistration && Array.isArray(event?.foodOptions) && event.foodOptions.length > 0 && <fieldset disabled={confirmationBusy} className="mt-5 rounded-xl border border-border bg-secondary/20 p-4"><legend className="px-1 text-sm font-medium">Food options (optional)</legend><p className="text-sm text-muted-foreground">Choose any options you would like. Your choices will be shared with the event organizer.</p><div className="mt-3 space-y-2">{[...new Set(event.foodOptions)].map(option => <label key={option} className="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg px-2 py-2 hover:bg-secondary/50"><input type="checkbox" checked={selectedFoodOptions.includes(option)} onChange={e => setSelectedFoodOptions(current => e.target.checked ? [...current, option] : current.filter(value => value !== option))} className="h-4 w-4 shrink-0 accent-primary" /><span className="break-words text-sm">{option}</span></label>)}</div></fieldset>}
             <div className="mt-7 flex flex-wrap gap-3">
-              <button type="button" disabled={confirmationBusy} onClick={pendingWithdrawal ? confirmWithdrawal : pendingRegistration ? confirmRegistration : closeConfirmation} className="min-h-12 bg-primary px-7 text-sm uppercase tracking-widest text-primary-foreground disabled:opacity-50">
+              <button type="button" disabled={confirmationBusy} onClick={pendingWithdrawal ? confirmWithdrawal : pendingRegistration ? confirmRegistration : closeConfirmation} className="ui-action min-h-12 bg-primary px-7 text-sm uppercase tracking-widest text-primary-foreground disabled:opacity-50">
                 {confirmationBusy ? "Please wait…" : pendingWithdrawal ? "Confirm withdrawal" : pendingRegistration ? "Confirm registration" : "Got it"}
               </button>
-              {(pendingRegistration || pendingWithdrawal) && <button type="button" disabled={confirmationBusy} onClick={closeConfirmation} className="min-h-12 border border-border px-7 text-sm uppercase tracking-widest disabled:opacity-50">Cancel</button>}
+              {(pendingRegistration || pendingWithdrawal) && <button type="button" disabled={confirmationBusy} onClick={closeConfirmation} className="ui-action min-h-12 border border-border px-7 text-sm uppercase tracking-widest disabled:opacity-50">Cancel</button>}
             </div>
           </div>
         </div>

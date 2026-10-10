@@ -99,7 +99,7 @@ const JoinPage = () => (
                                 {title === 'Activities & city memberships' ? 'Available now' : 'Opening soon'}
                             </span>
                             {title === 'Activities & city memberships' && (
-                                <Link to="/events" className="mt-6 ml-3 inline-flex min-h-10 items-center bg-primary px-5 text-sm font-medium uppercase tracking-widest text-primary-foreground">
+                                <Link to="/events" className="ui-action mt-6 ml-3 inline-flex min-h-10 items-center bg-primary px-5 text-sm font-medium uppercase tracking-widest text-primary-foreground">
                                     View events
                                 </Link>
                             )}
@@ -109,7 +109,7 @@ const JoinPage = () => (
             </div>
         </section>
 
-        <section className="mx-auto max-w-[72rem] px-5 pb-24 sm:px-8"><div className="border border-primary/30 bg-secondary/40 px-8 py-12 text-center sm:px-12"><p className="text-[0.7rem] uppercase tracking-[0.3em] text-primary">Stay in the loop</p><h2 className="mt-4 font-display text-3xl font-semibold sm:text-4xl">Join the community before it opens</h2><p className="mx-auto mt-4 max-w-xl leading-relaxed text-muted-foreground">Create your account to follow new services, share what you are looking for, and be among the first to hear when bookings begin.</p><Link to="/register" className="mt-8 inline-flex min-h-[48px] items-center bg-primary px-7 text-sm font-medium uppercase tracking-widest text-primary-foreground transition-transform active:scale-[0.98]">Register now</Link></div></section>
+        <section className="mx-auto max-w-[72rem] px-5 pb-24 sm:px-8"><div className="border border-primary/30 bg-secondary/40 px-8 py-12 text-center sm:px-12"><p className="text-[0.7rem] uppercase tracking-[0.3em] text-primary">Stay in the loop</p><h2 className="mt-4 font-display text-3xl font-semibold sm:text-4xl">Join the community before it opens</h2><p className="mx-auto mt-4 max-w-xl leading-relaxed text-muted-foreground">Create your account to follow new services, share what you are looking for, and be among the first to hear when bookings begin.</p><Link to="/register" className="ui-action mt-8 inline-flex min-h-[48px] items-center bg-primary px-7 text-sm font-medium uppercase tracking-widest text-primary-foreground transition-transform active:scale-[0.98]">Register now</Link></div></section>
 
         {/* Channel promotion is hidden until dedicated YKCircle channels are ready. */}
     </SiteChrome>

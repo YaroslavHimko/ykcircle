@@ -147,7 +147,7 @@ function GroupForm({ initial, onCancel, onSave, saving }) {
       <div className="flex flex-wrap gap-3">
         <button
           disabled={saving}
-          className="min-h-11 rounded-full bg-primary px-6 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+          className="ui-action min-h-11 rounded-full bg-primary px-6 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
         >
           {saving ? "Saving…" : initial ? "Save group" : "Create group"}
         </button>
@@ -155,7 +155,7 @@ function GroupForm({ initial, onCancel, onSave, saving }) {
           <button
             type="button"
             onClick={onCancel}
-            className="min-h-11 border border-border px-5 text-sm"
+            className="ui-action min-h-11 border border-border px-5 text-sm"
           >
             Cancel
           </button>
@@ -225,7 +225,7 @@ function MemberManagement({
         />
         <button
           disabled={loading}
-          className="min-h-11 rounded-full bg-primary px-6 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+          className="ui-action min-h-11 rounded-full bg-primary px-6 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
         >
           {loading ? "Sending…" : group.visibility === "Private" ? "Send invitation" : "Add member"}
         </button>
@@ -269,7 +269,7 @@ function MemberManagement({
                     type="button"
                     disabled={loading}
                     onClick={() => onRemove(member)}
-                    className="min-h-10 border border-destructive px-4 text-sm text-destructive disabled:opacity-50"
+                    className="ui-action min-h-10 border border-destructive px-4 text-sm text-destructive disabled:opacity-50"
                   >
                     Remove
                   </button>
@@ -796,13 +796,13 @@ export default function GroupsPage({
                         <>
                           <Link
                             to={`/profile/groups/${group.id}`}
-                            className="inline-flex min-h-11 items-center border border-border px-5 text-sm"
+                            className="ui-action inline-flex min-h-11 items-center border border-border px-5 text-sm"
                           >
                             Manage group
                           </Link>
                           <Link
                             to={`/profile/events/new?groupId=${group.id}`}
-                            className="inline-flex min-h-11 items-center bg-primary px-5 text-sm text-primary-foreground"
+                            className="ui-action inline-flex min-h-11 items-center bg-primary px-5 text-sm text-primary-foreground"
                           >
                             Create event
                           </Link>
@@ -812,7 +812,7 @@ export default function GroupsPage({
                           <button
                             disabled={saving}
                             onClick={toggleMembership}
-                            className="min-h-11 rounded-full bg-primary px-6 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+                            className="ui-action min-h-11 rounded-full bg-primary px-6 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
                           >
                             {group.isMember ? "Leave group" : "Join group"}
                           </button>
@@ -853,8 +853,8 @@ export default function GroupsPage({
                             <p className="mt-2 text-sm text-muted-foreground">{event.shortDescription || event.description}</p>
                             {canManageGroup && (
                               <div className="mt-5 flex flex-wrap gap-3">
-                                <button type="button" disabled={saving} onClick={() => setConfirmation({ action: "restore-event", target: event })} className="min-h-10 border border-border px-4 text-sm disabled:opacity-50">Restore</button>
-                                <button type="button" disabled={saving} onClick={() => setConfirmation({ action: "delete-event", target: event })} className="min-h-10 border border-destructive px-4 text-sm text-destructive disabled:opacity-50">Delete</button>
+                                <button type="button" disabled={saving} onClick={() => setConfirmation({ action: "restore-event", target: event })} className="ui-action min-h-10 border border-border px-4 text-sm disabled:opacity-50">Restore</button>
+                                <button type="button" disabled={saving} onClick={() => setConfirmation({ action: "delete-event", target: event })} className="ui-action min-h-10 border border-destructive px-4 text-sm text-destructive disabled:opacity-50">Delete</button>
                               </div>
                             )}
                           </div>
@@ -869,13 +869,13 @@ export default function GroupsPage({
                     <div className="flex flex-wrap gap-3">
                       <button
                         onClick={() => openMembers(group)}
-                        className="min-h-11 border border-border px-5 text-sm"
+                        className="ui-action min-h-11 border border-border px-5 text-sm"
                       >
                         Manage members
                       </button>
                       <button
                         onClick={() => deleteGroup(group)}
-                        className="min-h-11 border border-destructive px-5 text-sm text-destructive"
+                        className="ui-action min-h-11 border border-destructive px-5 text-sm text-destructive"
                       >
                         Delete group
                       </button>
@@ -904,7 +904,7 @@ export default function GroupsPage({
           </p>
           <Link
             to="/login?from=%2Fprofile%2Fgroups"
-            className="mt-6 inline-flex min-h-11 items-center bg-primary px-5 text-sm text-primary-foreground"
+            className="ui-action mt-6 inline-flex min-h-11 items-center bg-primary px-5 text-sm text-primary-foreground"
           >
             Log in
           </Link>
@@ -927,9 +927,9 @@ export default function GroupsPage({
             <h1 className="mt-3 font-display text-5xl font-black">Manage {focusedGroup.name}</h1>
             <GroupForm initial={focusedGroup} onSave={(form, image) => saveGroup(form, image, focusedGroup)} onCancel={() => navigate(`/groups/${focusedGroup.id}?manage=1`)} saving={saving} />
             <div className="mt-8 flex flex-wrap gap-3">
-              <button type="button" onClick={() => openMembers(focusedGroup)} className="min-h-11 border border-border px-5 text-sm">Manage members</button>
-              <Link to={`/profile/events/new?groupId=${focusedGroup.id}`} className="inline-flex min-h-11 items-center bg-primary px-5 text-sm text-primary-foreground">Create event</Link>
-              <button type="button" onClick={() => deleteGroup(focusedGroup)} className="min-h-11 border border-destructive px-5 text-sm text-destructive">Delete group</button>
+              <button type="button" onClick={() => openMembers(focusedGroup)} className="ui-action min-h-11 border border-border px-5 text-sm">Manage members</button>
+              <Link to={`/profile/events/new?groupId=${focusedGroup.id}`} className="ui-action inline-flex min-h-11 items-center bg-primary px-5 text-sm text-primary-foreground">Create event</Link>
+              <button type="button" onClick={() => deleteGroup(focusedGroup)} className="ui-action min-h-11 border border-destructive px-5 text-sm text-destructive">Delete group</button>
             </div>
             {selectedGroup?.id === focusedGroup.id && <div className="mt-8">{memberPanel}</div>}
           </>}
@@ -1011,27 +1011,27 @@ export default function GroupsPage({
                       <div className="flex flex-wrap gap-3">
                         <Link
                           to={`/groups/${item.id}?manage=1`}
-                          className="inline-flex min-h-10 items-center border border-border px-4 text-sm"
+                          className="ui-action inline-flex min-h-10 items-center border border-border px-4 text-sm"
                         >
                           Open
                         </Link>
                         <button
                           type="button"
                           onClick={() => beginEdit(item)}
-                          className="min-h-10 border border-border px-4 text-sm"
+                          className="ui-action min-h-10 border border-border px-4 text-sm"
                         >
                           Edit
                         </button>
                         <button
                           type="button"
                           onClick={() => openMembers(item)}
-                          className="min-h-10 border border-border px-4 text-sm"
+                          className="ui-action min-h-10 border border-border px-4 text-sm"
                         >
                           Members
                         </button>
                         <Link
                           to={`/profile/events/new?groupId=${item.id}`}
-                          className="inline-flex min-h-10 items-center bg-primary px-4 text-sm text-primary-foreground"
+                          className="ui-action inline-flex min-h-10 items-center bg-primary px-4 text-sm text-primary-foreground"
                         >
                           Create event
                         </Link>

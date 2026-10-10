@@ -62,7 +62,7 @@ function LegacyBookingDayTimeline({ available, unavailable = [], selectedInterva
   const height = hours.length * hourHeight;
   const selectedTop = ((selectedStart / 60) - 7) * hourHeight;
   const selectedHeight = ((selectedEnd - selectedStart) / 60) * hourHeight;
-  return <div className="mt-5 overflow-auto border border-border bg-background" style={{ maxHeight: "34rem" }}><div className="min-w-[20rem]"><div className="grid grid-cols-[4.5rem_1fr] border-b border-border bg-secondary/30"><div className="border-r border-border" /><div className="px-3 py-3 text-sm font-medium">Bookable venue time <span className="ml-2 text-xs font-normal text-muted-foreground">30-minute slots</span></div></div><div className="grid grid-cols-[4.5rem_1fr]"><div className="relative border-r border-border" style={{ height }}>{hours.map((hour) => <span key={hour} className="absolute right-2 -translate-y-2 text-xs text-muted-foreground" style={{ top: (hour - 7) * hourHeight }}>{asTime(hour * 60)}</span>)}</div><div className="relative" style={{ height }}>{hours.map((hour) => <span key={hour} className="pointer-events-none absolute left-0 right-0 border-b border-border/80" style={{ top: (hour - 7) * hourHeight }} />)}{hours.slice(0, -1).map((hour) => <span key={`half-${hour}`} className="pointer-events-none absolute left-0 right-0 border-b border-dashed border-border/50" style={{ top: (hour - 6.5) * hourHeight }} />)}{unavailable.map((slot, index) => { const start = asMinutes(slot.startTime || slot.start); const end = asMinutes(slot.endTime || slot.end); const top = Math.max(0, ((start / 60) - 7) * hourHeight); const bottom = Math.min(height, ((end / 60) - 7) * hourHeight); if (bottom <= top) return null; return <div key={`unavailable-${slot.startTime || slot.start}-${index}`} className="pointer-events-none absolute left-2 right-2 z-10 border border-slate-500/50 bg-slate-500/20 p-3 text-left text-sm text-muted-foreground" style={{ top: top + 3, height: Math.max(34, bottom - top - 6) }}><strong className="block">Unavailable</strong><span className="mt-1 block text-xs">{asTime(start)}–{asTime(end)}</span></div>; })}{available.map((slot, index) => { const start = asMinutes(slot.startTime || slot.start); const end = asMinutes(slot.endTime || slot.end); const top = Math.max(0, ((start / 60) - 7) * hourHeight); const bottom = Math.min(height, ((end / 60) - 7) * hourHeight); if (bottom <= top) return null; return <button key={`${slot.startTime || slot.start}-${index}`} type="button" aria-pressed={selectedInterval === slot} onClick={(event) => { const minutesFromTop = ((event.clientY - event.currentTarget.getBoundingClientRect().top) / event.currentTarget.getBoundingClientRect().height) * (end - start); const clickedStart = start + Math.max(0, Math.min(end - start - 30, Math.floor(minutesFromTop / 30) * 30)); onSelect(slot, clickedStart); }} className="absolute left-2 right-2 z-10 border border-accent/50 bg-accent/10 p-3 text-left text-sm shadow-sm hover:bg-accent/20" style={{ top: top + 3, height: Math.max(34, bottom - top - 6) }}><strong className="block">{asTime(start)}–{asTime(end)}</strong><span className="mt-1 block text-xs opacity-80">Click a 30-minute position to start there</span></button>; })}{selectedInterval && selectedEnd > selectedStart && selectedTop >= 0 && selectedTop < height && <div className="pointer-events-none absolute left-3 right-3 z-20 border-2 border-primary bg-primary/25 p-2 text-xs font-semibold text-primary shadow-sm" style={{ top: selectedTop + 3, height: Math.max(28, Math.min(height - selectedTop - 3, selectedHeight - 6)) }}>Selected: {asTime(selectedStart)}–{asTime(selectedEnd)}</div>}</div></div></div></div>;
+  return <div className="mt-5 overflow-auto border border-border bg-background" style={{ maxHeight: "34rem" }}><div className="min-w-[20rem]"><div className="grid grid-cols-[4.5rem_1fr] border-b border-border bg-secondary/30"><div className="border-r border-border" /><div className="px-3 py-3 text-sm font-medium">Bookable venue time <span className="ml-2 text-xs font-normal text-muted-foreground">30-minute slots</span></div></div><div className="grid grid-cols-[4.5rem_1fr]"><div className="relative border-r border-border" style={{ height }}>{hours.map((hour) => <span key={hour} className="absolute right-2 -translate-y-2 text-xs text-muted-foreground" style={{ top: (hour - 7) * hourHeight }}>{asTime(hour * 60)}</span>)}</div><div className="relative" style={{ height }}>{hours.map((hour) => <span key={hour} className="pointer-events-none absolute left-0 right-0 border-b border-border/80" style={{ top: (hour - 7) * hourHeight }} />)}{hours.slice(0, -1).map((hour) => <span key={`half-${hour}`} className="pointer-events-none absolute left-0 right-0 border-b border-dashed border-border/50" style={{ top: (hour - 6.5) * hourHeight }} />)}{unavailable.map((slot, index) => { const start = asMinutes(slot.startTime || slot.start); const end = asMinutes(slot.endTime || slot.end); const top = Math.max(0, ((start / 60) - 7) * hourHeight); const bottom = Math.min(height, ((end / 60) - 7) * hourHeight); if (bottom <= top) return null; return <div key={`unavailable-${slot.startTime || slot.start}-${index}`} className="rounded-2xl pointer-events-none absolute left-2 right-2 z-10 border border-slate-500/50 bg-slate-500/20 p-3 text-left text-sm text-muted-foreground" style={{ top: top + 3, height: Math.max(34, bottom - top - 6) }}><strong className="block">Unavailable</strong><span className="mt-1 block text-xs">{asTime(start)}–{asTime(end)}</span></div>; })}{available.map((slot, index) => { const start = asMinutes(slot.startTime || slot.start); const end = asMinutes(slot.endTime || slot.end); const top = Math.max(0, ((start / 60) - 7) * hourHeight); const bottom = Math.min(height, ((end / 60) - 7) * hourHeight); if (bottom <= top) return null; return <button key={`${slot.startTime || slot.start}-${index}`} type="button" aria-pressed={selectedInterval === slot} onClick={(event) => { const minutesFromTop = ((event.clientY - event.currentTarget.getBoundingClientRect().top) / event.currentTarget.getBoundingClientRect().height) * (end - start); const clickedStart = start + Math.max(0, Math.min(end - start - 30, Math.floor(minutesFromTop / 30) * 30)); onSelect(slot, clickedStart); }} className="ui-action absolute left-2 right-2 z-10 border border-accent/50 bg-accent/10 p-3 text-left text-sm shadow-sm hover:bg-accent/20" style={{ top: top + 3, height: Math.max(34, bottom - top - 6) }}><strong className="block">{asTime(start)}–{asTime(end)}</strong><span className="mt-1 block text-xs opacity-80">Click a 30-minute position to start there</span></button>; })}{selectedInterval && selectedEnd > selectedStart && selectedTop >= 0 && selectedTop < height && <div className="pointer-events-none absolute left-3 right-3 z-20 border-2 border-primary bg-primary/25 p-2 text-xs font-semibold text-primary shadow-sm" style={{ top: selectedTop + 3, height: Math.max(28, Math.min(height - selectedTop - 3, selectedHeight - 6)) }}>Selected: {asTime(selectedStart)}–{asTime(selectedEnd)}</div>}</div></div></div></div>;
 }
 
 function BookingDayTimeline({ available, unavailable = [], selectedInterval, selectedStart, selectedEnd, onSelect, asMinutes, asTime }) {
@@ -147,13 +147,13 @@ function VenueBookingPicker({ venues, venueId, onVenueChange, selectedDate, onDa
     onSelectSlot({ ...(selectedSlot || { interval: selectedInterval }), selectedStart: nextStart, selectedEnd: validEnd ? selectedEnd : nextStart + minimumDuration });
   };
   const available = schedule.slots || [];
-  if (schedule.bookingMode === "daily") return <div className="sm:col-span-2 border border-border bg-secondary/10 p-4 sm:p-5"><div><p className="text-xs uppercase tracking-[0.2em] text-primary">Venue scheduling</p><h3 className="mt-1 font-display text-2xl font-semibold">Book a full day</h3><p className="mt-1 text-sm text-muted-foreground">This venue is charged per day / evening. Selecting an available date reserves the entire local day.</p></div><div className="mt-5 grid gap-4 sm:grid-cols-2"><label className="text-sm font-medium">Venue<select required value={venueId} onChange={(event) => onVenueChange(event.target.value)} className="mt-2 min-h-11 w-full border border-border bg-background px-3"><option value="">Choose a venue</option>{venues.map((venue) => <option key={venue.id} value={venue.id}>{venue.name}{venue.location?.locality || venue.city ? ` — ${venue.location?.locality || venue.city}` : ""}</option>)}</select></label><label className="text-sm font-medium">Date<input type="date" required value={selectedDate} onChange={(event) => onDateChange(event.target.value)} className="mt-2 min-h-11 w-full border border-border bg-background px-3" /></label></div>{!venueId ? <p className="mt-5 text-sm text-muted-foreground">Choose a venue to see available dates.</p> : !selectedDate ? <p className="mt-5 text-sm text-muted-foreground">Choose a date to check availability.</p> : schedule.loading ? <p role="status" className="mt-5 text-sm text-muted-foreground">Loading availability…</p> : schedule.error ? <p role="alert" className="mt-5 text-sm text-destructive">{schedule.error}</p> : available.length ? <div className="mt-5 border border-primary/40 bg-background p-4"><p className="text-sm font-medium">{selectedSlot?.daily ? "Full day selected" : "This date is available"}</p><div className="mt-4 flex flex-wrap gap-2"><button type="button" onClick={() => onSelectSlot({ daily: true, selectedStart: 0, selectedEnd: 1439 })} className="border border-border px-4 py-2 text-sm">Select full day</button><button type="button" disabled={!selectedSlot?.daily} onClick={onConfirmSlot} className="bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-60">Apply this day</button></div></div> : <p className="mt-5 text-sm text-muted-foreground">This venue is not available on this date.</p>}</div>;
-  return <div className="sm:col-span-2 border border-border bg-secondary/10 p-4 sm:p-5">
+  if (schedule.bookingMode === "daily") return <div className="rounded-2xl sm:col-span-2 border border-border bg-secondary/10 p-4 sm:p-5"><div><p className="text-xs uppercase tracking-[0.2em] text-primary">Venue scheduling</p><h3 className="mt-1 font-display text-2xl font-semibold">Book a full day</h3><p className="mt-1 text-sm text-muted-foreground">This venue is charged per day / evening. Selecting an available date reserves the entire local day.</p></div><div className="mt-5 grid gap-4 sm:grid-cols-2"><label className="text-sm font-medium">Venue<select required value={venueId} onChange={(event) => onVenueChange(event.target.value)} className="mt-2 min-h-11 w-full border border-border bg-background px-3"><option value="">Choose a venue</option>{venues.map((venue) => <option key={venue.id} value={venue.id}>{venue.name}{venue.location?.locality || venue.city ? ` — ${venue.location?.locality || venue.city}` : ""}</option>)}</select></label><label className="text-sm font-medium">Date<input type="date" required value={selectedDate} onChange={(event) => onDateChange(event.target.value)} className="mt-2 min-h-11 w-full border border-border bg-background px-3" /></label></div>{!venueId ? <p className="mt-5 text-sm text-muted-foreground">Choose a venue to see available dates.</p> : !selectedDate ? <p className="mt-5 text-sm text-muted-foreground">Choose a date to check availability.</p> : schedule.loading ? <p role="status" className="mt-5 text-sm text-muted-foreground">Loading availability…</p> : schedule.error ? <p role="alert" className="mt-5 text-sm text-destructive">{schedule.error}</p> : available.length ? <div className="rounded-2xl mt-5 border border-primary/40 bg-background p-4"><p className="text-sm font-medium">{selectedSlot?.daily ? "Full day selected" : "This date is available"}</p><div className="mt-4 flex flex-wrap gap-2"><button type="button" onClick={() => onSelectSlot({ daily: true, selectedStart: 0, selectedEnd: 1439 })} className="ui-action border border-border px-4 py-2 text-sm">Select full day</button><button type="button" disabled={!selectedSlot?.daily} onClick={onConfirmSlot} className="ui-action bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-60">Apply this day</button></div></div> : <p className="mt-5 text-sm text-muted-foreground">This venue is not available on this date.</p>}</div>;
+  return <div className="rounded-2xl sm:col-span-2 border border-border bg-secondary/10 p-4 sm:p-5">
     <div className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-xs uppercase tracking-[0.2em] text-primary">Venue scheduling</p><h3 className="mt-1 font-display text-2xl font-semibold">Choose a booking time</h3><p className="mt-1 text-sm text-muted-foreground">The venue’s current availability and duration rules determine which times can be selected.</p></div>{schedule.timezone && <p className="text-sm text-muted-foreground">Venue time: {schedule.timezone}</p>}</div>
     <div className="mt-5 grid gap-4 sm:grid-cols-2"><label className="text-sm font-medium">Venue<select required value={venueId} onChange={(event) => onVenueChange(event.target.value)} className="mt-2 min-h-11 w-full border border-border bg-background px-3"><option value="">Choose a venue</option>{venues.map((venue) => <option key={venue.id} value={venue.id}>{venue.name}{venue.location?.locality || venue.city ? ` — ${venue.location?.locality || venue.city}` : ""}</option>)}</select></label><label className="text-sm font-medium">Date<input type="date" required value={selectedDate} onChange={(event) => onDateChange(event.target.value)} className="mt-2 min-h-11 w-full border border-border bg-background px-3" /></label></div>
-    {eventTimeOnSelectedDate?.start && eventTimeOnSelectedDate?.end && <p className="mt-4 border border-primary/40 bg-primary/5 p-3 text-sm">Event time: <strong>{eventTimeOnSelectedDate.start}–{eventTimeOnSelectedDate.end}</strong><span className="ml-2 text-primary">Current booking</span></p>}
-    {schedule.nextAvailable?.date && <button type="button" onClick={() => onDateChange(schedule.nextAvailable.date)} className="mt-4 border border-accent/50 bg-accent/10 px-4 py-3 text-left text-sm hover:bg-accent/20"><strong>Next available: {schedule.nextAvailable.date}</strong><span className="ml-2">{schedule.nextAvailable.startTime}–{schedule.nextAvailable.endTime}</span><span className="mt-1 block text-xs">Choose this date</span></button>}
-    {!venueId ? <p className="mt-5 text-sm text-muted-foreground">Choose a venue to see its free times.</p> : !selectedDate ? <p className="mt-5 text-sm text-muted-foreground">Choose a date to see available times.</p> : schedule.loading ? <p role="status" className="mt-5 text-sm text-muted-foreground">Loading availability…</p> : schedule.error ? <p role="alert" className="mt-5 text-sm text-destructive">{schedule.error}</p> : <>{(available.length || schedule.unavailableSlots?.length || schedule.unavailableIntervals?.length) ? <BookingDayTimeline available={available} unavailable={schedule.unavailableSlots || schedule.unavailableIntervals || []} selectedInterval={selectedInterval} selectedStart={selectedStart} selectedEnd={selectedEnd} onSelect={selectInterval} asMinutes={asMinutes} asTime={asTime} /> : <p className="mt-5 text-sm text-muted-foreground">No scheduled hours are available on this date.</p>}{selectedInterval && <div className="mt-5 border border-primary/40 bg-background p-4"><p className="text-sm font-medium">Choose the booking time</p><p className="mt-1 text-xs text-muted-foreground">Start and end are limited to the selected free interval and this venue’s booking rules.</p><div className="mt-4 grid gap-3 sm:grid-cols-2"><label className="text-sm font-medium">Start<select value={selectedStart} onChange={(event) => updateStart(event.target.value)} className="mt-2 min-h-11 w-full border border-border bg-background px-3">{startOptions.map((value) => <option key={value} value={value}>{asTime(value)}</option>)}</select></label><label className="text-sm font-medium">End<select value={selectedEnd} onChange={(event) => onSelectSlot({ ...selectedSlot, selectedEnd: Number(event.target.value) })} className="mt-2 min-h-11 w-full border border-border bg-background px-3">{endOptions.map((value) => <option key={value} value={value}>{asTime(value)}</option>)}</select></label></div><div className="mt-4 flex flex-wrap items-center justify-between gap-4"><p className="text-sm">Selected: <strong>{asTime(selectedStart)}–{asTime(selectedEnd)}</strong></p><div className="flex gap-2"><button type="button" onClick={onConfirmSlot} className="bg-primary px-4 py-2 text-sm text-primary-foreground">{timeApplied ? "Time applied" : "Apply this time"}</button><button type="button" onClick={() => onSelectSlot(null)} className="border border-border px-4 py-2 text-sm">Clear</button></div></div>{timeApplied && <p role="status" className="mt-3 text-sm text-primary">Time applied to the event. Save the event to keep this selection.</p>}</div>}</>}
+    {eventTimeOnSelectedDate?.start && eventTimeOnSelectedDate?.end && <p className="rounded-2xl mt-4 border border-primary/40 bg-primary/5 p-3 text-sm">Event time: <strong>{eventTimeOnSelectedDate.start}–{eventTimeOnSelectedDate.end}</strong><span className="ml-2 text-primary">Current booking</span></p>}
+    {schedule.nextAvailable?.date && <button type="button" onClick={() => onDateChange(schedule.nextAvailable.date)} className="ui-action mt-4 border border-accent/50 bg-accent/10 px-4 py-3 text-left text-sm hover:bg-accent/20"><strong>Next available: {schedule.nextAvailable.date}</strong><span className="ml-2">{schedule.nextAvailable.startTime}–{schedule.nextAvailable.endTime}</span><span className="mt-1 block text-xs">Choose this date</span></button>}
+    {!venueId ? <p className="mt-5 text-sm text-muted-foreground">Choose a venue to see its free times.</p> : !selectedDate ? <p className="mt-5 text-sm text-muted-foreground">Choose a date to see available times.</p> : schedule.loading ? <p role="status" className="mt-5 text-sm text-muted-foreground">Loading availability…</p> : schedule.error ? <p role="alert" className="mt-5 text-sm text-destructive">{schedule.error}</p> : <>{(available.length || schedule.unavailableSlots?.length || schedule.unavailableIntervals?.length) ? <BookingDayTimeline available={available} unavailable={schedule.unavailableSlots || schedule.unavailableIntervals || []} selectedInterval={selectedInterval} selectedStart={selectedStart} selectedEnd={selectedEnd} onSelect={selectInterval} asMinutes={asMinutes} asTime={asTime} /> : <p className="mt-5 text-sm text-muted-foreground">No scheduled hours are available on this date.</p>}{selectedInterval && <div className="rounded-2xl mt-5 border border-primary/40 bg-background p-4"><p className="text-sm font-medium">Choose the booking time</p><p className="mt-1 text-xs text-muted-foreground">Start and end are limited to the selected free interval and this venue’s booking rules.</p><div className="mt-4 grid gap-3 sm:grid-cols-2"><label className="text-sm font-medium">Start<select value={selectedStart} onChange={(event) => updateStart(event.target.value)} className="mt-2 min-h-11 w-full border border-border bg-background px-3">{startOptions.map((value) => <option key={value} value={value}>{asTime(value)}</option>)}</select></label><label className="text-sm font-medium">End<select value={selectedEnd} onChange={(event) => onSelectSlot({ ...selectedSlot, selectedEnd: Number(event.target.value) })} className="mt-2 min-h-11 w-full border border-border bg-background px-3">{endOptions.map((value) => <option key={value} value={value}>{asTime(value)}</option>)}</select></label></div><div className="mt-4 flex flex-wrap items-center justify-between gap-4"><p className="text-sm">Selected: <strong>{asTime(selectedStart)}–{asTime(selectedEnd)}</strong></p><div className="flex gap-2"><button type="button" onClick={onConfirmSlot} className="ui-action bg-primary px-4 py-2 text-sm text-primary-foreground">{timeApplied ? "Time applied" : "Apply this time"}</button><button type="button" onClick={() => onSelectSlot(null)} className="ui-action border border-border px-4 py-2 text-sm">Clear</button></div></div>{timeApplied && <p role="status" className="mt-3 text-sm text-primary">Time applied to the event. Save the event to keep this selection.</p>}</div>}</>}
   </div>;
 }
 
@@ -811,7 +811,7 @@ export default function EventsPage({
         {organizerView && !creationPage && !editPage && (
           <Link
             to="/profile/events/new"
-            className="mt-7 inline-flex min-h-11 items-center bg-primary px-5 text-sm text-primary-foreground"
+            className="ui-action mt-7 inline-flex min-h-11 items-center bg-primary px-5 text-sm text-primary-foreground"
           >
             Create an event
           </Link>
@@ -824,7 +824,7 @@ export default function EventsPage({
             <button
               type="button"
               onClick={() => setSearchParams({})}
-              className={`directory-filter min-h-10 border px-4 text-sm ${!selectedCategory ? "border-primary text-primary" : "border-border"}`}
+              className={`ui-action directory-filter min-h-10 border px-4 text-sm ${!selectedCategory ? "border-primary text-primary" : "border-border"}`}
             >
               All categories
             </button>
@@ -833,7 +833,7 @@ export default function EventsPage({
                 key={category.id}
                 type="button"
                 onClick={() => setSearchParams({ category: category.slug })}
-                className={`directory-filter min-h-10 border px-4 text-sm ${selectedCategory === category.slug ? "border-primary text-primary" : "border-border"}`}
+                className={`ui-action directory-filter min-h-10 border px-4 text-sm ${selectedCategory === category.slug ? "border-primary text-primary" : "border-border"}`}
               >
                 {category.name}
               </button>
@@ -859,7 +859,7 @@ export default function EventsPage({
               {editPage && (
                 <Link
                   to="/profile/events/new"
-                  className="inline-flex min-h-11 items-center border border-border px-4 text-sm"
+                  className="ui-action inline-flex min-h-11 items-center border border-border px-4 text-sm"
                 >
                   Create an event
                 </Link>
@@ -955,20 +955,20 @@ export default function EventsPage({
                   ))}
                 </select>
               </label>
-              <fieldset className="grid gap-4 border border-border p-4 sm:col-span-2 sm:grid-cols-2">
+              <fieldset className="rounded-2xl grid gap-4 border border-border p-4 sm:col-span-2 sm:grid-cols-2">
                 <legend className="px-1 text-sm font-medium">Where is your event?</legend>
                 <label className="flex items-center gap-2 text-sm"><input type="radio" name="locationType" value="venue" checked={form.locationType === "venue"} onChange={update} />At a YKCircle venue</label>
                 <label className="flex items-center gap-2 text-sm"><input type="radio" name="locationType" value="custom" checked={form.locationType === "custom"} onChange={() => setForm((current) => ({ ...current, locationType: "custom", timezone: deviceTimezone() }))} />At another location</label>
                 <label className="flex items-center gap-2 text-sm"><input type="radio" name="locationType" value="online" checked={form.locationType === "online"} onChange={() => setForm((current) => ({ ...current, locationType: "online", timezone: deviceTimezone() }))} />Online</label>
                 {form.locationType === "venue" && <VenueBookingPicker venues={venues} venueId={form.venueId} onVenueChange={(venueId) => { const venue = venues.find((item) => String(item.id) === String(venueId)); setForm((current) => ({ ...current, venueId, timezone: venue?.timezone || deviceTimezone() })); setPendingVenueSlot(null); }} selectedDate={selectedVenueDate} onDateChange={(date) => { setForm((current) => ({ ...current, startsAt: `${date}T${current.startsAt?.slice(11, 16) || "09:00"}`, endsAt: current.endsAt ? `${date}T${current.endsAt.slice(11, 16)}` : "" })); setPendingVenueSlot(null); }} schedule={venueSchedule} selectedSlot={pendingVenueSlot} onSelectSlot={setPendingVenueSlot} onConfirmSlot={() => { const clock = (value) => `${String(Math.floor(value / 60)).padStart(2, "0")}:${String(value % 60).padStart(2, "0")}`; setForm((current) => ({ ...current, startsAt: `${venueSchedule.date}T${clock(pendingVenueSlot.selectedStart)}`, endsAt: `${venueSchedule.date}T${clock(pendingVenueSlot.selectedEnd)}`, timezone: venueSchedule.timezone || deviceTimezone() })); }} selectedEventTime={form.startsAt && form.endsAt ? { date: form.startsAt.slice(0, 10), start: form.startsAt.slice(11, 16), end: form.endsAt.slice(11, 16) } : null} />}
-                {form.locationType === "custom" && <div className="sm:col-span-2"><p className="text-sm font-medium">Search for an address</p><div className="mt-2"><GoogleLocationPicker onSelect={(place) => setForm((current) => ({ ...current, ...place, country: place.country || current.country, city: place.locality || current.city }))} /></div>{form.formattedAddress ? <p className="mt-3 border border-border bg-secondary/20 p-3 text-sm"><span className="text-muted-foreground">Selected location</span><br />{form.formattedAddress}</p> : <p className="mt-2 text-xs text-muted-foreground">Search and choose an address on the map. Google will save its address details and coordinates automatically.</p>}</div>}
+                {form.locationType === "custom" && <div className="sm:col-span-2"><p className="text-sm font-medium">Search for an address</p><div className="mt-2"><GoogleLocationPicker onSelect={(place) => setForm((current) => ({ ...current, ...place, country: place.country || current.country, city: place.locality || current.city }))} /></div>{form.formattedAddress ? <p className="rounded-2xl mt-3 border border-border bg-secondary/20 p-3 text-sm"><span className="text-muted-foreground">Selected location</span><br />{form.formattedAddress}</p> : <p className="mt-2 text-xs text-muted-foreground">Search and choose an address on the map. Google will save its address details and coordinates automatically.</p>}</div>}
                 {form.locationType === "online" && <div className="grid gap-4 sm:col-span-2 sm:grid-cols-2"><p className="sm:col-span-2 text-sm text-muted-foreground">The event is online. Joining links are shown only to the event manager/admin.</p>{input("onlinePlatform", "Platform (for example, Zoom)")}{input("onlineUrl", "Joining URL", "url")}</div>}
               </fieldset>
               {form.locationType !== "venue" && input("startsAt", "Starts", "datetime-local", true)}
               {form.locationType !== "venue" && input("endsAt", "Ends", "datetime-local", true)}
               {form.locationType === "venue" && errors.endsAt && <p role="alert" className="text-sm text-destructive">{errors.endsAt}</p>}
               {creationPage && !draftId && (
-                <div className="grid gap-4 border border-border p-4 sm:col-span-2 sm:grid-cols-3">
+                <div className="rounded-2xl grid gap-4 border border-border p-4 sm:col-span-2 sm:grid-cols-3">
                   <label className="block text-sm">
                     Repeat
                     <select
@@ -1051,7 +1051,7 @@ export default function EventsPage({
                 {errors.foodOptions && <span className="mt-1 block text-xs text-destructive">{errors.foodOptions}</span>}
               </label>
               <div className="flex flex-wrap gap-3 sm:col-span-2">
-                <button disabled={logoBusy} className="min-h-11 bg-primary px-5 text-sm text-primary-foreground disabled:opacity-60">
+                <button disabled={logoBusy} className="ui-action min-h-11 bg-primary px-5 text-sm text-primary-foreground disabled:opacity-60">
                   {logoBusy ? "Preparing logo…" : editPage ? "Save" : "Save draft"}
                 </button>
               </div>
@@ -1077,7 +1077,7 @@ export default function EventsPage({
             <h2 className="font-display text-3xl font-semibold">Drafts</h2>
             <div className="mt-4 space-y-3">
               {drafts.map((event) => (
-                <article key={event.id} className="border border-border p-5">
+                <article key={event.id} className="rounded-2xl border border-border p-5">
                   <EventCoverImage event={event} component="EventsPageDraft" className="mb-4 aspect-[16/7] w-full object-cover" />
                   <span className="text-xs uppercase tracking-[0.2em] text-primary">
                     Draft
@@ -1088,21 +1088,21 @@ export default function EventsPage({
                   <div className="mt-4 flex flex-wrap gap-2">
                     <a
                       href={`/profile/events/${event.id}/edit`}
-                      className="inline-flex min-h-10 items-center border border-border px-4 text-sm"
+                      className="ui-action inline-flex min-h-10 items-center border border-border px-4 text-sm"
                     >
                       Edit
                     </a>
                     <button
                       type="button"
                       onClick={() => publishEvent(event.id)}
-                      className="min-h-10 bg-primary px-4 text-sm text-primary-foreground"
+                      className="ui-action min-h-10 bg-primary px-4 text-sm text-primary-foreground"
                     >
                       Publish
                     </button>
                     <button
                       type="button"
                       onClick={() => deleteEvent(event.id, true)}
-                      className="min-h-10 border border-destructive px-4 text-sm text-destructive"
+                      className="ui-action min-h-10 border border-destructive px-4 text-sm text-destructive"
                     >
                       Delete
                     </button>
@@ -1140,27 +1140,27 @@ export default function EventsPage({
                     <div className="grid grid-cols-2 gap-2">
                       <a
                         href={`/profile/events/${event.id}/edit`}
-                        className="inline-flex min-h-10 items-center justify-center border border-border px-3 text-sm"
+                        className="ui-action inline-flex min-h-10 items-center justify-center border border-border px-3 text-sm"
                       >
                         Edit
                       </a>
                       <a
                         href={`/events/${event.id}?manage=1`}
-                        className="inline-flex min-h-10 items-center justify-center bg-primary px-3 text-sm text-primary-foreground"
+                        className="ui-action inline-flex min-h-10 items-center justify-center bg-primary px-3 text-sm text-primary-foreground"
                       >
                         Manage
                       </a>
                       {event.status !== "Completed" && <button
                         type="button"
                         onClick={() => archiveEvent(event.id)}
-                        className="min-h-10 border border-border px-3 text-sm"
+                        className="ui-action min-h-10 border border-border px-3 text-sm"
                       >
                         Archive
                       </button>}
                       <button
                         type="button"
                         onClick={() => deleteEvent(event.id)}
-                        className="min-h-10 border border-destructive px-3 text-sm text-destructive"
+                        className="ui-action min-h-10 border border-destructive px-3 text-sm text-destructive"
                       >
                         Delete
                       </button>
@@ -1177,7 +1177,7 @@ export default function EventsPage({
             <p className="mt-2 text-sm text-muted-foreground">Archived events are kept here for your records and are not visible to customers.</p>
             <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {archived.map((event) => (
-                <article key={event.id} className="relative overflow-hidden border border-border bg-secondary/25 p-4 opacity-75">
+                <article key={event.id} className="rounded-2xl relative overflow-hidden border border-border bg-secondary/25 p-4 opacity-75">
                   <div className="pointer-events-none absolute inset-0 z-10 bg-white/35" aria-hidden="true" />
                   <EventCoverImage event={event} component="EventsPageArchived" className="mb-4 aspect-[16/10] w-full object-cover" />
                   <div className="relative z-20">
@@ -1189,14 +1189,14 @@ export default function EventsPage({
                     <button
                       type="button"
                       onClick={() => restoreEvent(event.id)}
-                      className="min-h-10 bg-primary px-3 text-sm text-primary-foreground"
+                      className="ui-action min-h-10 bg-primary px-3 text-sm text-primary-foreground"
                     >
                       Restore
                     </button>
                     <button
                       type="button"
                       onClick={() => deleteEvent(event.id)}
-                      className="min-h-10 border border-destructive px-3 text-sm text-destructive"
+                      className="ui-action min-h-10 border border-destructive px-3 text-sm text-destructive"
                     >
                       Delete
                     </button>
@@ -1213,7 +1213,7 @@ export default function EventsPage({
           role="dialog"
           aria-modal="true"
         >
-          <div className="w-full max-w-md border border-border bg-background p-7 shadow-2xl">
+          <div className="rounded-2xl w-full max-w-md border border-border bg-background p-7 shadow-2xl">
             <p className="text-xs uppercase tracking-[0.25em] text-primary">
               Please confirm
             </p>
@@ -1239,7 +1239,7 @@ export default function EventsPage({
               <button
                 type="button"
                 onClick={() => setDialog(null)}
-                className="min-h-11 border border-border px-4 text-sm"
+                className="ui-action min-h-11 border border-border px-4 text-sm"
               >
                 Cancel
               </button>
@@ -1261,7 +1261,7 @@ export default function EventsPage({
           aria-modal="true"
           aria-labelledby="published-title"
         >
-          <div className="w-full max-w-md border border-border bg-background p-8 text-center shadow-2xl">
+          <div className="rounded-2xl w-full max-w-md border border-border bg-background p-8 text-center shadow-2xl">
             <p className="text-xs uppercase tracking-[0.25em] text-primary">
               Now live
             </p>
@@ -1280,7 +1280,7 @@ export default function EventsPage({
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
               <Link
                 to={`/events/${publishedEvent.id}`}
-                className="inline-flex min-h-11 items-center justify-center bg-primary px-5 text-sm text-primary-foreground"
+                className="ui-action inline-flex min-h-11 items-center justify-center bg-primary px-5 text-sm text-primary-foreground"
                 onClick={() => setPublishedEvent(null)}
               >
                 View event
@@ -1288,7 +1288,7 @@ export default function EventsPage({
               <button
                 type="button"
                 onClick={() => setPublishedEvent(null)}
-                className="min-h-11 border border-border px-5 text-sm"
+                className="ui-action min-h-11 border border-border px-5 text-sm"
               >
                 Done
               </button>
@@ -1303,7 +1303,7 @@ export default function EventsPage({
           aria-modal="true"
           aria-labelledby="saved-event-title"
         >
-          <div className="w-full max-w-md border border-border bg-background p-8 text-center shadow-2xl">
+          <div className="rounded-2xl w-full max-w-md border border-border bg-background p-8 text-center shadow-2xl">
             <p className="text-xs uppercase tracking-[0.25em] text-primary">
               Saved
             </p>
@@ -1316,7 +1316,7 @@ export default function EventsPage({
             <button
               type="button"
               onClick={() => navigate("/profile/events")}
-              className="mt-8 min-h-11 bg-primary px-5 text-sm text-primary-foreground"
+              className="ui-action mt-8 min-h-11 bg-primary px-5 text-sm text-primary-foreground"
             >
               Manage events
             </button>

@@ -73,7 +73,7 @@ const AboutPage = () => (
             <div className="pt-4">
                 <Link
                     to="/join"
-                    className="inline-flex min-h-[48px] items-center gap-3 bg-primary px-7 text-sm font-medium uppercase tracking-widest text-primary-foreground transition-transform active:scale-[0.98]"
+                    className="ui-action inline-flex min-h-[48px] items-center gap-3 bg-primary px-7 text-sm font-medium uppercase tracking-widest text-primary-foreground transition-transform active:scale-[0.98]"
                 >
                     What is coming next <ArrowRight className="h-4 w-4" />
                 </Link>
