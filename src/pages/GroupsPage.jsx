@@ -6,6 +6,7 @@ import EventPreviewCard from '@/components/EventPreviewCard';
 import DiscoveryCard from '@/components/DiscoveryCard';
 import SiteChrome from "@/components/SiteChrome";
 import DirectoryActions from '@/components/DirectoryActions';
+import DirectoryHeader from '@/components/DirectoryHeader';
 import ConfirmationDialog from "@/components/ConfirmationDialog";
 import ForumDiscussion from "@/components/ForumDiscussion";
 import { apiAssetUrl, apiFetch } from "@/lib/api";
@@ -946,22 +947,14 @@ export default function GroupsPage({
           {managementOnly ? "Manage groups | YKCircle" : "Groups | YKCircle"}
         </title>
       </Helmet>
-      <section className="mx-auto max-w-[72rem] px-5 pb-24 pt-10 sm:px-8 sm:pt-14">
-        <div className="flex flex-wrap items-end justify-between gap-5">
-          <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-primary">
-              Groups
-            </p>
-            <h1 className="mt-3 font-display text-5xl font-black">
-              {managementOnly ? "Your groups" : "Find your people."}
-            </h1>
-            <p className="mt-5 max-w-2xl text-muted-foreground">
-              {managementOnly
-                ? "Create a following and share events with your members."
-                : "Join groups to hear when their organizers publish a new event."}
-            </p>
-          </div>
-        </div>
+      <section className="directory-page">
+        <DirectoryHeader
+          eyebrow="Groups"
+          title={managementOnly ? "Your groups" : "Find your people."}
+          description={managementOnly
+            ? "Create a following and share events with your members."
+            : "Join groups to hear when their organizers publish a new event."}
+        />
         {canManageOwnGroups && <DirectoryActions manageTo={!managementOnly ? '/profile/groups' : null} manageLabel="Manage groups" createLabel={creating ? 'Close' : 'Create group'} onCreate={() => { setCreating(value => !value); setEditing(null); }} />}
         {creating && (
           <GroupForm
@@ -979,7 +972,7 @@ export default function GroupsPage({
           />
         )}
         {!managementOnly && token && (
-          <section className="mt-12">
+          <section className="mt-10">
             <h2 className="font-display text-3xl font-semibold">
               My Groups
             </h2>

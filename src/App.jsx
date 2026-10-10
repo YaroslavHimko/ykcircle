@@ -1,3 +1,4 @@
+import PageHeader from '@/components/PageHeader';
 import SiteChrome from './components/SiteChrome';
 import { useProductConfiguration } from './lib/product-configuration';
 import SubscriptionsPage from './pages/SubscriptionsPage';
@@ -97,8 +98,8 @@ function CreateEventRoute() {
 function PaidFeatureRoute({ children, feature }) {
     const product = useProductConfiguration();
     const enabled = feature ? product[feature] : product.subscriptionsEnabled || product.paidEventsEnabled || product.paidVenuesEnabled || product.paidServicesEnabled;
-    if (product.loading) return <SiteChrome><p className="mx-auto max-w-3xl px-5 py-20">Loading...</p></SiteChrome>;
-    if (!enabled) return <SiteChrome><section className="mx-auto max-w-3xl px-5 py-20"><h1 className="text-3xl font-semibold">Free early access</h1><p className="mt-4">This feature is not available during free early access.</p></section></SiteChrome>;
+    if (product.loading) return <SiteChrome><section className="page-container"><PageHeader title="Loading�" /><p role="status" className="mt-6">Loading account features�</p></section></SiteChrome>;
+    if (!enabled) return <SiteChrome><section className="page-container"><PageHeader title="Free early access" description="This feature is not available during free early access." /></section></SiteChrome>;
     return children;
 }
 

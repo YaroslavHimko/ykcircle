@@ -1,3 +1,4 @@
+import PageHeader from '@/components/PageHeader';
 import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { useNavigate } from 'react-router-dom';
@@ -28,10 +29,8 @@ export default function AdminContactMessagesPage() {
   }, [navigate]);
 
   return <SiteChrome><Helmet><title>Contact messages | YKCircle</title><meta name="robots" content="noindex" /></Helmet>
-    <section className="mx-auto max-w-4xl px-5 pb-24 pt-32 sm:px-8 sm:pt-40">
-      <p className="text-xs uppercase tracking-[0.25em] text-primary">Administration</p>
-      <h1 className="mt-3 font-display text-4xl font-bold">Contact messages</h1>
-      <p className="mt-3 text-sm text-muted-foreground">Messages sent through the Contact Us form.</p>
+    <section className="page-container">
+      <PageHeader eyebrow="Administration" title={<>Contact messages</>} description={<>Messages sent through the Contact Us form.</>} />
       {loading && <p className="mt-8 text-muted-foreground">Loading messages…</p>}
       {error && <p role="alert" className="mt-8 text-destructive">{error}</p>}
       {!loading && !error && messages.length === 0 && <p className="mt-8 text-muted-foreground">No contact messages yet.</p>}

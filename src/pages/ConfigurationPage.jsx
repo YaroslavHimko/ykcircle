@@ -18,7 +18,7 @@ export default function ConfigurationPage() {
   const load = async () => { const [settings, rows, plans] = await Promise.all([request('/api/product-configuration'), request('/api/admin/subscriptions'), request('/api/platform/products')]); setConfiguration(settings); setCustomers(rows); setProducts(plans); };
   useEffect(() => { if (staff) load().catch((failure) => setError(failure.message)); }, [staff]);
   const run = async (action) => { setBusy(true); setError(''); setNotice(''); try { await action(); } catch (failure) { setError(failure.message); } finally { setBusy(false); } };
-  if (!staff) return <SubscriptionShell title="Configuration"><p className="mt-6">Administrator or manager access is required.</p></SubscriptionShell>;
+  if (!staff) return <SubscriptionShell title="Configuration" eyebrow="Administration"><p className="mt-6">Administrator or manager access is required.</p></SubscriptionShell>;
   const subscriptions = customers?.subscriptions.filter((entry) => `${entry.customerName} ${entry.email || ''} ${entry.planName} ${entry.status}`.toLowerCase().includes(filter.toLowerCase())) || [];
   const savePlan = (event) => { event.preventDefault(); run(async () => {
     let product = products.find((entry) => entry.code === plan.code);
@@ -27,8 +27,8 @@ export default function ConfigurationPage() {
     await request(`/api/admin/platform/products/${product.id}/prices`, { amount: Number(plan.amount), currency: plan.currency, billingInterval: plan.billingInterval, providerPriceId: plan.providerPriceId, isActive: true });
     await load(); setNotice('Subscription plan saved.'); setPlan(emptyPlan);
   }); };
-  return <SubscriptionShell title="Configuration">
-    <p className="mt-4 text-muted-foreground">Control paid features and publishing allowances.</p>
+  return <SubscriptionShell title="Configuration" eyebrow="Administration" description={<>Control paid features and publishing allowances.</>}>
+
     {error && <p role="alert" className="mt-5 text-destructive">{error}</p>}{notice && <p role="status" className="mt-5 text-primary">{notice}</p>}
     {!configuration && !error && <p className="mt-6">Loading configuration…</p>}
     {configuration && <form className="rounded-2xl mt-7 space-y-5 border border-border p-5 sm:p-7" onSubmit={(event) => { event.preventDefault(); run(async () => { setConfiguration(await request('/api/admin/configuration', configuration, 'PUT')); setNotice('Configuration saved.'); }); }}>

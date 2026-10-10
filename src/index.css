@@ -5,6 +5,36 @@
 @tailwind utilities;
 
 @layer components {
+  /* Primary pages and discovery tabs share one visual starting point. */
+  .page-container, .directory-page {
+    @apply mx-auto max-w-[72rem] px-5 pb-24 pt-10 sm:px-8 sm:pt-14;
+  }
+
+  .page-heading, .directory-heading {
+    @apply mt-3 font-display text-4xl font-black leading-[1.1] sm:text-5xl sm:leading-[1.1];
+    /* Reserve wrapping space without clipping longer or translated titles. */
+    min-height: 3.3em;
+  }
+
+  .page-description, .directory-description {
+    @apply mt-5 max-w-2xl text-base leading-6 text-muted-foreground;
+    min-height: 4.5rem;
+  }
+
+  @media (max-width: 359px) {
+    .page-heading, .directory-heading { font-size: 2rem; }
+    .page-description, .directory-description { min-height: 6rem; }
+  }
+
+  @screen sm {
+    .page-heading, .directory-heading { min-height: 2.2em; }
+    .page-description, .directory-description { min-height: 3rem; }
+  }
+
+  @screen lg {
+    .page-heading, .directory-heading { min-height: 1.1em; }
+  }
+
   /* Use the same control shape for native buttons and link-based actions. */
   .ui-action {
     @apply rounded-lg transition-[background-color,border-color,color,box-shadow] duration-200 ease-out;
@@ -114,6 +144,11 @@
     font: inherit;
     cursor: pointer;
   }
+}
+
+/* Keep the content's horizontal anchor when a page gains a scrollbar. */
+html {
+  scrollbar-gutter: stable;
 }
 
 html, body, #root {

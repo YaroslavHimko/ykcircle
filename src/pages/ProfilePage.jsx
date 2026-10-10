@@ -1,3 +1,4 @@
+import PageHeader from '@/components/PageHeader';
 import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { Link, useNavigate } from 'react-router-dom';
@@ -116,12 +117,13 @@ export default function ProfilePage() {
     ['groupEventAnnouncements', 'New events from your groups', 'Announcements when a group you belong to publishes an event.'],
   ];
   return <SiteChrome><Helmet><title>My profile | YKCircle</title><meta name="robots" content="noindex" /></Helmet>
-    <section className="mx-auto max-w-4xl px-5 pb-24 pt-10 sm:px-8 sm:pt-14">
-      <header className="flex flex-wrap items-center justify-between gap-6">
+    <section className="page-container">
+      <PageHeader title="My profile" description="Manage your account, email preferences, and privacy." />
+      <header className="mt-8 flex flex-wrap items-center justify-between gap-6">
         <div className="flex min-w-0 items-center gap-5"><label className="group relative shrink-0 cursor-pointer rounded-full focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-4" title="Change profile picture">
           {user.profilePicture ? <img src={user.profilePicture} alt="" className="h-20 w-20 rounded-full object-cover sm:h-24 sm:w-24" /> : <span className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 text-3xl font-medium text-primary sm:h-24 sm:w-24">{user.name?.charAt(0)}</span>}
           <span className="absolute -bottom-1 -right-1 rounded-full border-4 border-background bg-secondary p-2"><Camera className="h-4 w-4" aria-hidden="true" /></span><input aria-label="Change profile picture" type="file" accept="image/jpeg,image/png,image/gif,image/webp" onChange={uploadPicture} disabled={uploading} className="sr-only" />
-        </label><div className="min-w-0"><p className="text-xs font-medium uppercase tracking-widest text-primary">Your account</p><h1 className="mt-2 break-words text-3xl font-semibold tracking-tight sm:text-4xl">{user.name}</h1><p className="mt-2 break-all text-sm text-muted-foreground">{user.email}</p>{uploading && <p role="status" className="mt-1 text-xs text-muted-foreground">Uploading picture…</p>}</div></div>
+        </label><div className="min-w-0"><p className="text-xs font-medium uppercase tracking-widest text-primary">Your account</p><h2 className="mt-2 break-words text-3xl font-semibold tracking-tight sm:text-4xl">{user.name}</h2><p className="mt-2 break-all text-sm text-muted-foreground">{user.email}</p>{uploading && <p role="status" className="mt-1 text-xs text-muted-foreground">Uploading picture…</p>}</div></div>
         <button onClick={logout} className="ui-action min-h-11 rounded-xl border border-border px-5 text-sm font-medium hover:bg-secondary/50">Log out</button>
       </header>
       {error && <p role="alert" className="mt-6 rounded-xl bg-destructive/5 p-4 text-sm text-destructive">{error}</p>}

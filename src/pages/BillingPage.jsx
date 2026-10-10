@@ -1,3 +1,4 @@
+import PageHeader from '@/components/PageHeader';
 ﻿import React, { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { Link, Navigate, useLocation, useParams, useSearchParams } from 'react-router-dom';
@@ -67,9 +68,10 @@ export default function BillingPage() {
   if (!localStorage.getItem('authToken')) return <Navigate replace to={`/login?from=${encodeURIComponent(location.pathname + location.search)}`} />;
   if (area && !paymentTitles[area]) return <Navigate replace to="/account/payments" />;
   const title = paymentTitles[area] || 'Payments & business';
-  return <SiteChrome><Helmet><title>{title} | YKCircle</title><meta name="robots" content="noindex" /></Helmet><main className="mx-auto max-w-5xl px-5 pb-24 pt-32 sm:px-8 sm:pt-40">
-    <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground"><Link to="/profile" className="inline-flex min-h-11 items-center hover:underline">Your account</Link>{area && <><span aria-hidden="true">/</span><Link to="/account/payments" className="inline-flex min-h-11 items-center hover:underline">Payments & business</Link></>}<span aria-hidden="true">/</span><span aria-current="page">{title}</span></nav>
-    <h1 className="mt-3 font-display text-4xl font-bold sm:text-5xl">{title}</h1><p className="mt-4 max-w-2xl leading-relaxed text-muted-foreground">{({ plan: 'Payments you make to YKCircle for premium features.', tickets: 'Ticket payments are used when attendees buy paid Event tickets. Money is processed for the Event seller.', venues: 'Payments you receive from organizers booking your Venue.', business: 'Legal and contact information used on payments and invoices.', documents: 'Financial documents from Venue bookings and YKCircle purchases.' })[area] || 'Manage what you pay for, how you receive money, and the business details used for transactions.'}</p>
+  return <SiteChrome><Helmet><title>{title} | YKCircle</title><meta name="robots" content="noindex" /></Helmet><section className="page-container">
+
+    <PageHeader eyebrow="Your account" title={title} description={({ plan: 'Payments you make to YKCircle for premium features.', tickets: 'Ticket payments are used when attendees buy paid Event tickets. Money is processed for the Event seller.', venues: 'Payments you receive from organizers booking your Venue.', business: 'Legal and contact information used on payments and invoices.', documents: 'Financial documents from Venue bookings and YKCircle purchases.' })[area] || 'Manage what you pay for, how you receive money, and the business details used for transactions.'} />
+    <nav aria-label="Breadcrumb" className="mt-6 flex flex-wrap items-center gap-2 text-sm text-muted-foreground"><Link to="/profile" className="inline-flex min-h-11 items-center hover:underline">Your account</Link>{area && <><span aria-hidden="true">/</span><Link to="/account/payments" className="inline-flex min-h-11 items-center hover:underline">Payments & business</Link></>}<span aria-hidden="true">/</span><span aria-current="page">{title}</span></nav>
     {returnTo && <Link to={returnTo} className="mt-4 inline-flex min-h-11 items-center text-sm text-primary underline">Return to where you started</Link>}{notice && <p role="status" className="mt-5 text-sm text-primary">{notice}</p>}{error && <div className="mt-6"><ErrorNotice error={error} /><button className={secondaryButton} onClick={load}>Try again</button></div>}{!data && !error && <p role="status" className="mt-8">Loading payments and business details…</p>}
     {data && <div className="mt-9">
       {!area && <Overview data={data} />}
@@ -80,5 +82,5 @@ export default function BillingPage() {
       {area === 'documents' && <DocumentsPanel documents={data.documents} venueId={params.get('venueId')} />}
     </div>}
     {editor && <BillingProfileEditor profile={editor} organizations={data?.organizations || []} existingProfiles={data?.businesses || []} onOrganizationSaved={(organization) => setData((current) => ({ ...current, organizations: [...current.organizations, organization] }))} onSaved={saved} onClose={closeEditor} />}
-  </main></SiteChrome>;
+  </section></SiteChrome>;
 }

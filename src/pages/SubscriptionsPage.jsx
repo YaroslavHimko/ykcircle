@@ -1,3 +1,4 @@
+import PageHeader from '@/components/PageHeader';
 import React, { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, Check, CreditCard, LockKeyhole } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -15,9 +16,9 @@ export async function subscriptionRequest(path, body, method = 'POST') {
 export const fieldClass = 'mt-2 min-h-11 w-full min-w-0 border border-border bg-background px-3';
 export const buttonClass = 'inline-flex min-h-11 items-center justify-center bg-primary px-5 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50';
 export const dateLabel = (value) => value ? new Date(value).toLocaleDateString(undefined, { dateStyle: 'medium' }) : '—';
-export function SubscriptionShell({ title, children, embedded = false }) {
-  if (embedded) return <div>{children}</div>;
-  return <SiteChrome><section className="mx-auto max-w-5xl px-5 pb-24 pt-10 sm:px-8 sm:pt-14"><h1 className="font-display text-4xl font-bold">{title}</h1>{children}</section></SiteChrome>;
+export function SubscriptionShell({ title, children, embedded = false, eyebrow = 'Your account', description }) {
+  if (embedded) return <div>{description && <p className="mt-4 max-w-2xl text-muted-foreground">{description}</p>}{children}</div>;
+  return <SiteChrome><section className="page-container"><PageHeader eyebrow={eyebrow} title={title} description={description} />{children}</section></SiteChrome>;
 }
 function openBilling(url) {
   const target = new URL(url);
@@ -69,8 +70,8 @@ export default function SubscriptionsPage({ embedded = false }) {
   const selectedProfile = matchingProfiles.find(profile => String(profile.id) === String(profileId));
   const existing = summary?.subscriptions.some((entry) => ['active','trialing','past_due','unpaid','paused','incomplete'].includes(entry.status));
   if (!user) return <SubscriptionShell title="Your plan" embedded={embedded}><Link to={`/login?from=${encodeURIComponent(`/profile/subscriptions?feature=${feature}&returnTo=${encodeURIComponent(returnTo)}`)}`} className="mt-6 inline-block text-primary underline">Log in to view your subscriptions</Link></SubscriptionShell>;
-  return <SubscriptionShell title="Your plan" embedded={embedded}>
-    <p className="mt-4 max-w-2xl text-muted-foreground">Manage your YKCircle plan and premium features. You can create and edit drafts at any time.</p>
+  return <SubscriptionShell title="Your plan" embedded={embedded} description={<>Manage your YKCircle plan and premium features. You can create and edit drafts at any time.</>}>
+
     <div className="mt-5 flex flex-wrap gap-3" aria-label="Subscription type">{[['organizer.publish_event', 'Event publishing'], ['author.publish_article', 'Article space']].map(([value, label]) => <button key={value} type="button" aria-pressed={feature === value} onClick={() => { setOptions(null); setParams({ feature: value, returnTo }); }} className={`ui-action min-h-11 border px-4 text-sm ${feature === value ? 'border-primary text-primary' : 'border-border'}`}>{label}</button>)}</div>
     {error && <p role="alert" className="mt-5 text-destructive">{error}</p>}
     {!summary && !error && <p role="status" className="mt-6">Loading subscription…</p>}

@@ -1,3 +1,4 @@
+import PageHeader from '@/components/PageHeader';
 import { useProductConfiguration } from '@/lib/product-configuration';
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Helmet } from "react-helmet";
@@ -25,10 +26,9 @@ export function MyVenuesPage() {
   const publish=async venue=>{try{setError("");if(venue?.id==null)throw new Error("This venue is missing its ID and cannot be published.");const r=await apiFetch(`/api/admin/venues/${venue.id}/moderation`,{method:"PATCH",headers:{...auth(),"Content-Type":"application/json"},body:JSON.stringify({moderationStatus:"approved"})});const d=r.status===204?null:await r.json().catch(()=>({}));if(!r.ok)throw new Error(errorText(d,"Unable to publish venue."));const updated=normalizeVenue(d.venue||d);setVenues(current=>current.map(item=>item.id===venue.id?{...item,...updated,isActive:isVenueActive(updated.isActive)}:item));}catch(e){setError(e.message);}};
   const submitForReview=async venue=>{try{setError("");if(venue?.id==null)throw new Error("This venue is missing its ID and cannot be submitted for review.");const r=await apiFetch(`/api/venues/${venue.id}/submit-for-review`,{method:"POST",headers:auth()});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(errorText(d,"Unable to submit venue for review."));const updated=normalizeVenue(d.venue||d);setVenues(current=>current.map(item=>item.id===venue.id?{...item,...updated,isActive:isVenueActive(updated.isActive)}:item));}catch(e){setError(e.message);}};
   return <Shell title={dashboardTitle}>
-    <div className="flex flex-wrap items-center justify-between gap-4">
+    <div className="space-y-6">
       <div>
-        <h1 className="font-display text-4xl font-bold">{dashboardTitle}</h1>
-        <p className="mt-2 text-muted-foreground">{isAdmin || isManager ? "Review all active and inactive venues." : "Create spaces and respond to event booking requests."}</p>
+        <PageHeader eyebrow="Venue workspace" title={dashboardTitle} description={isAdmin || isManager ? "Review all active and inactive venues." : "Create spaces and respond to event booking requests."} />
       </div>
       <Link to="/profile/venues/new" className="ui-action inline-flex min-h-11 shrink-0 items-center justify-center self-center bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">Add venue</Link>
     </div>
@@ -137,10 +137,10 @@ export function VenueBookingsPage() {
   };
 
   return <Shell title="Venue requests">
-    <Link to="/profile/venues" className="text-sm text-primary underline">Back to my venues</Link>
+    <PageHeader eyebrow="Venue workspace" title={<>Venue requests</>} description={<>Direct venue inquiries and event bookings are separate request types. Both are shown below.</>} />
+    <div className="mt-6 flex flex-wrap items-center gap-4">    <Link to="/profile/venues" className="text-sm text-primary underline">Back to my venues</Link>
     {product.paidVenuesEnabled && <Link to={`/account/payments/venues?venueId=${id}&edit=1&returnTo=${encodeURIComponent(window.location.pathname)}`} className="ml-4 text-sm text-primary underline">Venue payments</Link>}
-    <h1 className="mt-5 font-display text-4xl font-bold">Venue requests</h1>
-    <p className="mt-3 max-w-2xl text-muted-foreground">Direct venue inquiries and event bookings are separate request types. Both are shown below.</p>
+</div>
     {error && <Error text={error} />}
     {loading ? <Loading label="Loading booking requests…" /> : <div className="mt-8 space-y-3">
       <section className="border-b border-border pb-8">
@@ -199,7 +199,7 @@ function ExternalInvoiceEditor({ booking, onSaved, onError }) {
   return <details className="mt-4 border-t border-border pt-4"><summary className="cursor-pointer text-sm font-medium">External invoice details</summary><form onSubmit={save} className="mt-4 grid gap-3 sm:grid-cols-2"><Field label="Invoice number" value={form.externalInvoiceNumber} onChange={(value) => setForm({ ...form, externalInvoiceNumber: value })} /><Field label="Invoice date" value={form.externalInvoiceDate} onChange={(value) => setForm({ ...form, externalInvoiceDate: value })} /><Field label="Amount" value={form.amount} onChange={(value) => setForm({ ...form, amount: value })} /><Field label="Currency" value={form.currency} onChange={(value) => setForm({ ...form, currency: value })} /><Field label="Due date" value={form.dueDate} onChange={(value) => setForm({ ...form, dueDate: value })} /><Field label="Secure invoice URL" value={form.externalInvoiceUrl} onChange={(value) => setForm({ ...form, externalInvoiceUrl: value })} /><div className="sm:col-span-2 flex gap-2"><button className="ui-action border border-border px-4 py-2 text-sm">Save external invoice</button>{booking.externalInvoiceId && booking.externalInvoiceStatus !== "paid" && <button type="button" onClick={paid} className="ui-action bg-primary px-4 py-2 text-sm text-primary-foreground">Mark payment received</button>}</div></form></details>;
 }
 
-function Shell({title,children}){return <SiteChrome><Helmet><title>{title} | YKCircle</title></Helmet><section className="mx-auto max-w-[72rem] px-5 pb-24 pt-10 sm:px-8 sm:pt-14">{children}</section></SiteChrome>}; function Loading({label="Loading…"}){return <p role="status" className="mt-8 text-muted-foreground">{label}</p>}; function Field({label,required,value,onChange}){return <label className="block text-sm font-medium">{label}{required&&" *"}<input required={required} value={value} onChange={e=>onChange(e.target.value)} className="mt-2 min-h-11 w-full border border-border bg-background px-3"/></label>}; function Error({text}){return <p role="alert" className="rounded-2xl mt-5 border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">{text}</p>}; function Status({status}){return <span className="whitespace-nowrap text-sm capitalize text-primary">{status||"pending"}</span>};
+function Shell({title,children}){return <SiteChrome><Helmet><title>{title} | YKCircle</title></Helmet><section className="page-container">{children}</section></SiteChrome>}; function Loading({label="Loading…"}){return <p role="status" className="mt-8 text-muted-foreground">{label}</p>}; function Field({label,required,value,onChange}){return <label className="block text-sm font-medium">{label}{required&&" *"}<input required={required} value={value} onChange={e=>onChange(e.target.value)} className="mt-2 min-h-11 w-full border border-border bg-background px-3"/></label>}; function Error({text}){return <p role="alert" className="rounded-2xl mt-5 border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">{text}</p>}; function Status({status}){return <span className="whitespace-nowrap text-sm capitalize text-primary">{status||"pending"}</span>};
 const moderationLabels={draft:"Draft",pending:"Pending review",approved:"Published",rejected:"Rejected",removed:"Removed"};
 const moderationStyles={approved:"border-primary text-primary",rejected:"border-destructive text-destructive",removed:"border-destructive text-destructive"};
 function ModerationStatus({status}){const value=status||"draft";return <span className={`whitespace-nowrap border px-2 py-1 text-xs font-semibold uppercase tracking-wider ${moderationStyles[value]||"border-border text-muted-foreground"}`}>{moderationLabels[value]||value}</span>}

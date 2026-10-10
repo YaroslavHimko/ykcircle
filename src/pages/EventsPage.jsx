@@ -5,6 +5,7 @@ import { Helmet } from "react-helmet";
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import SiteChrome from "@/components/SiteChrome";
 import DirectoryActions from '@/components/DirectoryActions';
+import DirectoryHeader from '@/components/DirectoryHeader';
 import EventPreviewCard from '@/components/EventPreviewCard';
 import MyEventsSection, { useAttendingEvents } from '@/components/MyEventsSection';
 import { RepresentativeEvents } from "@/components/EventRepresentatives";
@@ -798,16 +799,12 @@ export default function EventsPage({
       <Helmet>
         <title>Events | YKCircle</title>
       </Helmet>
-      <section className="mx-auto max-w-[72rem] px-5 pb-24 pt-10 sm:px-8 sm:pt-14">
-        <p className="text-xs uppercase tracking-[0.3em] text-primary">
-          YKCircle experiences
-        </p>
-        <h1 className="mt-3 font-display text-5xl font-black">
-          Find something worth joining.
-        </h1>
-        <p className="mt-5 max-w-2xl text-muted-foreground">
-          Explore activities, gatherings and local experiences.
-        </p>
+      <section className="directory-page">
+        <DirectoryHeader
+          eyebrow="YKCircle experiences"
+          title="Find something worth joining."
+          description="Explore activities, gatherings and local experiences."
+        />
         {organizerView && !creationPage && !editPage && (
           <Link
             to="/profile/events/new"

@@ -1,3 +1,4 @@
+import PageHeader from '@/components/PageHeader';
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
@@ -20,8 +21,8 @@ async function request(path, options = {}) {
   if (!response.ok) throw new Error(data.error || "Unable to load tickets.");
   return data;
 }
-function Shell({ title, children }) {
-  return <SiteChrome><section className="mx-auto max-w-4xl px-5 pb-24 pt-32 sm:px-8 sm:pt-40"><p className="text-xs uppercase tracking-[0.25em] text-primary">Event tickets</p><h1 className="mt-2 font-display text-4xl font-bold">{title}</h1>{children}</section></SiteChrome>;
+function Shell({ title, children, description }) {
+  return <SiteChrome><section className="page-container"><PageHeader eyebrow="Event tickets" title={title} description={description} />{children}</section></SiteChrome>;
 }
 function ErrorNotice({ message }) { return message ? <p role="alert" className="rounded-2xl mt-5 border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">{message}</p> : null; }
 function TestNotice({ checkout = false }) {
@@ -150,7 +151,7 @@ export function TicketsPage({ success = false }) {
     return () => { active = false; clearInterval(timer); };
   }, []);
   const visibleOrders = eventId ? orders.filter((order) => String(order.eventId) === eventId && order.paymentStatus === "paid") : orders;
-  return <Shell title={eventId ? "Your event tickets" : "My tickets"}>
+  return <Shell title={eventId ? "Your event tickets" : "My tickets"} description="View your ticket orders and event admission details.">
     {eventId && <Link to="/profile/my-events" className="mt-4 inline-block text-sm text-primary underline">Back to My events</Link>}
     {success && <p className="mt-5">Open your order to check payment confirmation and view your tickets.</p>}
     <ErrorNotice message={error} />
