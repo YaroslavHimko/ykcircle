@@ -6,7 +6,7 @@ import { openCookieSettings } from "@/components/CookieSettings";
 class MapErrorBoundary extends React.Component {
   state = { failed: false };
   static getDerivedStateFromError() { return { failed: true }; }
-  render() { return this.state.failed ? <div className="mt-5 border border-border bg-secondary/30 p-5 text-sm text-muted-foreground">Map unavailable</div> : this.props.children; }
+  render() { return this.state.failed ? <div className="rounded-2xl mt-5 border border-border bg-secondary/30 p-5 text-sm text-muted-foreground">Map unavailable</div> : this.props.children; }
 }
 
 function GoogleMapCanvas({ config, location, label, zoom, interactive, onError }) {
@@ -53,7 +53,7 @@ function MapLocationView({ location, label = "Location", zoom = 14, interactive 
   if (hidden || !navigationUrl) return null;
   return <div className="mt-5">
     {state === "loaded" ? <GoogleMapCanvas config={config} location={normalised} label={label} zoom={zoom} onError={markMapError} interactive={interactive} /> :
-      <div className="flex h-40 flex-col items-center justify-center border border-border bg-secondary/30 p-5 text-center text-sm text-muted-foreground">
+      <div className="rounded-2xl flex h-40 flex-col items-center justify-center border border-border bg-secondary/30 p-5 text-center text-sm text-muted-foreground">
         {state === "loading" && <><span className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" /><span className="mt-3">Loading map…</span></>}
         {state === "consent" && <><MapPinned className="h-6 w-6 text-primary" /><span className="mt-3">Map is disabled based on your privacy preferences.</span><button type="button" onClick={openCookieSettings} className="mt-3 text-primary underline">Enable map</button></>}
         {state === "disabled" && "Map unavailable"}

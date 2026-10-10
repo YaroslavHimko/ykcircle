@@ -34,7 +34,7 @@ export default function MyEventsSection({ events, loading, error }) {
         {event.isRegistered && <span className="border border-border px-3 py-1">Registered</span>}
         {event.isParticipating && <span className="border border-border px-3 py-1">Participating</span>}
       </div>
-      {event.isParticipating && event.ticketOrderIds?.length > 0 && <Link to={event.ticketOrderIds.length === 1 ? `/tickets/${event.ticketOrderIds[0]}` : `/account/tickets?eventId=${event.id}`} className="mt-4 inline-flex min-h-11 items-center border border-primary px-4 text-sm text-primary hover:bg-primary/5">Show the ticket</Link>}
+      {event.isParticipating && event.ticketOrderIds?.length > 0 && <Link to={event.ticketOrderIds.length === 1 ? `/tickets/${event.ticketOrderIds[0]}` : `/account/tickets?eventId=${event.id}`} className="ui-action mt-4 inline-flex min-h-11 items-center border border-primary px-4 text-sm text-primary hover:bg-primary/5">Show the ticket</Link>}
     </EventPreviewCard>)}</div>
   </section>;
 }

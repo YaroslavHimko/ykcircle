@@ -75,7 +75,7 @@ export default function ReportPage() {
         <p className="mt-5 max-w-2xl leading-relaxed text-muted-foreground">Use this form to report content you believe breaches our rules or may be illegal. You can submit a report without signing in.</p>
 
         {reference ? (
-          <div className="mt-10 border border-primary bg-primary/5 p-6" role="status">
+          <div className="rounded-2xl mt-10 border border-primary bg-primary/5 p-6" role="status">
             <h2 className="font-display text-3xl">Report received</h2>
             <p className="mt-3 text-muted-foreground">Keep this reference for any follow-up about your report.</p>
             <p className="mt-4 font-mono text-lg font-semibold text-primary">{reference}</p>
@@ -88,12 +88,12 @@ export default function ReportPage() {
             <label className="block text-sm">Reason<select required name="reasonCode" value={form.reasonCode} onChange={update} className="mt-2 min-h-12 w-full border border-border bg-background px-4"><option value="">Select a reason</option><option value="illegal_content">Suspected illegal content</option><option value="harassment">Harassment or abuse</option><option value="unsafe_event">Unsafe event</option><option value="scam_fraud">Fraud or scam</option><option value="privacy">Privacy concern</option><option value="other">Other</option></select></label>
             <label className="block text-sm">Explain the concern<textarea required name="description" value={form.description} onChange={update} rows="5" className="mt-2 w-full border border-border bg-background px-4 py-3" /></label>
             <label className="block text-sm">Supporting details <span className="text-muted-foreground">(optional)</span><textarea name="supportingDetails" value={form.supportingDetails} onChange={update} rows="3" className="mt-2 w-full border border-border bg-background px-4 py-3" /></label>
-            <p className="border border-border bg-secondary/30 p-4 text-sm text-muted-foreground">Please do not upload or send suspected illegal imagery through this form. Describe the content and provide its ID or URL instead.</p>
+            <p className="rounded-2xl border border-border bg-secondary/30 p-4 text-sm text-muted-foreground">Please do not upload or send suspected illegal imagery through this form. Describe the content and provide its ID or URL instead.</p>
             <label className="block text-sm">Email address<input required type="email" name="reporterEmail" value={form.reporterEmail} onChange={update} className="mt-2 min-h-12 w-full border border-border bg-background px-4" /></label>
             <label className="flex items-start gap-3 text-sm"><input type="checkbox" name="allegedIllegal" checked={form.allegedIllegal} onChange={update} className="mt-1 h-4 w-4" /><span>I believe this content may be illegal.</span></label>
             <label className="flex items-start gap-3 text-sm"><input required type="checkbox" name="goodFaithDeclared" checked={form.goodFaithDeclared} onChange={update} className="mt-1 h-4 w-4" /><span>I declare in good faith that the information in this report is accurate to the best of my knowledge.</span></label>
             {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
-            <button disabled={submitting} className="min-h-12 bg-primary px-7 text-sm font-medium uppercase tracking-widest text-primary-foreground disabled:opacity-60">{submitting ? "Submitting…" : "Submit report"}</button>
+            <button disabled={submitting} className="ui-action min-h-12 bg-primary px-7 text-sm font-medium uppercase tracking-widest text-primary-foreground disabled:opacity-60">{submitting ? "Submitting…" : "Submit report"}</button>
           </form>
         )}
       </section>

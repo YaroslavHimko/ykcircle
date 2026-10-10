@@ -12,13 +12,13 @@ export default function ConfirmationDialog({
 }) {
   return (
     <div
-      className="fixed inset-0 z-[72] flex items-center justify-center bg-black/50 px-5"
+      className="fixed inset-0 z-[72] flex items-center justify-center bg-black/45 px-5 py-6 backdrop-blur-sm"
       role="alertdialog"
       aria-modal="true"
       aria-labelledby="confirmation-dialog-title"
       aria-describedby="confirmation-dialog-description"
     >
-      <div className="w-full max-w-md border border-border bg-background p-7 shadow-2xl">
+      <div className="rounded-2xl max-h-[calc(100dvh-3rem)] w-full max-w-md overflow-y-auto border border-border bg-background p-7 shadow-2xl">
         <p className="text-xs uppercase tracking-[0.25em] text-primary">Please confirm</p>
         <h2 id="confirmation-dialog-title" className="mt-3 font-display text-3xl font-semibold">
           {title}
@@ -32,7 +32,7 @@ export default function ConfirmationDialog({
             type="button"
             onClick={onCancel}
             disabled={busy}
-            className="min-h-11 border border-border px-4 text-sm disabled:opacity-50"
+            className="ui-action min-h-11 border border-border px-4 text-sm disabled:opacity-50"
           >
             Cancel
           </button>

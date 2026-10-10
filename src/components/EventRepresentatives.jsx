@@ -38,7 +38,7 @@ export default function EventRepresentatives({ eventId, token }) {
       setMessage(userId ? 'Representative removed. Their check-in access has ended.' : data.alreadyAssigned ? 'This person is already a representative.' : 'Representative assigned. They can now find this event under Manage events.');
     } catch (issue) { setError(issue.message); } finally { setWorking(false); }
   };
-  return <section className="mt-10 border border-border p-5 sm:p-6" aria-labelledby="representatives-title">
+  return <section className="rounded-2xl mt-10 border border-border p-5 sm:p-6" aria-labelledby="representatives-title">
     <h2 id="representatives-title" className="font-display text-2xl font-semibold">Event representatives</h2>
     <p className="mt-2 max-w-2xl text-sm text-muted-foreground">Assign people to scan tickets and check participants in for this event. Representatives cannot edit event details, billing, venues, or other representatives.</p>
     <form className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-end" onSubmit={(event) => { event.preventDefault(); save(); }}>
@@ -79,7 +79,7 @@ export function RepresentativeEvents({ token }) {
       .catch((issue) => { if (!controller.signal.aborted) setState({ loading: false, error: issue.message }); });
     return () => controller.abort();
   }, [token, reload]);
-  return <section className="mt-10 border border-border p-5 sm:p-6">
+  return <section className="rounded-2xl mt-10 border border-border p-5 sm:p-6">
     <h2 className="font-display text-2xl font-semibold">Assigned ticket check-in</h2>
     <p className="mt-2 text-sm text-muted-foreground">Events where you are an event representative.</p>
     {state.loading ? <p role="status" className="mt-4 text-sm">Loading assigned events...</p> : state.error ? <p role="alert" className="mt-4 text-sm text-destructive">{state.error} <button className="underline" onClick={() => setReload((value) => value + 1)}>Try again</button></p> : events.length ? <ul className="mt-4 divide-y divide-border">

@@ -19,7 +19,7 @@ export default function EventPreviewCard({ event, children }) {
   const image = eventMediaUrl(event);
   const organizer = event.brandName || event.groupName || event.managerName;
   if (image) eventImageRenderDebug({ component: 'HomeEventCard', event });
-  return <article className="group flex min-w-0 flex-col overflow-hidden rounded-xl border border-border/70 bg-background transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-4">
+  return <article className="discovery-card group flex min-w-0 flex-col overflow-hidden rounded-2xl border border-border/70 bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-4">
     <Link to={`/events/${event.id}`} className="flex flex-1 flex-col focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
     <div className="relative aspect-[16/10] overflow-hidden bg-secondary/60">
       {image ? <img src={image} alt="" loading="lazy" className="h-full w-full object-cover transition-transform duration-300 motion-safe:group-hover:scale-105" /> : <div className="flex h-full items-center justify-center text-muted-foreground/40"><CalendarDays aria-hidden="true" className="h-12 w-12" strokeWidth={1} /></div>}

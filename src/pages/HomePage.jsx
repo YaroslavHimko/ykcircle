@@ -40,8 +40,8 @@ export default function HomePage() {
       <h1 className="font-display text-3xl font-semibold tracking-tight sm:text-5xl">Find your next event</h1>
       <p className="mt-3 max-w-xl text-base text-muted-foreground">Discover something to do, from the people who make it happen.</p>
       <nav aria-label="Event interests" className="mt-6 flex flex-wrap gap-2">
-        <Link to="/events" className="inline-flex min-h-11 items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-4 text-sm font-medium text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">All events <ArrowRight aria-hidden="true" className="h-4 w-4" /></Link>
-        {interests.map(interest => <Link key={interest.slug} to={`/events?category=${interest.slug}`} className="inline-flex min-h-11 items-center rounded-full border border-border px-4 text-sm transition-colors hover:border-primary/50 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">{interest.label}</Link>)}
+        <Link to="/events" className="ui-action inline-flex min-h-11 items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-4 text-sm font-medium text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">All events <ArrowRight aria-hidden="true" className="h-4 w-4" /></Link>
+        {interests.map(interest => <Link key={interest.slug} to={`/events?category=${interest.slug}`} className="ui-action inline-flex min-h-11 items-center rounded-full border border-border px-4 text-sm transition-colors hover:border-primary/50 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">{interest.label}</Link>)}
       </nav>
       <div className="mt-9 flex flex-wrap items-center justify-between gap-3 sm:mt-10">
         <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">Upcoming events</h2>

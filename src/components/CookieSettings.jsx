@@ -34,7 +34,7 @@ export default function CookieSettings() {
   };
 
   if (!open) return null;
-  return <div className="fixed inset-x-0 bottom-0 z-[80] border-t border-border bg-background p-5 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="cookie-settings-title">
+  return <div className="rounded-2xl fixed inset-x-3 bottom-3 z-[80] mx-auto max-h-[calc(100dvh-1.5rem)] max-w-5xl overflow-y-auto rounded-2xl border border-border bg-background p-5 shadow-2xl sm:inset-x-6 sm:bottom-6 sm:p-6" role="dialog" aria-modal="true" aria-labelledby="cookie-settings-title">
     <div className="mx-auto max-w-4xl">
       <h2 id="cookie-settings-title" className="font-display text-2xl font-semibold">Your cookie choices</h2>
       <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">Necessary storage keeps the site working. Optional technologies remain off unless you choose to enable them. Read our <a className="text-primary underline" href="/cookies">Cookie Policy</a>.</p>
@@ -45,9 +45,9 @@ export default function CookieSettings() {
         <label className="flex items-start gap-3"><input checked={consent.marketing} onChange={(event) => setConsent((current) => ({ ...current, marketing: event.target.checked }))} type="checkbox" className="mt-1" /><span><strong>Marketing</strong><br /><span className="text-muted-foreground">Optional marketing and retargeting technologies.</span></span></label>
       </div>}
       <div className="mt-5 flex flex-wrap gap-3">
-        <button type="button" onClick={() => save({ analytics: true, marketing: true, externalMedia: true })} className="min-h-11 bg-primary px-5 text-sm text-primary-foreground">Accept all</button>
-        <button type="button" onClick={() => save({ analytics: false, marketing: false, externalMedia: false })} className="min-h-11 border border-border px-5 text-sm">Reject non-essential</button>
-        {customizing ? <button type="button" onClick={() => save(consent)} className="min-h-11 border border-border px-5 text-sm">Save choices</button> : <button type="button" onClick={() => setCustomizing(true)} className="min-h-11 border border-border px-5 text-sm">Customize</button>}
+        <button type="button" onClick={() => save({ analytics: true, marketing: true, externalMedia: true })} className="ui-action min-h-11 bg-primary px-5 text-sm text-primary-foreground">Accept all</button>
+        <button type="button" onClick={() => save({ analytics: false, marketing: false, externalMedia: false })} className="ui-action min-h-11 border border-border px-5 text-sm">Reject non-essential</button>
+        {customizing ? <button type="button" onClick={() => save(consent)} className="ui-action min-h-11 border border-border px-5 text-sm">Save choices</button> : <button type="button" onClick={() => setCustomizing(true)} className="ui-action min-h-11 border border-border px-5 text-sm">Customize</button>}
       </div>
     </div>
   </div>;
