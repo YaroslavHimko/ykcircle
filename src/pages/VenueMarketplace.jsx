@@ -191,7 +191,7 @@ export function VenuesDiscoveryPage({ city: routeCity = "", venueType: routeVenu
   const ownedIds = new Set(owned.venues.map((venue) => String(venue.id)));
   const savedVenues = saved.venues.filter((venue) => !ownedIds.has(String(venue.id)));
   const otherVenues = state.venues.filter((venue) => !ownedIds.has(String(venue.id)) && !savedIds.has(String(venue.id)));
-  return <Shell directory title={title} description="Discover spaces for meetups, workshops, celebrations and community events."><DirectoryHeader eyebrow="Venue marketplace" title={title} description="Find spaces that fit your people, plan and budget. Send a request�no payment or booking is completed here." />
+  return <Shell directory title={title} description="Discover spaces for meetups, workshops, celebrations and community events."><DirectoryHeader eyebrow="Venue marketplace" title={title} description="Find spaces that fit your people, plan and budget. Send a request. No payment or booking is completed here." />
     {token && <DirectoryActions manageTo="/profile/venues" manageLabel="Manage venues" createTo="/profile/venues/new" createLabel="Add venue" />}
     {token && <section id="my-venues" aria-labelledby="my-venues-title" className="mt-10 scroll-mt-8">
       <h2 id="my-venues-title" className="font-display text-3xl font-semibold">My Venues</h2>
