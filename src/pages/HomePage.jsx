@@ -3,6 +3,7 @@ import { Helmet } from 'react-helmet';
 import { Link } from 'react-router-dom';
 import { ArrowRight, CalendarDays } from 'lucide-react';
 import SiteChrome from '@/components/SiteChrome';
+import PageHeader from '@/components/PageHeader';
 import { apiFetch } from '@/lib/api';
 import EventPreviewCard from '@/components/EventPreviewCard';
 
@@ -36,9 +37,8 @@ export default function HomePage() {
 
   return <SiteChrome>
     <Helmet><title>Discover local events | YKCircle</title><meta name="description" content="Explore upcoming events, discover local organizers, and find something you'd love to join." /></Helmet>
-    <section className="mx-auto max-w-[90rem] px-5 pb-12 pt-9 sm:px-8 sm:pb-16 sm:pt-12">
-      <h1 className="font-display text-3xl font-semibold tracking-tight sm:text-5xl">Find your next event</h1>
-      <p className="mt-3 max-w-xl text-base text-muted-foreground">Discover something to do, from the people who make it happen.</p>
+    <section className="page-container">
+      <PageHeader eyebrow="Discover YKCircle" title="Find your next event" description="Discover something to do, from the people who make it happen." />
       <nav aria-label="Event interests" className="mt-6 flex flex-wrap gap-2">
         <Link to="/events" className="ui-action inline-flex min-h-11 items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-4 text-sm font-medium text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">All events <ArrowRight aria-hidden="true" className="h-4 w-4" /></Link>
         {interests.map(interest => <Link key={interest.slug} to={`/events?category=${interest.slug}`} className="ui-action inline-flex min-h-11 items-center rounded-full border border-border px-4 text-sm transition-colors hover:border-primary/50 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">{interest.label}</Link>)}
