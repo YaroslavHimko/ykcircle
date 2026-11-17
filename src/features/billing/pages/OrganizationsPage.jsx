@@ -1,0 +1,122 @@
+import PageHeader from '@/shared/components/PageHeader.jsx';
+import { useEffect, useState } from 'react';
+import { Helmet } from 'react-helmet';
+import { Link, Navigate, useSearchParams } from 'react-router-dom';
+import SiteChrome from '@/shared/components/SiteChrome.jsx';
+import OrganizationEditor from '../components/OrganizationEditor.jsx';
+import { ErrorNotice } from '../components/shared.jsx';
+import { asList, secondaryButton } from '../model/billing-ui.js';
+import { billingRequest } from '../api/billing.js';
+export default function OrganizationsPage() {
+  const [params] = useSearchParams();
+  const [organizations, setOrganizations] = useState([]),
+    [editor, setEditor] = useState(null),
+    [loading, setLoading] = useState(true),
+    [error, setError] = useState('');
+  const load = async () => {
+    setError('');
+    setLoading(true);
+    try {
+      setOrganizations(asList(await billingRequest('/api/my/organizations'), 'organizations'));
+    } catch (failure) {
+      setError(failure.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => {
+    if (localStorage.getItem('authToken')) load();
+  }, []);
+  if (!localStorage.getItem('authToken'))
+    return <Navigate replace to="/login?from=%2Faccount%2Forganizations" />;
+  const selected = organizations.find((item) => String(item.id) === params.get('organizationId'));
+  return (
+    <SiteChrome>
+      <Helmet>
+        <title>Organizations | YKCircle</title>
+        <meta name="robots" content="noindex" />
+      </Helmet>
+      <section className="page-container">
+        <PageHeader
+          eyebrow="Your account"
+          title={<>Organizations</>}
+          description={<>Manage the organizations behind your Events, Venues and team.</>}
+        />
+        <div className="my-7 flex flex-wrap items-center gap-4">
+          <Link
+            to="/profile"
+            className="inline-flex min-h-11 items-center text-sm text-primary underline"
+          >
+            Your account
+          </Link>
+          <button className={secondaryButton} onClick={() => setEditor({})}>
+            Add organization
+          </button>
+        </div>
+        <ErrorNotice error={error} />
+        {error && (
+          <button onClick={load} className={secondaryButton}>
+            Try again
+          </button>
+        )}
+        {loading ? (
+          <p role="status">Loading organizations…</p>
+        ) : (
+          <div className="space-y-4">
+            {(selected ? [selected] : organizations).map((organization) => (
+              <article key={organization.id} className="rounded-xl border border-border p-6">
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <div>
+                    <h2 className="font-display text-2xl font-semibold">{organization.name}</h2>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      {organization.contactEmail || 'No contact email added'}
+                    </p>
+                  </div>
+                  <button onClick={() => setEditor(organization)} className={secondaryButton}>
+                    Edit<span className="sr-only"> {organization.name}</span>
+                  </button>
+                </div>
+                {organization.description && (
+                  <p className="mt-4 text-sm text-muted-foreground">{organization.description}</p>
+                )}
+                <Link
+                  to={`/account/payments/business?new=organization&organizationId=${organization.id}`}
+                  className="mt-5 inline-flex min-h-11 items-center text-sm text-primary underline"
+                >
+                  Manage business details
+                </Link>
+              </article>
+            ))}
+            {!organizations.length && !error && (
+              <p className="text-muted-foreground">
+                No organizations yet. Add one when you organize Events or operate a Venue with a
+                team.
+              </p>
+            )}
+          </div>
+        )}
+        {selected && (
+          <Link
+            to="/account/organizations"
+            className="mt-4 inline-flex min-h-11 items-center text-sm text-primary underline"
+          >
+            All organizations
+          </Link>
+        )}
+        {editor && (
+          <OrganizationEditor
+            organization={editor}
+            onClose={() => setEditor(null)}
+            onSaved={(saved) => {
+              setOrganizations((current) => [
+                ...current.filter((item) => item.id !== saved.id),
+                saved,
+              ]);
+              setEditor(null);
+            }}
+          />
+        )}
+      </section>
+    </SiteChrome>
+  );
+}

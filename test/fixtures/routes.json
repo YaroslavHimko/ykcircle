@@ -1,0 +1,877 @@
+[
+  {
+    "path": "/",
+    "element": {
+      "component": "HomePage",
+      "props": {},
+      "children": []
+    }
+  },
+  {
+    "path": "/about",
+    "element": {
+      "component": "AboutPage",
+      "props": {},
+      "children": []
+    }
+  },
+  {
+    "path": "/join",
+    "element": {
+      "component": "JoinPage",
+      "props": {},
+      "children": []
+    }
+  },
+  {
+    "path": "/contact",
+    "element": {
+      "component": "ContactPage",
+      "props": {},
+      "children": []
+    }
+  },
+  {
+    "path": "/report",
+    "element": {
+      "component": "ReportPage",
+      "props": {},
+      "children": []
+    }
+  },
+  {
+    "path": "/appeal",
+    "element": {
+      "component": "AppealPage",
+      "props": {},
+      "children": []
+    }
+  },
+  {
+    "path": "/legal",
+    "element": {
+      "component": "LegalDocumentsPage",
+      "props": {},
+      "children": []
+    }
+  },
+  {
+    "path": "/legal/:slug",
+    "element": {
+      "component": "LegalDocumentsPage",
+      "props": {},
+      "children": []
+    }
+  },
+  {
+    "path": "/terms",
+    "element": {
+      "component": "LegalDocumentsPage",
+      "props": {
+        "documentSlug": "terms"
+      },
+      "children": []
+    }
+  },
+  {
+    "path": "/privacy",
+    "element": {
+      "component": "LegalDocumentsPage",
+      "props": {
+        "documentSlug": "privacy"
+      },
+      "children": []
+    }
+  },
+  {
+    "path": "/cookies",
+    "element": {
+      "component": "LegalDocumentsPage",
+      "props": {
+        "documentSlug": "cookies"
+      },
+      "children": []
+    }
+  },
+  {
+    "path": "/community-guidelines",
+    "element": {
+      "component": "LegalDocumentsPage",
+      "props": {
+        "documentSlug": "community-guidelines"
+      },
+      "children": []
+    }
+  },
+  {
+    "path": "/organizer-terms",
+    "element": {
+      "component": "LegalDocumentsPage",
+      "props": {
+        "documentSlug": "organizer-terms"
+      },
+      "children": []
+    }
+  },
+  {
+    "path": "/venue-terms",
+    "element": {
+      "component": "LegalDocumentsPage",
+      "props": {
+        "documentSlug": "venue-terms"
+      },
+      "children": []
+    }
+  },
+  {
+    "path": "/tickets-refunds",
+    "element": {
+      "component": "LegalDocumentsPage",
+      "props": {
+        "documentSlug": "tickets-refunds"
+      },
+      "children": []
+    }
+  },
+  {
+    "path": "/paid-services",
+    "element": {
+      "component": "LegalDocumentsPage",
+      "props": {
+        "documentSlug": "paid-services"
+      },
+      "children": []
+    }
+  },
+  {
+    "path": "/marketplace-transparency",
+    "element": {
+      "component": "LegalDocumentsPage",
+      "props": {
+        "documentSlug": "marketplace-transparency"
+      },
+      "children": []
+    }
+  },
+  {
+    "path": "/company",
+    "element": {
+      "component": "Navigate",
+      "props": {
+        "to": "/operator",
+        "replace": true
+      },
+      "children": []
+    }
+  },
+  {
+    "path": "/operator",
+    "element": {
+      "component": "CompanyInformationPage",
+      "props": {},
+      "children": []
+    }
+  },
+  {
+    "path": "/subprocessors",
+    "element": {
+      "component": "SubprocessorsPage",
+      "props": {},
+      "children": []
+    }
+  },
+  {
+    "path": "/login",
+    "element": {
+      "component": "AuthPage",
+      "props": {
+        "mode": "login"
+      },
+      "children": []
+    }
+  },
+  {
+    "path": "/register",
+    "element": {
+      "component": "AuthPage",
+      "props": {
+        "mode": "register"
+      },
+      "children": []
+    }
+  },
+  {
+    "path": "/check-email",
+    "element": {
+      "component": "CheckEmailPage",
+      "props": {},
+      "children": []
+    }
+  },
+  {
+    "path": "/verify-email",
+    "element": {
+      "component": "VerifyEmailPage",
+      "props": {},
+      "children": []
+    }
+  },
+  {
+    "path": "/forgot-password",
+    "element": {
+      "component": "ForgotPasswordPage",
+      "props": {},
+      "children": []
+    }
+  },
+  {
+    "path": "/reset-password",
+    "element": {
+      "component": "ResetPasswordPage",
+      "props": {},
+      "children": []
+    }
+  },
+  {
+    "path": "/profile",
+    "element": {
+      "component": "ProfilePage",
+      "props": {},
+      "children": []
+    }
+  },
+  {
+    "path": "/profile/subscriptions",
+    "element": {
+      "component": "PaidFeatureRoute",
+      "props": {
+        "feature": "subscriptionsEnabled"
+      },
+      "children": [
+        {
+          "component": "SubscriptionsPage",
+          "props": {},
+          "children": []
+        }
+      ]
+    }
+  },
+  {
+    "path": "/subscribe",
+    "element": {
+      "component": "PaidFeatureRoute",
+      "props": {
+        "feature": "subscriptionsEnabled"
+      },
+      "children": [
+        {
+          "component": "SubscriptionsPage",
+          "props": {},
+          "children": []
+        }
+      ]
+    }
+  },
+  {
+    "path": "/admin/configuration",
+    "element": {
+      "component": "ConfigurationPage",
+      "props": {},
+      "children": []
+    }
+  },
+  {
+    "path": "/admin/contact-messages",
+    "element": {
+      "component": "AdminContactMessagesPage",
+      "props": {},
+      "children": []
+    }
+  },
+  {
+    "path": "/admin/users",
+    "element": {
+      "component": "UserRolesPage",
+      "props": {},
+      "children": []
+    }
+  },
+  {
+    "path": "/admin/reports",
+    "element": {
+      "component": "AdminReportsPage",
+      "props": {},
+      "children": []
+    }
+  },
+  {
+    "path": "/admin/platform-billing",
+    "element": {
+      "component": "PaidFeatureRoute",
+      "props": {},
+      "children": [
+        {
+          "component": "PlatformAdminPage",
+          "props": {},
+          "children": []
+        }
+      ]
+    }
+  },
+  {
+    "path": "/account/payments",
+    "element": {
+      "component": "PaidFeatureRoute",
+      "props": {},
+      "children": [
+        {
+          "component": "BillingPage",
+          "props": {},
+          "children": []
+        }
+      ]
+    }
+  },
+  {
+    "path": "/account/payments/:area",
+    "element": {
+      "component": "PaidFeatureRoute",
+      "props": {},
+      "children": [
+        {
+          "component": "BillingPage",
+          "props": {},
+          "children": []
+        }
+      ]
+    }
+  },
+  {
+    "path": "/account/organizations",
+    "element": {
+      "component": "PaidFeatureRoute",
+      "props": {},
+      "children": [
+        {
+          "component": "OrganizationsPage",
+          "props": {},
+          "children": []
+        }
+      ]
+    }
+  },
+  {
+    "path": "/account/billing",
+    "element": {
+      "component": "PaidFeatureRoute",
+      "props": {},
+      "children": [
+        {
+          "component": "LegacyBillingRedirect",
+          "props": {},
+          "children": []
+        }
+      ]
+    }
+  },
+  {
+    "path": "/account/plans",
+    "element": {
+      "component": "PaidFeatureRoute",
+      "props": {},
+      "children": [
+        {
+          "component": "LegacyBillingRedirect",
+          "props": {
+            "section": "platform"
+          },
+          "children": []
+        }
+      ]
+    }
+  },
+  {
+    "path": "/account/venue-billing",
+    "element": {
+      "component": "PaidFeatureRoute",
+      "props": {},
+      "children": [
+        {
+          "component": "LegacyBillingRedirect",
+          "props": {
+            "section": "venues"
+          },
+          "children": []
+        }
+      ]
+    }
+  },
+  {
+    "path": "/account/billing-profiles",
+    "element": {
+      "component": "PaidFeatureRoute",
+      "props": {},
+      "children": [
+        {
+          "component": "LegacyBillingRedirect",
+          "props": {
+            "section": "profiles"
+          },
+          "children": []
+        }
+      ]
+    }
+  },
+  {
+    "path": "/billing/payment-account/refresh",
+    "element": {
+      "component": "PaidFeatureRoute",
+      "props": {},
+      "children": [
+        {
+          "component": "PaymentAccountReturnPage",
+          "props": {
+            "refresh": true
+          },
+          "children": []
+        }
+      ]
+    }
+  },
+  {
+    "path": "/billing/payment-account/complete",
+    "element": {
+      "component": "PaidFeatureRoute",
+      "props": {},
+      "children": [
+        {
+          "component": "PaymentAccountReturnPage",
+          "props": {},
+          "children": []
+        }
+      ]
+    }
+  },
+  {
+    "path": "/account/platform-billing",
+    "element": {
+      "component": "PaidFeatureRoute",
+      "props": {},
+      "children": [
+        {
+          "component": "LegacyBillingRedirect",
+          "props": {
+            "section": "platform"
+          },
+          "children": []
+        }
+      ]
+    }
+  },
+  {
+    "path": "/account/tickets",
+    "element": {
+      "component": "PaidFeatureRoute",
+      "props": {
+        "feature": "paidEventsEnabled"
+      },
+      "children": [
+        {
+          "component": "TicketsPage",
+          "props": {},
+          "children": []
+        }
+      ]
+    }
+  },
+  {
+    "path": "/tickets/success",
+    "element": {
+      "component": "PaidFeatureRoute",
+      "props": {
+        "feature": "paidEventsEnabled"
+      },
+      "children": [
+        {
+          "component": "TicketsPage",
+          "props": {
+            "success": true
+          },
+          "children": []
+        }
+      ]
+    }
+  },
+  {
+    "path": "/tickets/:id",
+    "element": {
+      "component": "PaidFeatureRoute",
+      "props": {
+        "feature": "paidEventsEnabled"
+      },
+      "children": [
+        {
+          "component": "TicketOrderPage",
+          "props": {},
+          "children": []
+        }
+      ]
+    }
+  },
+  {
+    "path": "/profile/venues",
+    "element": {
+      "component": "MyVenuesPage",
+      "props": {},
+      "children": []
+    }
+  },
+  {
+    "path": "/profile/saved-venues",
+    "element": {
+      "component": "SavedVenuesPage",
+      "props": {},
+      "children": []
+    }
+  },
+  {
+    "path": "/profile/venues/new",
+    "element": {
+      "component": "VenueEditorPage",
+      "props": {},
+      "children": []
+    }
+  },
+  {
+    "path": "/profile/venues/:id/edit",
+    "element": {
+      "component": "VenueEditorPage",
+      "props": {},
+      "children": []
+    }
+  },
+  {
+    "path": "/profile/venues/:id/bookings",
+    "element": {
+      "component": "VenueBookingsPage",
+      "props": {},
+      "children": []
+    }
+  },
+  {
+    "path": "/profile/venues/:id/billing",
+    "element": {
+      "component": "PaidFeatureRoute",
+      "props": {},
+      "children": [
+        {
+          "component": "VenueBillingPage",
+          "props": {},
+          "children": []
+        }
+      ]
+    }
+  },
+  {
+    "path": "/profile/venues/:id/calendar",
+    "element": {
+      "component": "VenueCalendarPage",
+      "props": {},
+      "children": []
+    }
+  },
+  {
+    "path": "/profile/invoices",
+    "element": {
+      "component": "PaidFeatureRoute",
+      "props": {},
+      "children": [
+        {
+          "component": "LegacyBillingRedirect",
+          "props": {
+            "section": "invoices"
+          },
+          "children": []
+        }
+      ]
+    }
+  },
+  {
+    "path": "/account/invoices",
+    "element": {
+      "component": "PaidFeatureRoute",
+      "props": {},
+      "children": [
+        {
+          "component": "LegacyBillingRedirect",
+          "props": {
+            "section": "invoices"
+          },
+          "children": []
+        }
+      ]
+    }
+  },
+  {
+    "path": "/invoices/:invoiceId",
+    "element": {
+      "component": "PaidFeatureRoute",
+      "props": {},
+      "children": [
+        {
+          "component": "InvoiceDetailPage",
+          "props": {},
+          "children": []
+        }
+      ]
+    }
+  },
+  {
+    "path": "/venues",
+    "element": {
+      "component": "VenuesDiscoveryPage",
+      "props": {},
+      "children": []
+    }
+  },
+  {
+    "path": "/venues/slug/:slug",
+    "element": {
+      "component": "VenueDetailPage",
+      "props": {},
+      "children": []
+    }
+  },
+  {
+    "path": "/venues/:id/availability",
+    "element": {
+      "component": "OrganizerAvailabilityPage",
+      "props": {},
+      "children": []
+    }
+  },
+  {
+    "path": "/venues/:city/:venueType",
+    "element": {
+      "component": "VenueSearchRoutePage",
+      "props": {},
+      "children": []
+    }
+  },
+  {
+    "path": "/venues/:city",
+    "element": {
+      "component": "VenueCityOrDetailPage",
+      "props": {},
+      "children": []
+    }
+  },
+  {
+    "path": "/account-deleted",
+    "element": {
+      "component": "AccountDeletedPage",
+      "props": {},
+      "children": []
+    }
+  },
+  {
+    "path": "/profile/my-events",
+    "element": {
+      "component": "MyAttendingEventsPage",
+      "props": {},
+      "children": []
+    }
+  },
+  {
+    "path": "/events",
+    "element": {
+      "component": "EventsPage",
+      "props": {
+        "key": "events"
+      },
+      "children": []
+    }
+  },
+  {
+    "path": "/profile/events",
+    "element": {
+      "component": "EventsPage",
+      "props": {
+        "key": "manage-events",
+        "managementOnly": true
+      },
+      "children": []
+    }
+  },
+  {
+    "path": "/profile/events/new",
+    "element": {
+      "component": "CreateEventRoute",
+      "props": {},
+      "children": []
+    }
+  },
+  {
+    "path": "/profile/events/:id/edit",
+    "element": {
+      "component": "EventsPage",
+      "props": {
+        "key": "edit-event",
+        "managementOnly": true,
+        "editPage": true
+      },
+      "children": []
+    }
+  },
+  {
+    "path": "/events/:id",
+    "element": {
+      "component": "EventDetailPage",
+      "props": {},
+      "children": []
+    }
+  },
+  {
+    "path": "/events/:id/check-in",
+    "element": {
+      "component": "EventCheckInPage",
+      "props": {},
+      "children": []
+    }
+  },
+  {
+    "path": "/events/:id/tickets",
+    "element": {
+      "component": "PaidFeatureRoute",
+      "props": {
+        "feature": "paidEventsEnabled"
+      },
+      "children": [
+        {
+          "component": "TicketCheckoutPage",
+          "props": {},
+          "children": []
+        }
+      ]
+    }
+  },
+  {
+    "path": "/groups",
+    "element": {
+      "component": "GroupsPage",
+      "props": {},
+      "children": []
+    }
+  },
+  {
+    "path": "/groups/:id",
+    "element": {
+      "component": "GroupsPage",
+      "props": {
+        "detailPage": true
+      },
+      "children": []
+    }
+  },
+  {
+    "path": "/profile/groups/:id",
+    "element": {
+      "component": "GroupsPage",
+      "props": {
+        "managementOnly": true,
+        "focusedManagement": true
+      },
+      "children": []
+    }
+  },
+  {
+    "path": "/profile/groups",
+    "element": {
+      "component": "GroupsPage",
+      "props": {
+        "managementOnly": true
+      },
+      "children": []
+    }
+  },
+  {
+    "path": "/profile/articles",
+    "element": {
+      "component": "ArticlesPage",
+      "props": {
+        "view": "workspace"
+      },
+      "children": []
+    }
+  },
+  {
+    "path": "/profile/articles/new",
+    "element": {
+      "component": "ArticlesPage",
+      "props": {
+        "view": "new"
+      },
+      "children": []
+    }
+  },
+  {
+    "path": "/profile/articles/:id/edit",
+    "element": {
+      "component": "ArticlesPage",
+      "props": {
+        "view": "edit"
+      },
+      "children": []
+    }
+  },
+  {
+    "path": "/articles/category/:category",
+    "element": {
+      "component": "ArticlesPage",
+      "props": {},
+      "children": []
+    }
+  },
+  {
+    "path": "/articles/:slug",
+    "element": {
+      "component": "ArticlesPage",
+      "props": {
+        "view": "detail"
+      },
+      "children": []
+    }
+  },
+  {
+    "path": "/articles",
+    "element": {
+      "component": "ArticlesPage",
+      "props": {},
+      "children": []
+    }
+  },
+  {
+    "path": "/:city/groups/:id",
+    "element": {
+      "component": "GroupSlugRedirect",
+      "props": {},
+      "children": []
+    }
+  },
+  {
+    "path": "/invitation-response",
+    "element": {
+      "component": "InvitationResponsePage",
+      "props": {},
+      "children": []
+    }
+  },
+  {
+    "path": "/group-invitation",
+    "element": {
+      "component": "GroupInvitationPage",
+      "props": {},
+      "children": []
+    }
+  }
+]
